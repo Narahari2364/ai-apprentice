@@ -68,6 +68,39 @@ export function attachLedgerline(iframe: HTMLIFrameElement): () => void {
   };
 }
 
+// ---------- Ledgerline's own main menu, shown in our top bar ----------
+
+export const LEDGERLINE_MENU: { label: string; action: string; data?: Record<string, string> }[] = [
+  { label: "Home", action: "home" },
+  { label: "Expense Reports", action: "list", data: { filter: "" } },
+  { label: "Drafts", action: "list", data: { filter: "draft" } },
+  { label: "Submitted", action: "list", data: { filter: "submitted" } },
+  { label: "Receipt Gallery", action: "gallery", data: { ctx: "view" } },
+];
+
+/** Run one of Ledgerline's own data-action handlers (same-origin, file stays unchanged). */
+export function ledgerlineAction(action: string, data: Record<string, string> = {}) {
+  const doc = frame?.contentDocument;
+  if (!doc?.body) return;
+  const btn = doc.createElement("button");
+  btn.hidden = true;
+  btn.dataset.action = action;
+  Object.assign(btn.dataset, data);
+  doc.body.appendChild(btn);
+  btn.click();
+  btn.remove();
+}
+
+// Ledgerline's chrome we hide inside the embed: its own header (logo, menu, help,
+// user) and the company notices panel on its home screen. Injected, not edited.
+export const EMBED_CSS = `
+.top{display:none!important}
+.main{height:100vh!important}
+.main:has(> .right .notices){grid-template-columns:minmax(0,1fr)!important}
+.main:has(> .right .notices) > .right{display:none!important}
+.drawer{padding-top:0!important}
+`;
+
 // ---------- Ledgerline event → ScreenEvent ----------
 
 // Noise for the agent and the Work Map.

@@ -46,7 +46,7 @@ export default function TeachPage() {
   );
 
   return (
-    <div className="grid h-full grid-cols-[68%_32%]">
+    <div className="grid h-full grid-cols-[68%_32%] grid-rows-[100%]">
       <LedgerlineFrame query="user=lena&guard=1" />
       <aside className="flex min-h-0 flex-col border-l border-line bg-panel p-3">
         <TutorPanel violations={violations} progress={progress} onReset={reset} />

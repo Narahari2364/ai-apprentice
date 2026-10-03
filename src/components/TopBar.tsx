@@ -1,8 +1,11 @@
 "use client";
-// Top bar in Ledgerline's style: logo left, mode switch + current user right.
+// Top bar in Ledgerline's style. Ledgerline's own header is hidden inside the embed,
+// so its main menu (Home, Expense Reports, Drafts, Submitted, Receipt Gallery) lives
+// here, beside the logo, on pages that show Ledgerline.
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { LEDGERLINE_MENU, ledgerlineAction } from "@/lib/ledgerline";
 
 const COMPANY = "Nordhaven Consulting Group";
 
@@ -10,40 +13,40 @@ export default function TopBar() {
   const path = usePathname();
   const mode = path.startsWith("/teach") ? "newhire" : path === "/" ? null : "expert";
   const user = mode === "newhire" ? "Lena Brandt" : mode === "expert" ? "Sabine Keller" : null;
-
-  const nav = [
-    { href: "/capture", label: "Capture" },
-    { href: "/map", label: "Work Map" },
-    { href: "/teach", label: "Teach" },
-  ];
+  const showMenu = path.startsWith("/capture") || path.startsWith("/teach");
 
   return (
     <header className="relative z-20 flex h-16 flex-none items-center border-b border-line bg-white px-6">
-      <Link href="/" className="flex items-center gap-2.5 text-[24px] tracking-tight text-[#1f2d3d]">
+      <Link href="/" className="flex flex-none items-center gap-2.5 text-[24px] tracking-tight text-[#1f2d3d]">
         <Logo />
         <span>
           <b className="font-medium">AI</b> <span className="font-light">Apprentice</span>
         </span>
       </Link>
 
-      <nav className="ml-10 flex h-full items-stretch gap-1">
-        {nav.map((n) => {
-          const on = path.startsWith(n.href);
-          return (
-            <Link
-              key={n.href}
-              href={n.href}
-              className={`flex items-center border-b-[3px] px-3 text-[15px] ${on ? "border-brand text-brand" : "border-transparent text-[#444] hover:text-brand"}`}
+      {showMenu && (
+        <nav className="ml-8 flex h-full items-stretch" aria-label="Expenses menu">
+          {LEDGERLINE_MENU.map((m) => (
+            <button
+              key={m.label}
+              onClick={() => ledgerlineAction(m.action, m.data)}
+              className="flex items-center whitespace-nowrap border-b-[3px] border-transparent px-2.5 text-[15px] text-[#444] hover:border-brand hover:text-brand"
             >
-              {n.label}
-            </Link>
-          );
-        })}
-      </nav>
+              {m.label}
+            </button>
+          ))}
+        </nav>
+      )}
 
-      <div className="ml-auto flex items-center gap-6">
+      <div className="ml-auto flex flex-none items-center gap-5">
+        <Link
+          href="/map"
+          className={`whitespace-nowrap text-[15px] ${path.startsWith("/map") ? "font-medium text-brand" : "text-[#444] hover:text-brand"}`}
+        >
+          Work Map
+        </Link>
         <div className="flex overflow-hidden rounded-sm border border-brand text-[14px]" role="group" aria-label="Mode">
-          <Link href="/capture" className={`px-3.5 py-1.5 ${mode === "expert" ? "bg-brand text-white" : "bg-white text-brand hover:bg-brand-soft"}`}>
+          <Link href="/capture" className={`px-3.5 py-1.5 ${mode === "expert" && !path.startsWith("/map") ? "bg-brand text-white" : "bg-white text-brand hover:bg-brand-soft"}`}>
             Expert
           </Link>
           <Link href="/teach" className={`border-l border-brand px-3.5 py-1.5 ${mode === "newhire" ? "bg-brand text-white" : "bg-white text-brand hover:bg-brand-soft"}`}>
