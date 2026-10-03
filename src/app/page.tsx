@@ -14,15 +14,15 @@ export default function Home() {
           <ModeCard
             href="/capture"
             bar="Expert mode"
-            title="Sabine Keller · Senior consultant"
-            text="File team meal expenses as usual. The apprentice watches, stays quiet while you work, and asks why at natural pauses. Then it debriefs and builds the Work Map."
+            title="Paul Adler · Consultant"
+            text="Submit meal expenses as usual. Click Apprentice in Ledgerline: it watches, stays quiet while you work, and asks why at natural pauses. Then it debriefs and builds the Work Map."
             cta="Start capture"
           />
           <ModeCard
             href="/teach"
             bar="New hire mode"
             title="Lena Brandt · Associate"
-            text="File a new meal expense with a voice tutor. It explains each step the way Sabine does and stops a wrong save before Global Audit returns it."
+            text="Submit a new delivery-order expense with a voice tutor. It asks you to predict each step the way Paul does it and stops a wrong save before finance rejects it."
             cta="Start learning"
           />
         </div>
@@ -31,7 +31,7 @@ export default function Home() {
           <ol className="grid gap-4 p-4 text-[14.5px] md:grid-cols-3">
             <li><b className="text-brand">1. Capture</b><br />Voice agent + screen events from Ledgerline. Questions only at natural pauses.</li>
             <li><b className="text-brand">2. Map</b><br />Debrief and teach-back become clickable steps, decisions, reasons and guardrails.</li>
-            <li><b className="text-brand">3. Teach</b><br />The tutor checks every Save against Sabine&apos;s guardrails and explains in her words.</li>
+            <li><b className="text-brand">3. Teach</b><br />The tutor checks every Save against Paul&apos;s guardrails and explains in his words.</li>
           </ol>
         </div>
       </div>

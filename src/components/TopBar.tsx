@@ -1,16 +1,14 @@
 "use client";
-// Top bar in Ledgerline's style: logo, Ledgerline's menu, Work Map link and mode switch. Ledgerline's own header is hidden inside the embed,
-// so its main menu (Home, Expense Reports, Drafts, Submitted, Receipt Gallery) lives
-// here, beside the logo, on pages that show Ledgerline.
+// Top bar in Ledgerline's style: logo, Work Map link and mode switch.
+// Hidden on /capture and /teach: there Ledgerline fills the screen with its own header,
+// and the Apprentice lives in it.
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LEDGERLINE_MENU, ledgerlineAction } from "@/lib/ledgerline";
 
 export default function TopBar() {
   const path = usePathname();
-  const mode = path.startsWith("/teach") ? "newhire" : path === "/" ? null : "expert";
-  const showMenu = path.startsWith("/capture") || path.startsWith("/teach");
+  if (path.startsWith("/capture") || path.startsWith("/teach")) return null;
 
   return (
     <header className="relative z-20 flex h-16 flex-none items-center border-b border-line bg-white px-6">
@@ -21,20 +19,6 @@ export default function TopBar() {
         </span>
       </Link>
 
-      {showMenu && (
-        <nav className="ml-8 flex h-full items-stretch" aria-label="Expenses menu">
-          {LEDGERLINE_MENU.map((m) => (
-            <button
-              key={m.label}
-              onClick={() => ledgerlineAction(m.action, m.data)}
-              className="flex items-center whitespace-nowrap border-b-[3px] border-transparent px-2.5 text-[15px] text-[#444] hover:border-brand hover:text-brand"
-            >
-              {m.label}
-            </button>
-          ))}
-        </nav>
-      )}
-
       <div className="ml-auto flex flex-none items-center gap-5">
         <Link
           href="/map"
@@ -43,10 +27,10 @@ export default function TopBar() {
           Work Map
         </Link>
         <div className="flex overflow-hidden rounded-sm border border-brand text-[14px]" role="group" aria-label="Mode">
-          <Link href="/capture" className={`px-3.5 py-1.5 ${mode === "expert" && !path.startsWith("/map") ? "bg-brand text-white" : "bg-white text-brand hover:bg-brand-soft"}`}>
+          <Link href="/capture" className="bg-white px-3.5 py-1.5 text-brand hover:bg-brand-soft">
             Expert
           </Link>
-          <Link href="/teach" className={`border-l border-brand px-3.5 py-1.5 ${mode === "newhire" ? "bg-brand text-white" : "bg-white text-brand hover:bg-brand-soft"}`}>
+          <Link href="/teach" className="border-l border-brand bg-white px-3.5 py-1.5 text-brand hover:bg-brand-soft">
             New hire
           </Link>
         </div>

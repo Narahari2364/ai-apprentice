@@ -1,13 +1,21 @@
+"use client";
+// Capture (Module 1): Ledgerline full screen as Paul; the Apprentice lives in its top bar.
+
+import { useState } from "react";
 import LedgerlineFrame from "@/features/erp/LedgerlineFrame";
-import VoiceAgentPanel from "@/features/capture/VoiceAgentPanel";
+import VoiceAgentPanel, { type CaptureStage } from "@/features/capture/VoiceAgentPanel";
 
 export default function CapturePage() {
+  const [stage, setStage] = useState<CaptureStage>("closed");
   return (
-    <div className="grid h-full grid-cols-[68%_32%] grid-rows-[100%]">
-      <LedgerlineFrame query="user=sabine" />
-      <aside className="flex min-h-0 flex-col border-l border-line bg-panel p-3">
-        <VoiceAgentPanel />
-      </aside>
+    <div className="h-full">
+      <LedgerlineFrame
+        query="user=paul"
+        mode="capture"
+        apprenticeOn={stage !== "closed"}
+        onApprenticeClick={() => setStage(stage === "closed" ? "intro" : stage)}
+      />
+      <VoiceAgentPanel stage={stage} setStage={setStage} />
     </div>
   );
 }

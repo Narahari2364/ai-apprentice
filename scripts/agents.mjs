@@ -23,13 +23,13 @@ const agents = [
     envKey: "ELEVENLABS_INTERVIEWER_AGENT_ID",
     name: "AI Apprentice - Interviewer",
     prompt: interviewerPrompt,
-    firstMessage: "Hi Sabine, I'm your apprentice. Go ahead and file your expenses as usual. I'll stay quiet and only ask when you pause.",
+    firstMessage: "Hi Paul, I'm your apprentice. Go ahead and show me how you submit your expenses. I'll stay quiet and only ask when you pause.",
   },
   {
     envKey: "ELEVENLABS_TUTOR_AGENT_ID",
     name: "AI Apprentice - Tutor",
     prompt: tutorPrompt,
-    firstMessage: "Hi Lena! Today you'll file your team meal expenses the way Sabine does. Start whenever you're ready.",
+    firstMessage: "Hi Lena! Here's a new one: a dinner you ordered through Bitebox. Let's walk through it together. First step: what do you upload?",
   },
 ];
 

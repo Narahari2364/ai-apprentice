@@ -1,25 +1,29 @@
 "use client";
-// Interviewer (ElevenLabs) side panel for /capture.
-// When to ask: after a judgment-relevant action (Type of Meal, guests, attachments,
-// save...) we wait until there has been no typing/pointer activity, no screen event
+// The Apprentice in learning mode (/capture): start card → floating popup over Ledgerline.
+// When to ask: after a judgment-relevant action (an attachment, a guest, a key field,
+// a save) we wait until there has been no typing/pointer activity, no screen event
 // and no expert speech for PAUSE_MS, the agent is silent, no document is open
-// (she is reading), and MIN_GAP_MS has passed since the last question.
-// Only then is the agent allowed one question.
+// (he is reading), and MIN_GAP_MS has passed since the last question.
+// Then the agent may ask one question, and the field it is about gets an indigo outline.
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ConversationProvider } from "@elevenlabs/react";
 import { getHistory, onActivity, resetSession, subscribe, useScreenEvents } from "@/lib/events";
-import { sampleWorkMap } from "@/data/sampleWorkMap";
+import { fieldFor, sendCommand } from "@/lib/ledgerline";
 import { attachDocs, attachScreenshots, saveSession, saveWorkMap } from "@/lib/session";
 import { useVoiceAgent } from "@/lib/useVoiceAgent";
+import { sampleWorkMap } from "@/data/sampleWorkMap";
 import type { ScreenEvent } from "@/lib/types";
+import Popup, { ListeningBars } from "@/features/apprentice/Popup";
+import StartCard from "@/features/apprentice/StartCard";
 import { registerAgent, sendToAgent, STATE_LABEL, type AgentUiState } from "./agent";
 import { setCapturePaused, snapshot, startScreenCapture, stopScreenCapture } from "./screenCapture";
 import EventLog from "./EventLog";
 
 const PAUSE_MS = 3500;
 const MIN_GAP_MS = 20000;
+const EXPERT = "Paul Adler";
 
 // Actions worth a "why" question. Plain amount typing is not: the screen already answers it.
 const JUDGMENT_FIELDS = new Set(["type_of_meal", "location", "business_purpose"]);
@@ -27,24 +31,32 @@ const JUDGMENT_TYPES = new Set(["guest_added", "guest_removed", "attachment_adde
 const isNotable = (e: ScreenEvent) =>
   e.source === "dom" && (JUDGMENT_TYPES.has(e.type) || (e.type === "field_changed" && JUDGMENT_FIELDS.has(e.field ?? "")));
 
-export default function VoiceAgentPanel() {
+export type CaptureStage = "closed" | "intro" | "live";
+
+interface Props {
+  stage: CaptureStage;
+  setStage: (s: CaptureStage) => void;
+}
+
+export default function VoiceAgentPanel(props: Props) {
   return (
     <ConversationProvider>
-      <Interviewer />
+      <Interviewer {...props} />
     </ConversationProvider>
   );
 }
 
-function Interviewer() {
+function Interviewer({ stage, setStage }: Props) {
   const router = useRouter();
   const agent = useVoiceAgent("interviewer");
   const [offRecord, setOffRecord] = useState(false);
   const [phase, setPhase] = useState<"task" | "debrief" | "building">("task");
   const [waiting, setWaiting] = useState<string | null>(null); // why the agent is holding a question
-  const [questions, setQuestions] = useState(0);
   const [sharing, setSharing] = useState(false);
   const [starting, setStarting] = useState(false);
   const [buildError, setBuildError] = useState<string | null>(null);
+  const [details, setDetails] = useState(false);
+  const [task, setTask] = useState("Meal expense report");
   const seenEvents = useScreenEvents();
 
   const agentRef = useRef(agent);
@@ -54,6 +66,7 @@ function Interviewer() {
   const lastActivity = useRef(0);
   const lastQuestion = useRef(0);
   const reading = useRef(false);
+  const highlighted = useRef(false);
   const offRecordEvents = useRef(new Set<ScreenEvent>());
   const shots = useRef<Record<string, string>>({});
 
@@ -70,15 +83,25 @@ function Interviewer() {
     });
   }, [agent.connected]);
 
+  // The question's highlight goes away once the expert answers.
+  const lastLine = agent.transcript[agent.transcript.length - 1];
+  useEffect(() => {
+    if (lastLine?.speaker === "expert" && highlighted.current) {
+      sendCommand({ cmd: "clear_highlight" });
+      highlighted.current = false;
+    }
+  }, [lastLine]);
+
   useEffect(() => {
     if (!agent.connected || phase !== "task") return;
 
     function tryAsk() {
       const a = agentRef.current;
       const now = Date.now();
-      if (!pending.current || offRef.current) return setWaiting(null);
+      const e = pending.current;
+      if (!e || offRef.current) return setWaiting(null);
       if (a.isSpeaking || reading.current || now - a.lastUserSpeech.current < 2500 || now - lastActivity.current < PAUSE_MS) {
-        setWaiting(reading.current ? "she is reading a document" : a.isSpeaking ? "agent is speaking" : "she is working or talking");
+        setWaiting(reading.current ? "he is reading a document" : a.isSpeaking ? "agent is speaking" : "he is working or talking");
         timer.current = setTimeout(tryAsk, 1000);
         return;
       }
@@ -88,13 +111,23 @@ function Interviewer() {
         timer.current = setTimeout(tryAsk, Math.min(wait, 1000));
         return;
       }
+      // Earlier saved expenses let the agent spot "same kind of expense, different steps".
+      const earlier = getHistory()
+        .filter((h) => h.type === "expense_saved" && h !== e)
+        .slice(-3)
+        .map((h) => `- ${h.description}`)
+        .join("\n");
       sendToAgent(
-        `[PAUSE] Sabine paused right after: ${pending.current.description}. Ask one short question about why, or about a limit or when she would stop and ask.`,
+        `[PAUSE] Paul paused right after: ${e.description}.${earlier ? `\nEarlier expenses he saved:\n${earlier}` : ""}\nIf he handled this one differently from a similar earlier one, ask what the difference is. Otherwise ask one short question about why, a limit, or when he would stop and ask.`,
         { respond: true },
       );
+      const field = fieldFor(e);
+      if (field) {
+        sendCommand({ cmd: "highlight", fields: [field] });
+        highlighted.current = true;
+      }
       lastQuestion.current = now;
       pending.current = null;
-      setQuestions((q) => q + 1);
       setWaiting(null);
     }
 
@@ -104,7 +137,7 @@ function Interviewer() {
         return;
       }
       sendToAgent(`[SCREEN] ${e.time} ${e.description}`);
-      // A screen change is activity too (vision lags 2–3 s behind, so only the app's own events count).
+      // A screen change is activity too (vision lags 2–3 s behind, so only Ledgerline's own events count).
       if (e.source === "dom") lastActivity.current = Date.now();
       if (e.type === "document_opened") reading.current = true;
       if (e.type === "document_closed") reading.current = false;
@@ -143,7 +176,9 @@ function Interviewer() {
     return getHistory().filter((e) => !offRecordEvents.current.has(e));
   }
 
-  async function start() {
+  async function start(chosenTask: string) {
+    setTask(chosenTask);
+    setStage("live");
     setStarting(true);
     resetSession();
     shots.current = {};
@@ -151,7 +186,7 @@ function Interviewer() {
       await startScreenCapture(() => setSharing(false));
       setSharing(true);
     } catch {
-      // Sharing declined: the agent still gets Ledgerline events, just no vision/screenshots.
+      // Sharing declined: the agent still gets Ledgerline's events, just no vision/screenshots.
     }
     await agent.start();
     setStarting(false);
@@ -168,13 +203,14 @@ function Interviewer() {
     setOffRecord(next);
     agent.setMuted(next);
     setCapturePaused(next);
-    sendToAgent(next ? "[SCREEN] Sabine went off the record." : "[SCREEN] Sabine is back on the record.");
+    sendToAgent(next ? "[SCREEN] Paul went off the record." : "[SCREEN] Paul is back on the record.");
   }
 
-  function finishTask() {
+  function endTask() {
     setPhase("debrief");
+    sendCommand({ cmd: "clear_highlight" });
     sendToAgent(
-      `[DEBRIEF] Sabine is done with the task. Everything that happened on screen:\n${recordedEvents()
+      `[DEBRIEF] Paul is done with the task (${task}). Everything that happened on screen:\n${recordedEvents()
         .map((e) => `${e.time} ${e.description}`)
         .join("\n")}\nStart the debrief now.`,
       { respond: true },
@@ -210,6 +246,30 @@ function Interviewer() {
     router.push("/map");
   }
 
+  if (stage === "closed") return null;
+
+  if (stage === "intro") {
+    return (
+      <StartCard
+        title="Apprentice"
+        subtitle="Show it how you do a task. It learns why."
+        modeLabel="LEARNING MODE"
+        taskLabel="Task you'll show"
+        tasks={["Meal expense report", "Client-travel expense report"]}
+        expectations={[
+          "Watches <b>this Ledgerline window only</b>, nothing else on your screen.",
+          "Stays quiet while you work and asks a few short questions out loud when you pause.",
+          "You can go <b>off the record</b> any time.",
+          "Names and card numbers are hidden automatically.",
+          "You review everything it learned before anyone else sees it.",
+        ]}
+        startLabel="Start learning"
+        onStart={start}
+        onClose={() => setStage("closed")}
+      />
+    );
+  }
+
   const ui: AgentUiState =
     phase === "building" ? "building"
     : starting || agent.status === "connecting" ? "connecting"
@@ -220,129 +280,94 @@ function Interviewer() {
     : waiting && waiting !== "waiting for a pause" ? "quiet"
     : "listening";
 
-  const pillClass: Record<AgentUiState, string> = {
-    not_started: "bg-[#EEF1F4] text-[#444]",
-    connecting: "bg-[#EEF1F4] text-[#444]",
-    listening: "bg-ok-soft text-ok",
-    quiet: "bg-warn-soft text-[#7a5a00]",
-    asking: "bg-brand-soft text-brand",
-    off_record: "bg-err-soft text-err",
-    debrief: "bg-brand-soft text-brand",
-    building: "bg-brand-soft text-brand",
-  };
+  const lastAgent = [...agent.transcript].reverse().find((t) => t.speaker === "agent");
+  const review = phase !== "task";
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col gap-3">
-      <section className="card flex-none">
-        <div className="card-bar">
-          <span>Apprentice</span>
-          <span className={`pill ml-auto ${pillClass[ui]}`}>
-            <Dot ui={ui} /> {STATE_LABEL[ui]}
-          </span>
-        </div>
-        <div className="card-body flex flex-col gap-3">
-          <div className="flex items-center gap-3">
+    <Popup
+      title="Apprentice"
+      subtitle={review ? `Review mode · checking what it learned from ${EXPERT}` : `Learning from ${EXPERT}`}
+      modeLabel={review ? "REVIEW" : "LEARNING MODE"}
+      initial={{ left: 24, bottom: 120 }}
+      width={420}
+      foldable
+    >
+      <div className="px-4 pb-3 pt-3">
+        {lastAgent ? (
+          <div>
+            <div className="text-[13px] text-[#444]">
+              <b className="text-ink">Apprentice</b> <span className="ml-1 font-mono text-muted">{lastAgent.time}</span>
+            </div>
+            <p className="mt-0.5 text-[16px] leading-snug">{lastAgent.text}</p>
+          </div>
+        ) : (
+          <p className="text-[14.5px] text-[#444]">
+            {ui === "connecting" ? "Connecting…" : "Work as usual. I'll stay quiet and only ask when you pause."}
+          </p>
+        )}
+        {offRecord && (
+          <p className="mt-2 border-l-4 border-err bg-err-soft px-3 py-1.5 text-[13px] text-[#8E1B1B]">
+            Off the record. Nothing is saved and no questions are asked until you resume.
+          </p>
+        )}
+        {buildError && (
+          <div className="mt-2 border-l-4 border-warn bg-warn-soft px-3 py-2 text-[13px]">
+            <b>Couldn&apos;t build the Work Map.</b> {buildError}
+            <div className="mt-2 flex gap-2">
+              <button className="btn h-8 bg-white text-[13px]" onClick={buildMap}>Try again</button>
+              <button className="btn-pri h-8 text-[13px]" onClick={loadPreparedMap}>Use prepared Work Map</button>
+            </div>
+          </div>
+        )}
+        {agent.error && <p className="mt-2 border-l-4 border-err bg-err-soft px-3 py-1.5 text-[13px] text-[#8E1B1B]">{agent.error}</p>}
+      </div>
+
+      <div className="flex items-center gap-2 border-t border-line px-4 py-2.5">
+        <span className="flex min-w-0 flex-1 items-center gap-2 text-[14px] text-indigo">
+          {(ui === "listening" || ui === "debrief") && <ListeningBars active />}
+          <span className="truncate">{ui === "listening" || ui === "debrief" ? "Listening…" : STATE_LABEL[ui]}</span>
+        </span>
+        {phase === "task" && (
+          <>
             <button
-              onClick={() => agent.setMuted(!agent.isMuted)}
-              disabled={!agent.connected || offRecord}
-              aria-label={agent.isMuted ? "Unmute microphone" : "Mute microphone"}
-              className={`grid h-11 w-11 place-items-center rounded-full border ${agent.connected && !agent.isMuted ? "border-brand bg-brand text-white" : "border-line bg-panel text-muted"} disabled:opacity-50`}
+              onClick={toggleOffRecord}
+              disabled={!agent.connected}
+              className={`h-9 rounded-sm border px-3 text-[14px] disabled:opacity-50 ${offRecord ? "border-err bg-err text-white" : "border-indigo bg-white text-indigo hover:bg-indigo-soft"}`}
             >
-              <MicIcon muted={!agent.connected || agent.isMuted} />
+              {offRecord ? "Back on record" : "Off the record"}
             </button>
-            <div className="min-w-0 flex-1 text-[13px] leading-snug text-[#444]">
-              {ui === "not_started" && "Start, then share this tab. The apprentice stays quiet while Sabine works and asks at natural pauses."}
-              {ui === "connecting" && "Connecting the voice agent…"}
-              {ui === "listening" && (waiting ? "A question is ready. Waiting for a natural pause." : "Watching the screen and listening.")}
-              {ui === "quiet" && `Holding the question: ${waiting}.`}
-              {ui === "asking" && "Asking about what just happened on screen."}
-              {ui === "off_record" && "Nothing is recorded or sent until you resume."}
-              {ui === "debrief" && "Debrief: closing gaps, then the teach-back."}
-              {ui === "building" && "Merging events, transcript and answers…"}
-            </div>
-            {!agent.connected ? (
-              <button className="btn-pri" onClick={start} disabled={starting || phase === "building"}>Start</button>
-            ) : (
-              <button className="btn" onClick={stop}>Stop</button>
-            )}
-          </div>
+            <button onClick={endTask} disabled={!agent.connected} className="h-9 rounded-sm bg-indigo px-3 text-[14px] text-white hover:bg-indigo-dark disabled:opacity-50">
+              End task
+            </button>
+          </>
+        )}
+        {(phase === "debrief" || (!agent.connected && phase === "task" && seenEvents.length > 0 && !starting)) && (
+          // Also offered without a live agent (e.g. voice credits ran out): events alone still build a map.
+          <button onClick={buildMap} className="h-9 rounded-sm bg-indigo px-3 text-[14px] text-white hover:bg-indigo-dark">
+            Build Work Map
+          </button>
+        )}
+      </div>
 
-          <div className="grid grid-cols-2 gap-2 text-[13px]">
-            <Stat label="Questions asked" value={String(questions)} />
-            <Stat label="Screen" value={sharing ? (offRecord ? "Paused" : "Shared · vision on") : "App events only"} />
+      <button onClick={() => setDetails((d) => !d)} className="w-full border-t border-line bg-panel-2 px-4 py-1.5 text-left text-[12.5px] text-muted hover:text-indigo">
+        {details ? "▾ Hide details" : "▸ Details: transcript, screen events, pause detector"}
+      </button>
+      {details && (
+        <div className="flex h-72 flex-col gap-2 border-t border-line bg-panel p-2">
+          <div className="text-[12px] text-[#444]">
+            Pause detector: <b>{waiting ?? "idle"}</b> · Screen: <b>{sharing ? (offRecord ? "paused" : "shared, vision on") : "app events only"}</b>
           </div>
-
-          <div className="flex items-center gap-2">
-            <label className="flex flex-1 cursor-pointer items-center gap-2 text-[14px]">
-              <span
-                role="switch"
-                aria-checked={offRecord}
-                tabIndex={0}
-                onClick={() => agent.connected && toggleOffRecord()}
-                onKeyDown={(e) => e.key === " " && agent.connected && toggleOffRecord()}
-                className={`relative h-5 w-9 rounded-full transition ${offRecord ? "bg-err" : "bg-[#c7ccd1]"} ${agent.connected ? "" : "opacity-50"}`}
-              >
-                <span className={`absolute top-0.5 h-4 w-4 rounded-full bg-white shadow transition-all ${offRecord ? "left-[18px]" : "left-0.5"}`} />
-              </span>
-              Off the record
-            </label>
-            {agent.connected && phase === "task" && <button className="btn h-9 text-[14px]" onClick={finishTask}>I&apos;m done → debrief</button>}
-            {(phase === "debrief" || (!agent.connected && phase === "task" && seenEvents.length > 0)) && (
-              // Also offered without a live agent (e.g. voice credits ran out): events alone still build a map.
-              <button className="btn-pri h-9 text-[14px]" onClick={buildMap}>Build Work Map</button>
-            )}
-          </div>
-          {buildError && (
-            <div className="border-l-4 border-warn bg-warn-soft px-3 py-2 text-[13px]">
-              <b>Couldn&apos;t build the Work Map.</b> {buildError}
-              <div className="mt-2 flex gap-2">
-                <button className="btn h-8 bg-white text-[13px]" onClick={buildMap}>Try again</button>
-                <button className="btn-pri h-8 text-[13px]" onClick={loadPreparedMap}>Use prepared Work Map</button>
-              </div>
-            </div>
-          )}
-          {agent.error && <p className="rounded-sm border-l-4 border-err bg-err-soft px-3 py-2 text-[13px] text-[#8E1B1B]">{agent.error}</p>}
+          <ol className="max-h-28 min-h-0 space-y-1 overflow-y-auto rounded-sm border border-line bg-white p-2 text-[12.5px]">
+            {agent.transcript.length === 0 && <li className="text-muted">No conversation yet.</li>}
+            {agent.transcript.map((t, i) => (
+              <li key={i}>
+                <b className={t.speaker === "agent" ? "text-indigo" : ""}>{t.speaker === "agent" ? "Apprentice" : "Paul"}:</b> {t.text}
+              </li>
+            ))}
+          </ol>
+          <EventLog />
         </div>
-      </section>
-
-      <section className="card flex min-h-0 flex-1 flex-col">
-        <div className="section-title rounded-t-sm border-t-0">Transcript</div>
-        <ol className="min-h-0 flex-1 space-y-2 overflow-y-auto p-3 text-[14px]">
-          {agent.transcript.length === 0 && <li className="text-muted">The conversation will appear here.</li>}
-          {agent.transcript.map((t, i) => (
-            <li key={i} className="leading-snug">
-              <span className="mr-1.5 font-mono text-[11.5px] text-muted">{t.time}</span>
-              <b className={t.speaker === "agent" ? "text-brand" : "text-ink"}>{t.speaker === "agent" ? "Apprentice" : "Sabine"}:</b> {t.text}
-            </li>
-          ))}
-        </ol>
-      </section>
-
-      <EventLog />
-    </div>
-  );
-}
-
-function Stat({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="rounded-sm border border-line bg-panel px-3 py-2">
-      <div className="text-[11.5px] uppercase tracking-wide text-muted">{label}</div>
-      <div className="text-[15px] font-medium">{value}</div>
-    </div>
-  );
-}
-
-function Dot({ ui }: { ui: AgentUiState }) {
-  const live = ui === "listening" || ui === "asking";
-  return <span className={`inline-block h-2 w-2 rounded-full bg-current ${live ? "animate-pulse" : ""}`} />;
-}
-
-function MicIcon({ muted }: { muted: boolean }) {
-  return (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
-      <rect x="9" y="3" width="6" height="11" rx="3" />
-      <path d="M5 11a7 7 0 0 0 14 0M12 18v3" strokeLinecap="round" />
-      {muted && <path d="M4 4l16 16" strokeLinecap="round" />}
-    </svg>
+      )}
+    </Popup>
   );
 }

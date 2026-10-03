@@ -6,7 +6,7 @@ Times are `"mm:ss"` since the session started. Money is a plain number plus an I
 
 ## The work app: Ledgerline
 
-`public/ledgerline/index.html` is the team's fake expense tool, copied **unchanged** (read its header comment for the full API).
+`public/ledgerline/index.html` is the team's fake expense tool (read its header comment for the full API). Only its story data (CONFIG users, DOCS, seed) was changed to follow the demo script: Paul Adler (expert) and Lena Brandt (new hire); its storage key is `expense-demo-v2`.
 Our app embeds it in an iframe (`src/features/erp/LedgerlineFrame.tsx`, scaled to fit its 1180px minimum) and talks to it only through
 `src/lib/ledgerline.ts`:
 
@@ -17,8 +17,9 @@ Our app embeds it in an iframe (`src/features/erp/LedgerlineFrame.tsx`, scaled t
 | `sendCommand({cmd, ...})` | Posts `{target: 'expense-demo', cmd, ...}`: `save_decision`, `open_document`, `highlight`, `switch_user`, `reset`, `new_session`, ... |
 | `toScreenEvent(e)` | Ledgerline event → ScreenEvent; every event is published on the shared bus, `user_activity` goes to `markActivity()` for pause detection |
 
-URLs: `/ledgerline/index.html?user=sabine` (Capture, /map) and `?user=lena&guard=1` (Teach: every Save waits for our `save_decision`).
+URLs: `/ledgerline/index.html?user=paul` (Capture, /map) and `?user=lena&guard=1` (Teach: every Save waits for our `save_decision`).
 Hidden demo controls inside Ledgerline: Alt+Shift+D (reset data, switch user, test a blocked save).
+The Apprentice is injected into Ledgerline's top bar (indigo button) and opens as floating popups (`src/features/apprentice/`).
 
 ### ExpenseSnapshot
 
@@ -83,8 +84,8 @@ All events go through the bus in `src/lib/events.ts`:
 { ok: boolean, applicable: RuleKey[], violations: { key, stepId, rule, explanation, fields }[] }
 ```
 
-Returned by `checkGuardrails(expense, workMap)`. Teach sends it back as `save_decision`: `allow: false` blocks the Save, shows the message in Sabine's words and highlights `fields`.
-`RuleKey`: `type_of_meal` | `small_meals` | `tax_invoice` | `company_address`.
+Returned by `checkGuardrails(expense, workMap)`. Teach sends it back as `save_decision`: `allow: false` blocks the Save, shows the message in Paul's words and highlights `fields`.
+`RuleKey`: `approval` (over 30 per person needs the supervisor's approval) | `delivery_docs` (delivery orders need receipt + invoice).
 
 ## Voice agent surface (`src/features/capture/agent.ts`)
 
@@ -93,6 +94,6 @@ Returned by `checkGuardrails(expense, workMap)`. Teach sends it back as `save_de
 
 ## Fake data (`src/data/`)
 
-- `fakeSession.ts`: `fakeEvents` + `fakeTranscript` of Sabine filing four team meals.
-- `sampleWorkMap.ts`: 7 steps, 4 judgment calls, 4 guardrails (Eat In vs Take Away, €30 per person, order confirmation is not an invoice, over €250 needs the company address).
+- `fakeSession.ts`: `fakeEvents` + `fakeTranscript` of Paul's session from the demo script.
+- `sampleWorkMap.ts`: Paul's map, 6 steps, 3 judgment calls, 3 guardrails (approval over 30 per person, what the approval must show, delivery orders need the invoice).
 - `invoices.ts`: legacy data for the old invoice mock ERP (`src/features/erp/MockErp.tsx`), no longer used.

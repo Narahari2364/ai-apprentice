@@ -1,11 +1,10 @@
 // Teach-mode Save guard for Ledgerline meal expenses. Returns ok: false to block.
-// Rules mirror Sabine's guardrails; explanations quote her from the Work Map.
-// `fields` are Ledgerline data-field names the mock highlights (type_of_meal, guests, attachments).
+// Paul's two rules from the demo script; explanations quote him from the Work Map.
+// `fields` are Ledgerline data-field names the mock highlights (guests, attachments).
 
 import type { DocFacts, ExpenseSnapshot, GuardrailResult, RuleKey, WorkMap, WorkMapStep } from "@/lib/types";
 
-const SMALL_MEALS_LIMIT = 30; // € per person without PL approval
-const COMPANY_ADDRESS_LIMIT = 250; // € — above this the invoice must name the company
+const APPROVAL_LIMIT = 30; // per person; above it the supervisor's written approval must be attached
 
 function findStep(map: WorkMap, pattern: RegExp): WorkMapStep | undefined {
   return (
@@ -15,73 +14,43 @@ function findStep(map: WorkMap, pattern: RegExp): WorkMapStep | undefined {
 }
 
 function quote(step: WorkMapStep | undefined, fallback: string) {
-  return `Sabine said: “${step?.expertQuote || fallback}”`;
+  return `Paul said: “${step?.expertQuote || fallback}”`;
 }
 
 export function checkGuardrails(exp: ExpenseSnapshot, workMap: WorkMap): GuardrailResult {
   const violations: GuardrailResult["violations"] = [];
-  const applicable: RuleKey[] = ["small_meals"];
+  const applicable: RuleKey[] = ["approval"];
   const docs = exp.attachments.map((a) => a.facts).filter(Boolean) as DocFacts[];
-  const receipts = docs.filter((d) => d.kind === "invoice" || d.kind === "order_confirmation");
   const hasApproval = docs.some((d) => d.kind === "approval_email");
 
-  // 1. Type of meal comes from the receipt, not habit.
-  const receipt = receipts[0];
-  if (receipt && exp.type_of_meal) {
-    const expected =
-      receipt.kind === "order_confirmation" || receipt.platform || receipt.consumption === "außer Haus"
-        ? "Take Away"
-        : receipt.consumption === "im Haus"
-          ? "Eat In"
-          : null;
-    if (expected) applicable.push("type_of_meal");
-    if (expected && exp.type_of_meal !== expected) {
-      const step = findStep(workMap, /type of meal|eat in|take away/i);
+  // 1. Delivery apps: the receipt is not tax-compliant on its own; attach the downloaded invoice too.
+  const isDelivery = docs.some((d) => d.kind === "order_confirmation" || (d.kind === "invoice" && d.issued_by));
+  if (isDelivery) {
+    applicable.push("delivery_docs");
+    const hasReceipt = docs.some((d) => d.kind === "order_confirmation");
+    const hasInvoice = docs.some((d) => d.kind === "invoice" && d.is_tax_invoice);
+    if (!hasReceipt || !hasInvoice) {
+      const step = findStep(workMap, /delivery|invoice|both/i);
       violations.push({
-        key: "type_of_meal",
+        key: "delivery_docs",
         stepId: step?.id ?? "s4",
-        rule: `Type of Meal should be ${expected}: the receipt says ${receipt.consumption ? `"Verzehr: ${receipt.consumption}"` : "it was delivered"}.`,
-        explanation: quote(step, "Look at the receipt. Im Haus means Eat In, and that changes the VAT."),
-        fields: ["type_of_meal"],
+        rule: hasInvoice
+          ? "Delivery order: attach the app receipt as well as the invoice."
+          : "Delivery order: the receipt alone isn't tax-compliant. Download the invoice from the app and attach it too.",
+        explanation: quote(step, "The receipt just shows what I paid. The invoice has the VAT breakdown finance needs, and I have to download it separately. So for delivery I always upload both."),
+        fields: ["attachments"],
       });
     }
   }
 
-  // 2. An order confirmation is not a tax invoice.
-  if (receipts.length) applicable.push("tax_invoice");
-  if (receipts.length && !receipts.some((d) => d.is_tax_invoice)) {
-    const step = findStep(workMap, /order confirmation|tax invoice|delivery/i);
+  // 2. Over 30 per person: proof that the supervisor signed off.
+  if ((exp.amount_per_person ?? 0) > APPROVAL_LIMIT && !hasApproval) {
+    const step = findStep(workMap, /approval|per person|30/i);
     violations.push({
-      key: "tax_invoice",
-        stepId: step?.id ?? "s6",
-      rule: "Only an order confirmation is attached. It is not a tax invoice.",
-      explanation: quote(step, "The Bitebox confirmation is not an invoice. Download the real invoice first."),
-      fields: ["attachments"],
-    });
-  }
-
-  // 3. Small-meals limit: over €30 per person needs the PL's approval email attached.
-  if ((exp.amount_per_person ?? 0) > SMALL_MEALS_LIMIT && !hasApproval) {
-    const step = findStep(workMap, /per person|€30|approval/i);
-    violations.push({
-      key: "small_meals",
-        stepId: step?.id ?? "s5",
-      rule: `€${exp.amount_per_person?.toFixed(2)} per person is over the €${SMALL_MEALS_LIMIT} small-meals limit and no PL approval is attached.`,
-      explanation: quote(step, "Over thirty euros a head, I attach Jonas's approval. No approval, I stop and ask him."),
-      fields: ["guests", "attachments"],
-    });
-  }
-
-  // 4. Over €250 the invoice must be addressed to the company.
-  if (receipts.some((d) => (d.total_paid ?? 0) > COMPANY_ADDRESS_LIMIT)) applicable.push("company_address");
-  const big = receipts.find((d) => d.kind === "invoice" && (d.total_paid ?? 0) > COMPANY_ADDRESS_LIMIT && !d.addressed_to);
-  if (big) {
-    const step = findStep(workMap, /€250|addressed|corrected invoice/i);
-    violations.push({
-      key: "company_address",
-        stepId: step?.id ?? "s7",
-      rule: `The invoice is over €${COMPANY_ADDRESS_LIMIT} but not addressed to Nordhaven Consulting GmbH.`,
-      explanation: quote(step, "Above 250 euros the invoice needs our company address, so I ask the restaurant for a corrected one."),
+      key: "approval",
+      stepId: step?.id ?? "s3",
+      rule: `${exp.amount_per_person?.toFixed(2)} per person is over ${APPROVAL_LIMIT}, and no supervisor approval is attached.`,
+      explanation: quote(step, "Over 30 a person, I need proof my supervisor actually signed off. A screenshot of an email or a chat works, as long as it shows the date, the amount and who was there."),
       fields: ["attachments"],
     });
   }

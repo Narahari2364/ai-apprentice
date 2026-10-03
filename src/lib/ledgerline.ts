@@ -27,7 +27,7 @@ export type LedgerCommand =
   | { cmd: "save_decision"; request_id: string; allow: boolean; title?: string; message?: string; fields?: string[]; note?: string }
   | { cmd: "highlight"; fields: string[]; message?: string }
   | { cmd: "clear_highlight" }
-  | { cmd: "switch_user"; user: "sabine" | "lena" }
+  | { cmd: "switch_user"; user: "paul" | "lena" }
   | { cmd: "open_document"; doc_id: string }
   | { cmd: "reset" }
   | { cmd: "new_session" }
@@ -68,38 +68,60 @@ export function attachLedgerline(iframe: HTMLIFrameElement): () => void {
   };
 }
 
-// ---------- Ledgerline's own main menu, shown in our top bar ----------
+// ---------- Embedding: styles and the Apprentice button inside Ledgerline ----------
 
-export const LEDGERLINE_MENU: { label: string; action: string; data?: Record<string, string> }[] = [
-  { label: "Home", action: "home" },
-  { label: "Expense Reports", action: "list", data: { filter: "" } },
-  { label: "Drafts", action: "list", data: { filter: "draft" } },
-  { label: "Submitted", action: "list", data: { filter: "submitted" } },
-  { label: "Receipt Gallery", action: "gallery", data: { ctx: "view" } },
-];
+export type EmbedMode = "capture" | "teach" | "view";
 
-/** Run one of Ledgerline's own data-action handlers (same-origin, file stays unchanged). */
-export function ledgerlineAction(action: string, data: Record<string, string> = {}) {
-  const doc = frame?.contentDocument;
-  if (!doc?.body) return;
-  const btn = doc.createElement("button");
-  btn.hidden = true;
-  btn.dataset.action = action;
-  Object.assign(btn.dataset, data);
-  doc.body.appendChild(btn);
-  btn.click();
-  btn.remove();
-}
+const INDIGO = "#5146d9";
 
-// Ledgerline's chrome we hide inside the embed: its own header (logo, menu, help,
-// user) and the company notices panel on its home screen. Injected, not edited.
-export const EMBED_CSS = `
-.top{display:none!important}
-.main{height:100vh!important}
+/** CSS injected into Ledgerline (the file itself stays unchanged). */
+export function embedCss(mode: EmbedMode): string {
+  return `
 .main:has(> .right .notices){grid-template-columns:minmax(0,1fr)!important}
 .main:has(> .right .notices) > .right{display:none!important}
-.drawer{padding-top:0!important}
+.appr-btn{height:42px;display:flex;align-items:center;gap:8px;padding:0 14px;border:1px solid ${INDIGO};background:#f1f0ff;color:${INDIGO};font-size:15px;border-radius:2px}
+.appr-btn:hover{background:#e6e3ff}
+.appr-btn.on{background:${INDIGO};color:#fff}
+${mode === "view" ? ".top{display:none!important}.main{height:100vh!important}" : ""}
+${mode === "capture" ? `.hl{outline:3px solid ${INDIGO}!important;outline-offset:-3px;background:#f5f3ff!important;animation:none!important}.hlnote{border-color:${INDIGO}!important;background:#f5f3ff!important}` : ""}
 `;
+}
+
+const BUTTON_ICON = `<svg width="18" height="16" viewBox="0 0 18 16" aria-hidden="true"><path d="M1.5 1.5h15v10H6L1.5 15z" fill="currentColor"/><path d="M5 5h8M5 8h5" stroke="#f1f0ff" stroke-width="1.4"/></svg>`;
+
+/** Put an "Apprentice" button into Ledgerline's top bar; re-adds it when Ledgerline re-renders. */
+export function injectApprenticeButton(doc: Document, onClick: () => void): (on: boolean) => void {
+  let on = false;
+  const place = () => {
+    const right = doc.querySelector(".top-right");
+    if (!right || right.querySelector(".appr-btn")) return;
+    const btn = doc.createElement("button");
+    btn.className = "appr-btn" + (on ? " on" : "");
+    btn.setAttribute("aria-label", "Apprentice");
+    btn.innerHTML = `${BUTTON_ICON}<span>Apprentice</span>`;
+    btn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      onClick();
+    });
+    right.prepend(btn);
+  };
+  place();
+  const top = doc.getElementById("top");
+  if (top) new MutationObserver(place).observe(top, { childList: true });
+  return (next: boolean) => {
+    on = next;
+    doc.querySelector(".appr-btn")?.classList.toggle("on", next);
+  };
+}
+
+/** Which Ledgerline field (data-field) an event is about, for the indigo highlight. */
+export function fieldFor(e: ScreenEvent): string | null {
+  if (e.type.startsWith("attachment_")) return "attachments";
+  if (e.type.startsWith("guest_") || e.type === "allocation_changed") return "guests";
+  if (e.type === "project_selected") return "project";
+  if (e.type === "field_changed" && e.field) return e.field;
+  return null;
+}
 
 // ---------- Ledgerline event → ScreenEvent ----------
 

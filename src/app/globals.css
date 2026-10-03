@@ -1,6 +1,7 @@
 @import "tailwindcss";
 
-/* Enterprise look matching Ledgerline: white, Roboto, blue #2F74D0, grey panels, thin borders, 3px radius. */
+/* Enterprise look matching Ledgerline: white, Roboto, blue #2F74D0, grey panels, thin borders, 3px radius.
+   Indigo marks the Apprentice itself, so it never looks like part of Ledgerline. */
 @theme inline {
   --font-sans: var(--font-roboto), "Segoe UI", Helvetica, Arial, sans-serif;
   --color-brand: #2f74d0;
@@ -17,6 +18,9 @@
   --color-warn-soft: #fff6db;
   --color-err: #c62828;
   --color-err-soft: #fdecec;
+  --color-indigo: #5146d9;
+  --color-indigo-dark: #3f35b8;
+  --color-indigo-soft: #f1f0ff;
   --radius-sm: 3px;
 }
 

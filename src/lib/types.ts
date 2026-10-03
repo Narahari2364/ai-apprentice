@@ -34,6 +34,7 @@ export interface DocFacts {
   tip?: number;
   is_tax_invoice?: boolean;
   addressed_to?: string | null;
+  issued_by?: string | null; // set when a platform (e.g. Bitebox) issues the invoice for the restaurant
   platform?: string;
   subject?: string;
 }
@@ -77,7 +78,7 @@ export interface WorkMap {
   confirmed: boolean; // expert confirmed the teach-back
 }
 
-export type RuleKey = "type_of_meal" | "small_meals" | "tax_invoice" | "company_address";
+export type RuleKey = "approval" | "delivery_docs";
 
 export interface GuardrailResult {
   ok: boolean;

@@ -8,25 +8,24 @@ import type { GuardrailResult, RuleKey, ScreenEvent } from "@/lib/types";
 export type RuleStatus = "untested" | "respected" | "broken" | "fixed";
 
 export const RULE_LABEL: Record<RuleKey, string> = {
-  type_of_meal: "Type of Meal taken from the receipt",
-  small_meals: "€30 per person, or PL approval attached",
-  tax_invoice: "Tax invoice attached, not an order confirmation",
-  company_address: "Over €250: invoice addressed to the company",
+  delivery_docs: "Delivery order: receipt and invoice attached",
+  approval: "Over 30 per person: supervisor approval attached",
 };
 
+const attached = (e: ScreenEvent, kind: string) => e.type === "attachment_added" && e.description.includes(`(${kind})`);
+
 const STEPS: { label: string; done: (e: ScreenEvent, seen: Set<string>) => boolean }[] = [
-  { label: "Create a report and a Meals / Drinks expense", done: (e) => e.type === "report_created" || e.type === "expense_form_opened" },
-  { label: "Open the receipt and read it", done: (e) => e.type === "document_opened" },
+  { label: "Open a Meals / Drinks expense", done: (e) => e.type === "expense_form_opened" },
+  { label: "Attach the receipt", done: (e) => attached(e, "order_confirmation") || attached(e, "invoice") },
   {
-    label: "Split meal, drinks and tip",
+    label: "Delivery order: attach the invoice too",
     done: (e, seen) => {
-      if (e.type === "field_changed" && ["meal_amount", "drink_amount", "tip_amount"].includes(e.field ?? "")) seen.add(e.field!);
-      return seen.size >= 2;
+      if (attached(e, "order_confirmation")) seen.add("receipt");
+      if (attached(e, "invoice")) seen.add("invoice");
+      return seen.has("receipt") && seen.has("invoice");
     },
   },
-  { label: "Set Type of Meal", done: (e) => e.type === "field_changed" && e.field === "type_of_meal" },
-  { label: "Add every participant as a guest", done: (e) => e.type === "guest_added" },
-  { label: "Attach the supporting documents", done: (e) => e.type === "attachment_added" },
+  { label: "Over 30 per person: attach the approval", done: (e) => attached(e, "approval_email") },
   { label: "Save without a guardrail block", done: (e) => e.type === "expense_saved" },
 ];
 
@@ -35,12 +34,7 @@ export interface TeachProgress {
   rules: Record<RuleKey, RuleStatus>;
 }
 
-const initialRules = (): Record<RuleKey, RuleStatus> => ({
-  type_of_meal: "untested",
-  small_meals: "untested",
-  tax_invoice: "untested",
-  company_address: "untested",
-});
+const initialRules = (): Record<RuleKey, RuleStatus> => ({ delivery_docs: "untested", approval: "untested" });
 
 export function useTeachProgress() {
   const [steps, setSteps] = useState(() => STEPS.map((s) => ({ label: s.label, done: false })));
@@ -84,7 +78,9 @@ export function masteryReport(p: TeachProgress) {
     ...p.steps.filter((s) => s.done).map((s) => s.label),
   ];
   const practise = [
-    ...keys.filter((k) => p.rules[k] === "broken" || p.rules[k] === "fixed").map((k) => `${RULE_LABEL[k]}${p.rules[k] === "fixed" ? " (fixed after the tutor stepped in)" : ""}`),
+    ...keys
+      .filter((k) => p.rules[k] === "broken" || p.rules[k] === "fixed")
+      .map((k) => `${RULE_LABEL[k]}${p.rules[k] === "fixed" ? ": caught by the tutor, practise spotting it yourself" : ""}`),
     ...p.steps.filter((s) => !s.done).map((s) => s.label),
   ];
   const untested = keys.filter((k) => p.rules[k] === "untested").map((k) => RULE_LABEL[k]);

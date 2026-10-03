@@ -412,11 +412,11 @@ const CONFIG = {
   vat: {reduced: 7, standard: 19},
   guardTimeoutMs: 20000,
   users: {
-    sabine: {id: 'sabine', name: 'Sabine Keller', title: 'CONS', role: 'expert', office: 'BERLIN', lastLogin: '09/30/2026 at 6:12 PM'},
+    paul: {id: 'paul', name: 'Paul Adler', title: 'CONS', role: 'expert', office: 'BERLIN', lastLogin: '09/30/2026 at 6:12 PM'},
     lena: {id: 'lena', name: 'Lena Brandt', title: 'ASC', role: 'new_hire', office: 'BERLIN', lastLogin: '10/02/2026 at 9:03 AM'},
   },
   colleagues: [
-    {name: 'Sabine Keller', title: 'CONS'}, {name: 'Lena Brandt', title: 'ASC'},
+    {name: 'Paul Adler', title: 'CONS'}, {name: 'Lena Brandt', title: 'ASC'},
     {name: 'Jonas Weber', title: 'PL'}, {name: 'Ana Souza', title: 'PL'},
     {name: 'Mira Okafor', title: 'ASC'}, {name: 'Tobias Lindqvist', title: 'CONS'},
     {name: 'Felix Krämer', title: 'CONS'}, {name: 'Clara Nguyen', title: 'CONS'},
@@ -532,77 +532,48 @@ function approval(id, pl, to, date, time, subject, lines, file) {
     messages: [{...pl, to, date, time, body: lines}]});
 }
 
-// Expert session (Sabine)
-doc({id: 'r1-inv', kind: 'invoice', style: 'thermal', file: 'Receipt – Trattoria da Lupo.jpg', date: '2026-09-29', time: '13:42',
+// Expert session (Paul) — follows the team's demo script:
+// $25 restaurant lunch (receipt only), $40 restaurant dinner (+ supervisor approval screenshot),
+// delivery order via Bitebox (stand-in for Uber Eats: receipt + separately downloaded tax invoice).
+doc({id: 'p1-inv', kind: 'invoice', style: 'thermal', file: 'Receipt – Trattoria da Lupo.jpg', date: '2026-09-29', time: '12:48',
   supplier: {name: 'Trattoria da Lupo', address: 'Bergmannstraße 21, 10961 Berlin', phone: '030 6912 4471', taxNo: '29/417/03821'},
-  number: '4471', table: 'Tisch 12', server: 'Marco', consumption: 'im Haus', payment: 'EC-Karte',
-  items: [[2, 'Pasta al limone', 14.50, 7], [1, 'Risotto ai funghi', 16.90, 7], [1, 'Insalata mista', 6.50, 7], [2, 'Acqua minerale 0,75l', 6.50, 19], [3, 'Espresso', 2.60, 19]], tip: 4.80});
-approval('r1-ok', PL_SAB, 'Sabine Keller', '2026-09-29', '15:06', 'RE: Approval – team lunch 29.09. at Trattoria da Lupo',
-  ['Hi Sabine,', 'approved – team lunch at Trattoria da Lupo on 09/29/2026, EUR 78.00 incl. tip.', 'Participants: Sabine Keller, Mira Okafor, Tobias Lindqvist.', 'Thanks,', 'Jonas'], 'Approval – lunch 29.09. (J. Weber).msg');
-
-doc({id: 'r2-conf', kind: 'order_confirmation', style: 'app', file: 'Bitebox order confirmation 48213.pdf', date: '2026-09-30', time: '22:41',
-  platform: 'Bitebox', orderNo: '48213', customer: 'Sabine', restaurant: 'Saigon Kitchen', restaurantAddress: 'Kantstraße 30, 10623 Berlin',
-  deliverTo: 'Nordhaven Consulting, Friedrichstraße 112, 10117 Berlin', card: 'Visa •••• 4417',
-  items: [[1, 'Pho Bo', 15.90], [1, 'Bun Cha', 14.50], [1, 'Com Ga', 13.90], [1, 'Curry Tofu', 16.90], [2, 'Frühlingsrollen', 5.50], [4, 'Hausgemachte Limonade', 3.90]],
-  fees: [['Delivery fee', 2.99], ['Service fee', 1.99]], tip: 5.00});
-doc({id: 'r2-inv', kind: 'invoice', style: 'a4', file: 'Bitebox invoice BBX-DE-2026-48213.pdf', date: '2026-09-30', issueDate: '2026-09-30',
-  brand: 'Bitebox', letterhead: {name: 'Bitebox Germany GmbH', lines: ['Kastanienallee 5', '10435 Berlin']},
-  onBehalf: {name: 'Saigon Kitchen', address: 'Kantstraße 30, 10623 Berlin', taxNo: '27/588/10342'},
-  customer: 'Sabine Keller', number: 'BBX-DE-2026-48213', payment: 'Visa',
-  items: [[1, 'Pho Bo', 15.90, 7], [1, 'Bun Cha', 14.50, 7], [1, 'Com Ga', 13.90, 7], [1, 'Curry Tofu', 16.90, 7], [2, 'Frühlingsrollen', 5.50, 7], [4, 'Hausgemachte Limonade', 3.90, 19], [1, 'Liefergebühr', 2.99, 19], [1, 'Servicegebühr', 1.99, 19], [1, 'Trinkgeld Kurier', 5.00, 0]],
-  footer: 'Bitebox Germany GmbH · Kastanienallee 5 · 10435 Berlin · Rechnung im Namen und für Rechnung des Restaurants'});
-approval('r2-ok', PL_SAB, 'Sabine Keller', '2026-09-30', '23:02', 'RE: Approval – team dinner delivery 30.09.',
-  ['Hi Sabine,', 'approved – dinner delivery from Saigon Kitchen via Bitebox on 09/30/2026, EUR 97.78 incl. courier tip.', 'Participants: Sabine Keller, Jonas Weber, Mira Okafor, Tobias Lindqvist.', 'Jonas'], 'Approval – dinner 30.09. (J. Weber).msg');
-
-doc({id: 'r3-inv', kind: 'invoice', style: 'thermal', file: 'Receipt – Brauhaus Kesselmann.jpg', date: '2026-10-01', time: '22:17',
+  number: '4471', table: 'Tisch 5', server: 'Marco', consumption: 'im Haus', payment: 'EC-Karte',
+  items: [[1, 'Pasta al limone', 14.50, 7], [1, 'Insalata mista', 6.50, 7], [1, 'Acqua minerale 0,5l', 2.20, 19]], tip: 1.80});
+doc({id: 'p2-inv', kind: 'invoice', style: 'thermal', file: 'Receipt – Brauhaus Kesselmann.jpg', date: '2026-09-30', time: '20:52',
   supplier: {name: 'Brauhaus Kesselmann', address: 'Rosenthaler Straße 40, 10178 Berlin', phone: '030 2809 5531', taxNo: '30/226/71904'},
   number: '20871', table: 'Tisch 7', server: 'Jana', consumption: 'im Haus', payment: 'Kreditkarte',
-  items: [[1, 'Schweinshaxe', 21.50, 7], [1, 'Wiener Schnitzel', 22.90, 7], [1, 'Käsespätzle', 17.90, 7], [1, 'Rinderroulade', 19.50, 7], [1, 'Bratwurst-Teller', 18.90, 7], [6, 'Pils 0,4l', 4.60, 19], [3, 'Apfelschorle 0,4l', 3.80, 19]], tip: 14.30});
+  items: [[1, 'Wiener Schnitzel', 22.90, 7], [1, 'Apfelstrudel', 6.50, 7], [2, 'Pils 0,4l', 4.60, 19]], tip: 1.40});
+approval('p2-ok', PL_SAB, 'Paul Adler', '2026-09-30', '19:40', 'RE: Dinner tonight – OK?',
+  ['Hi Paul,', 'approved – your dinner at Brauhaus Kesselmann on 09/30/2026, EUR 40.00 incl. tip. Participants: Paul Adler (late client work).', 'Jonas'],
+  'Screenshot – approval J. Weber (dinner 30.09.).png');
+doc({id: 'p3-conf', kind: 'order_confirmation', style: 'app', file: 'Bitebox receipt 48213.pdf', date: '2026-10-01', time: '21:10',
+  platform: 'Bitebox', orderNo: '48213', customer: 'Paul', restaurant: 'Saigon Kitchen', restaurantAddress: 'Kantstraße 30, 10623 Berlin',
+  deliverTo: 'Nordhaven Consulting, Friedrichstraße 112, 10117 Berlin', card: 'Visa •••• 4417',
+  items: [[1, 'Pho Bo', 15.90], [1, 'Hausgemachte Limonade', 3.90]],
+  fees: [['Delivery fee', 2.99], ['Service fee', 1.99]], tip: 2.00});
+doc({id: 'p3-inv', kind: 'invoice', style: 'a4', file: 'Bitebox invoice BBX-DE-2026-48213.pdf', date: '2026-10-01', issueDate: '2026-10-01',
+  brand: 'Bitebox', letterhead: {name: 'Bitebox Germany GmbH', lines: ['Kastanienallee 5', '10435 Berlin']},
+  onBehalf: {name: 'Saigon Kitchen', address: 'Kantstraße 30, 10623 Berlin', taxNo: '27/588/10342'},
+  customer: 'Paul Adler', number: 'BBX-DE-2026-48213', payment: 'Visa',
+  items: [[1, 'Pho Bo', 15.90, 7], [1, 'Hausgemachte Limonade', 3.90, 19], [1, 'Liefergebühr', 2.99, 19], [1, 'Servicegebühr', 1.99, 19], [1, 'Trinkgeld Kurier', 2.00, 0]],
+  footer: 'Bitebox Germany GmbH · Kastanienallee 5 · 10435 Berlin · Rechnung im Namen und für Rechnung des Restaurants'});
 
-doc({id: 'r4-inv', kind: 'invoice', style: 'a4', file: 'Restaurant Kranich – Rechnung 2026-0912.pdf', date: '2026-09-23', issueDate: '2026-09-23',
-  letterhead: {name: 'Restaurant Kranich', lines: ['Paul-Lincke-Ufer 8', '10999 Berlin', 'Tel. 030 6107 2290', 'St.-Nr. 16/349/58210']},
-  number: '2026-0912', intro: 'Bewirtung von 9 Personen am 23.09.2026', payment: 'Kreditkarte',
-  items: [[9, 'Herbstmenü (3 Gänge)', 19.90, 7], [2, 'Riesling trocken 0,75l', 27.00, 19], [4, 'Mineralwasser 0,75l', 5.50, 19]], tip: 12.90,
-  footer: 'Restaurant Kranich · Paul-Lincke-Ufer 8 · 10999 Berlin · Vielen Dank für Ihren Besuch'});
-approval('r4-ok', PL_SAB, 'Sabine Keller', '2026-09-23', '17:45', 'RE: Approval – workshop dinner 23.09. Restaurant Kranich',
-  ['Hi Sabine,', 'approved – workshop dinner at Restaurant Kranich on 09/23/2026, EUR 268.00 incl. tip, 9 participants (attendee list attached to your request).', 'Jonas'], 'Approval – dinner 23.09. (J. Weber).msg');
-doc({id: 'r4-corr', kind: 'correction_email', style: 'mail', file: 'Correction request – Restaurant Kranich.msg', date: '2026-09-28',
-  subject: 'Bitte um Rechnungskorrektur – Rechnung Nr. 2026-0912',
-  messages: [
-    {from: 'Sabine Keller', email: 'sabine.keller@nordhaven.example', to: 'info@restaurant-kranich.example', date: '2026-09-24', time: '09:12',
-      body: ['Sehr geehrte Damen und Herren,', 'für unsere Bewirtung am 23.09.2026 (Rechnung Nr. 2026-0912, 255,10 €) benötigen wir eine Rechnung, die auf unser Unternehmen ausgestellt ist:', 'Nordhaven Consulting GmbH, Friedrichstraße 112, 10117 Berlin', 'Könnten Sie uns bitte eine korrigierte Rechnung senden? Vielen Dank!', 'Sabine Keller']},
-    {from: 'Restaurant Kranich', email: 'info@restaurant-kranich.example', to: 'Sabine Keller', date: '2026-09-28', time: '16:40',
-      body: ['Liebe Frau Keller,', 'anbei die korrigierte Rechnung.', 'Herzliche Grüße', 'Ihr Team vom Restaurant Kranich'], attach: 'Rechnung_2026-0912-K.pdf'},
-  ]});
-doc({id: 'r4-inv2', kind: 'invoice', style: 'a4', file: 'Restaurant Kranich – Rechnung 2026-0912-K (korrigiert).pdf', date: '2026-09-23', issueDate: '2026-09-28',
-  letterhead: {name: 'Restaurant Kranich', lines: ['Paul-Lincke-Ufer 8', '10999 Berlin', 'Tel. 030 6107 2290', 'St.-Nr. 16/349/58210']},
-  recipient: {name: CONFIG.legalEntity.name, address: CONFIG.legalEntity.address},
-  number: '2026-0912-K', correctionOf: '2026-0912 vom 23.09.2026', intro: 'Bewirtung von 9 Personen am 23.09.2026', payment: 'Kreditkarte',
-  items: [[9, 'Herbstmenü (3 Gänge)', 19.90, 7], [2, 'Riesling trocken 0,75l', 27.00, 19], [4, 'Mineralwasser 0,75l', 5.50, 19]], tip: 12.90,
-  footer: 'Restaurant Kranich · Paul-Lincke-Ufer 8 · 10999 Berlin · Vielen Dank für Ihren Besuch'});
-
-// New-hire session (Lena)
-doc({id: 'n1-inv', kind: 'invoice', style: 'thermal', file: 'Receipt – Café Nordlicht.jpg', date: '2026-10-01', time: '12:51',
-  supplier: {name: 'Café Nordlicht', address: 'Torstraße 133, 10119 Berlin', phone: '030 4405 1187', taxNo: '31/502/66417'},
-  number: '7712', table: 'Tisch 4', server: 'Ole', consumption: 'im Haus', payment: 'EC-Karte',
-  items: [[3, 'Quiche Lorraine', 9.80, 7], [1, 'Zimtschnecke', 4.50, 7], [3, 'Cappuccino', 3.90, 19]], tip: 2.40});
-approval('n1-ok', PL_LEN, 'Lena Brandt', '2026-10-01', '14:20', 'RE: Approval – lunch 01.10. Café Nordlicht',
-  ['Hi Lena,', 'approved – lunch at Café Nordlicht on 10/01/2026, EUR 48.00 incl. tip.', 'Participants: Lena Brandt, Elif Demir, Max Oberle.', 'Ana'], 'Approval – lunch 01.10. (A. Souza).msg');
-doc({id: 'n2-inv', kind: 'invoice', style: 'thermal', file: 'Receipt – Osteria Ponte Vecchio.jpg', date: '2026-09-30', time: '21:14',
-  supplier: {name: 'Osteria Ponte Vecchio', address: 'Spielhagenstraße 3, 10585 Berlin', phone: '030 3427 9010', taxNo: '27/615/40028'},
-  number: '3390', table: 'Tisch 2', server: 'Luca', consumption: 'im Haus', payment: 'Kreditkarte',
-  items: [[1, 'Tagliatelle al ragù', 19.90, 7], [1, 'Saltimbocca', 24.50, 7], [1, 'Branzino', 22.50, 7], [1, 'Gnocchi', 21.00, 7], [1, 'Montepulciano 0,75l', 32.00, 19], [2, 'Acqua frizzante 0,75l', 5.50, 19]], tip: 9.10});
-approval('n2-ok', PL_LEN, 'Lena Brandt', '2026-09-30', '22:05', 'RE: Approval – team dinner 30.09.',
-  ['Hi Lena,', 'approved – team dinner at Osteria Ponte Vecchio on 09/30/2026, EUR 140.00 incl. tip.', 'Participants: Lena Brandt, Elif Demir, Max Oberle, Ruben Hartmann.', 'Ana'], 'Approval – dinner 30.09. (A. Souza).msg');
-doc({id: 'n3-conf', kind: 'order_confirmation', style: 'app', file: 'Bitebox order confirmation 51907.pdf', date: '2026-10-02', time: '21:37',
+// New-hire session (Lena): a $35 delivery dinner the expert never showed → needs receipt + invoice + approval.
+doc({id: 'n1-conf', kind: 'order_confirmation', style: 'app', file: 'Bitebox receipt 51907.pdf', date: '2026-10-02', time: '21:37',
   platform: 'Bitebox', orderNo: '51907', customer: 'Lena', restaurant: 'Burger Werk', restaurantAddress: 'Simon-Dach-Straße 9, 10245 Berlin',
   deliverTo: 'Nordhaven Consulting, Friedrichstraße 112, 10117 Berlin', card: 'Mastercard •••• 2290',
-  items: [[1, 'Classic Cheeseburger', 13.90], [1, 'Veggie Burger', 12.90], [2, 'Süßkartoffel-Pommes', 4.50], [2, 'Cola 0,33l', 3.20]],
-  fees: [['Delivery fee', 2.49], ['Service fee', 1.49]], tip: 3.00});
-approval('n3-ok', PL_LEN, 'Lena Brandt', '2026-10-02', '21:50', 'RE: Approval – late dinner 02.10.',
-  ['Hi Lena,', 'approved – dinner delivery from Burger Werk via Bitebox on 10/02/2026, EUR 49.18 incl. courier tip.', 'Participants: Lena Brandt, Ruben Hartmann.', 'Ana'], 'Approval – dinner 02.10. (A. Souza).msg');
-
-// History documents for Sabine's returned September report
+  items: [[1, 'Classic Cheeseburger', 15.90], [1, 'Süßkartoffel-Pommes', 5.50], [1, 'Coleslaw', 6.90], [1, 'Cola 0,33l', 3.20]],
+  fees: [['Delivery fee', 1.99], ['Service fee', 0.51]], tip: 1.00});
+doc({id: 'n1-inv', kind: 'invoice', style: 'a4', file: 'Bitebox invoice BBX-DE-2026-51907.pdf', date: '2026-10-02', issueDate: '2026-10-02',
+  brand: 'Bitebox', letterhead: {name: 'Bitebox Germany GmbH', lines: ['Kastanienallee 5', '10435 Berlin']},
+  onBehalf: {name: 'Burger Werk', address: 'Simon-Dach-Straße 9, 10245 Berlin', taxNo: '29/771/40385'},
+  customer: 'Lena Brandt', number: 'BBX-DE-2026-51907', payment: 'Mastercard',
+  items: [[1, 'Classic Cheeseburger', 15.90, 7], [1, 'Süßkartoffel-Pommes', 5.50, 7], [1, 'Coleslaw', 6.90, 7], [1, 'Cola 0,33l', 3.20, 19], [1, 'Liefergebühr', 1.99, 19], [1, 'Servicegebühr', 0.51, 19], [1, 'Trinkgeld Kurier', 1.00, 0]],
+  footer: 'Bitebox Germany GmbH · Kastanienallee 5 · 10435 Berlin · Rechnung im Namen und für Rechnung des Restaurants'});
+approval('n1-ok', PL_LEN, 'Lena Brandt', '2026-10-02', '20:58', 'RE: Late dinner tonight – OK?',
+  ['Hi Lena,', 'approved – your dinner delivery from Burger Werk via Bitebox on 10/02/2026, EUR 35.00 incl. courier tip. Participants: Lena Brandt (deadline work).', 'Ana'],
+  'Screenshot – approval A. Souza (dinner 02.10.).png');
+// History documents for Paul's returned September report
 doc({id: 'h1-inv', kind: 'invoice', style: 'thermal', file: 'Receipt – Deli Hafenblick.jpg', date: '2026-09-14', time: '12:58',
   supplier: {name: 'Deli Hafenblick', address: 'Am Kupfergraben 4, 10117 Berlin', phone: '030 2061 3380', taxNo: '34/118/20563'},
   number: '1186', consumption: 'außer Haus', payment: 'EC-Karte',
@@ -611,8 +582,8 @@ doc({id: 'h2-inv', kind: 'invoice', style: 'thermal', file: 'Receipt – Ristora
   supplier: {name: 'Ristorante Sole', address: 'Oranienburger Straße 32, 10117 Berlin', phone: '030 2830 4419', taxNo: '30/731/22816'},
   number: '5530', table: 'Tisch 9', consumption: 'im Haus', payment: 'Kreditkarte',
   items: [[4, 'Menù del giorno', 42.50, 7]], tip: 4.98});
-approval('h2-ok', PL_SAB, 'Sabine Keller', '2026-09-15', '22:10', 'RE: Approval – dinner 15.09. Ristorante Sole',
-  ['Hi Sabine,', 'approved – dinner at Ristorante Sole on 09/15/2026, EUR 174.98 incl. tip.', 'Participants: Sabine Keller, Jonas Weber, Felix Krämer, Clara Nguyen.', 'Jonas'], 'Approval – dinner 15.09. (J. Weber).msg');
+approval('h2-ok', PL_SAB, 'Paul Adler', '2026-09-15', '22:10', 'RE: Approval – dinner 15.09. Ristorante Sole',
+  ['Hi Paul,', 'approved – dinner at Ristorante Sole on 09/15/2026, EUR 174.98 incl. tip.', 'Participants: Paul Adler, Jonas Weber, Felix Krämer, Clara Nguyen.', 'Jonas'], 'Approval – dinner 15.09. (J. Weber).msg');
 doc({id: 'h3-inv', kind: 'invoice', style: 'thermal', file: 'Receipt – Soupkultur.jpg', date: '2026-09-17', time: '13:05',
   supplier: {name: 'Soupkultur', address: 'Kurfürstendamm 224, 10719 Berlin', phone: '030 8862 9273', taxNo: '24/409/33175'},
   number: '0921', consumption: 'außer Haus', payment: 'EC-Karte',
@@ -748,33 +719,36 @@ function guestFor(name, kind = 'internal', org) {
 function withGuests(e, names) { e.guests = names.map(n => guestFor(n)); recalcGuests(e); return e; }
 const proj = i => ({...CONFIG.projects[i], pct: 100});
 function seed() {
-  const sab = {reports: [], gallery: ['r1-inv', 'r1-ok', 'r2-conf', 'r2-inv', 'r2-ok', 'r3-inv', 'r4-inv', 'r4-ok', 'r4-corr', 'r4-inv2'], uploads: {}};
+  const sab = {reports: [], gallery: ['p1-inv', 'p2-inv', 'p2-ok', 'p3-conf', 'p3-inv'], uploads: {}};
   sab.reports.push({id: uid('rep'), number: '010053880417', name: 'Food – August', pay_in: 'EUR', office: 'BERLIN', status: 'submitted', created: '2026-08-28', expenses: [
     withGuests(mkExp({transaction_date: '2026-08-12', spent: 41.20, location: 'Germany', business_purpose: 'Case team lunch – workplan review', meal_amount: 33.80, drink_amount: 7.40,
-      restaurant_name: 'Kantine Spreeufer', restaurant_address: 'Holzmarktstraße 25, 10243 Berlin', type_of_meal: 'Take Away', projects: [proj(0)]}), ['Sabine Keller', 'Mira Okafor']),
+      restaurant_name: 'Kantine Spreeufer', restaurant_address: 'Holzmarktstraße 25, 10243 Berlin', type_of_meal: 'Take Away', projects: [proj(0)]}), ['Paul Adler', 'Mira Okafor']),
     withGuests(mkExp({transaction_date: '2026-08-19', spent: 88.50, location: 'Germany', business_purpose: 'Team dinner after client steering committee', meal_amount: 70.30, drink_amount: 14.20, tip_amount: 4.00,
-      restaurant_name: 'Lokal am Gleis', restaurant_address: 'Möckernstraße 26, 10963 Berlin', type_of_meal: 'Take Away', projects: [proj(0)]}), ['Sabine Keller', 'Tobias Lindqvist', 'Mira Okafor']),
+      restaurant_name: 'Lokal am Gleis', restaurant_address: 'Möckernstraße 26, 10963 Berlin', type_of_meal: 'Take Away', projects: [proj(0)]}), ['Paul Adler', 'Tobias Lindqvist', 'Mira Okafor']),
   ]});
   sab.reports.push({id: uid('rep'), number: '010054913286', name: 'Food – September', pay_in: 'EUR', office: 'BERLIN', status: 'returned', created: '2026-09-18', expenses: [
     withGuests(mkExp({transaction_date: '2026-09-14', spent: 63.65, location: 'Germany', business_purpose: 'Case team lunch – interview synthesis', meal_amount: 54.75, drink_amount: 8.90,
-      restaurant_name: 'Deli Hafenblick', restaurant_address: 'Am Kupfergraben 4, 10117 Berlin', type_of_meal: 'Take Away', projects: [proj(0)], attachments: ['h1-inv']}), ['Sabine Keller', 'Mira Okafor', 'Tobias Lindqvist']),
+      restaurant_name: 'Deli Hafenblick', restaurant_address: 'Am Kupfergraben 4, 10117 Berlin', type_of_meal: 'Take Away', projects: [proj(0)], attachments: ['h1-inv']}), ['Paul Adler', 'Mira Okafor', 'Tobias Lindqvist']),
     withGuests(mkExp({transaction_date: '2026-09-15', spent: 174.98, location: 'Germany', business_purpose: 'Dinner after diagnostic readout', meal_amount: 170.00, tip_amount: 4.98,
       restaurant_name: 'Ristorante Sole', restaurant_address: 'Oranienburger Straße 32, 10117 Berlin', type_of_meal: 'Take Away', projects: [proj(0)], attachments: ['h2-inv', 'h2-ok'], returned: true,
       comments: [{by: 'Global Audit', at: '2026-09-22T07:59:00', text: 'Please submit this via your PL. The small-meals rule only covers up to EUR 30.00 per person for associates and consultants. Thanks!'}]}),
-    ['Sabine Keller', 'Jonas Weber', 'Felix Krämer', 'Clara Nguyen']),
+    ['Paul Adler', 'Jonas Weber', 'Felix Krämer', 'Clara Nguyen']),
     withGuests(mkExp({transaction_date: '2026-09-17', spent: 54.20, location: 'Germany', business_purpose: 'Working lunch – model review', meal_amount: 46.80, drink_amount: 7.40,
-      restaurant_name: 'Soupkultur', restaurant_address: 'Kurfürstendamm 224, 10719 Berlin', type_of_meal: 'Take Away', projects: [proj(0)], attachments: ['h3-inv']}), ['Sabine Keller', 'Mira Okafor']),
+      restaurant_name: 'Soupkultur', restaurant_address: 'Kurfürstendamm 224, 10719 Berlin', type_of_meal: 'Take Away', projects: [proj(0)], attachments: ['h3-inv']}), ['Paul Adler', 'Mira Okafor']),
   ]});
-  const len = {reports: [], gallery: ['n1-inv', 'n1-ok', 'n2-inv', 'n2-ok', 'n3-conf', 'n3-ok'], uploads: {}};
+  const len = {reports: [], gallery: ['n1-conf', 'n1-inv', 'n1-ok'], uploads: {}};
   len.reports.push({id: uid('rep'), number: '010055120764', name: 'Onboarding week', pay_in: 'EUR', office: 'BERLIN', status: 'submitted', created: '2026-09-29', expenses: [
     withGuests(mkExp({transaction_date: '2026-09-28', spent: 18.40, location: 'Germany', business_purpose: 'Lunch on first day (onboarding)', meal_amount: 15.90, drink_amount: 2.50,
       restaurant_name: 'Mittagsküche Mitte', restaurant_address: 'Linienstraße 40, 10119 Berlin', type_of_meal: 'Take Away', projects: [proj(4)]}), ['Lena Brandt']),
   ]});
-  return {version: 1, userId: 'sabine', users: {sabine: sab, lena: len}};
+  // Empty October drafts so the demo starts right at "Add Expense".
+  sab.reports.push({id: uid('rep'), number: '010055231908', name: 'Food – October', pay_in: 'EUR', office: 'BERLIN', status: 'draft', created: '2026-10-01', expenses: []});
+  len.reports.push({id: uid('rep'), number: '010055231946', name: 'Food – October', pay_in: 'EUR', office: 'BERLIN', status: 'draft', created: '2026-10-02', expenses: []});
+  return {version: 1, userId: 'paul', users: {paul: sab, lena: len}};
 }
 
 /* ---------- state ---------- */
-const STORE_KEY = 'expense-demo-v1';
+const STORE_KEY = 'expense-demo-v2'; // v2: Paul story (demo script)
 const params = new URLSearchParams(location.search);
 let S = null;
 function loadState() {

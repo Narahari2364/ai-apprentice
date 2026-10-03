@@ -43,7 +43,7 @@ export default function MapPage() {
             <button
               className="btn ml-auto h-8 text-[13px]"
               onClick={() => downloadText("work-map-agent.md", toAgentMarkdown(map))}
-              title="Instructions an AI agent can load: same steps, stops where Sabine would"
+              title="Instructions an AI agent can load: same steps, stops where Paul would"
             >
               Export for agents
             </button>
@@ -79,7 +79,8 @@ export default function MapPage() {
           </div>
           <div className="min-h-0 flex-1">
             <LedgerlineFrame
-              query="user=sabine"
+              query="user=paul"
+              mode="view"
               onReady={() => {
                 ready.current = true;
                 if (selected.docId) sendCommand({ cmd: "open_document", doc_id: selected.docId });

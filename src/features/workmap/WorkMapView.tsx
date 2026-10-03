@@ -21,7 +21,7 @@ export default function WorkMapView({ map, selectedId, onSelect }: Props) {
           <div className="min-w-0 flex-1">
             <h1 className="text-[23px] font-normal leading-tight">{map.task}</h1>
             <p className="mt-1 text-[14px] text-[#444]">
-              {map.confirmed ? "Confirmed by Sabine after the teach-back" : "Awaiting Sabine's confirmation of the teach-back"}
+              {map.confirmed ? "Confirmed by Paul after the teach-back" : "Awaiting Paul's confirmation of the teach-back"}
             </p>
           </div>
           <Stat n={map.steps.length} label="Steps" />
@@ -54,7 +54,7 @@ export default function WorkMapView({ map, selectedId, onSelect }: Props) {
                     </Row>
                     {step.decision && <Row label="Decision">{step.decision}</Row>}
                     <Row label="Reason">{step.reason}</Row>
-                    <Row label="Sabine said">
+                    <Row label="Paul said">
                       <i>“{step.expertQuote}”</i>
                     </Row>
                     {step.guardrails.length > 0 && (
