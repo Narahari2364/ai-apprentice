@@ -1,4 +1,5 @@
 // localStorage persistence for the captured session and the generated Work Map.
+import { sampleWorkMap } from "@/data/sampleWorkMap";
 import type { ScreenEvent, TranscriptLine, WorkMap } from "./types";
 
 const SESSION_KEY = "apprentice.session";
@@ -62,3 +63,9 @@ export const loadSession = () => read<CapturedSession>(SESSION_KEY);
 export const saveSession = (s: CapturedSession) => write(SESSION_KEY, s);
 export const loadWorkMap = () => read<WorkMap>(WORKMAP_KEY);
 export const saveWorkMap = (m: WorkMap) => write(WORKMAP_KEY, m);
+
+/** The map Teaching mode uses: the expert's own once he published it, else the prepared one. */
+export function loadTeachingMap(): WorkMap {
+  const map = loadWorkMap();
+  return map?.published ? map : sampleWorkMap;
+}

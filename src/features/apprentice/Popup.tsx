@@ -1,6 +1,8 @@
 "use client";
 // The Apprentice's floating card: indigo header (so it is clearly the agent, not
 // Ledgerline), a mode label, drag by the header, fold down to a small bar.
+// autoFold folds it while the expert works and opens it when it has something to say;
+// a manual fold/unfold wins until autoFold changes again.
 
 import { useRef, useState, type ReactNode } from "react";
 
@@ -12,13 +14,18 @@ interface Props {
   initial: { top?: number; left?: number; right?: number; bottom?: number };
   width?: number;
   foldable?: boolean;
+  autoFold?: boolean;
+  /** One-line content shown under the header while folded (e.g. "Listening…"). */
+  foldedBar?: ReactNode;
   onClose?: () => void;
   children: ReactNode;
 }
 
-export default function Popup({ title, subtitle, modeLabel, initial, width = 400, foldable = false, onClose, children }: Props) {
+export default function Popup({ title, subtitle, modeLabel, initial, width = 400, foldable = false, autoFold, foldedBar, onClose, children }: Props) {
   const [pos, setPos] = useState<{ x: number; y: number } | null>(null);
-  const [folded, setFolded] = useState(false);
+  // Manual fold remembers the autoFold value it overrode, so the next auto change takes over again.
+  const [manual, setManual] = useState<{ folded: boolean; over: boolean | undefined } | null>(null);
+  const folded = manual && manual.over === autoFold ? manual.folded : (autoFold ?? false);
   const card = useRef<HTMLDivElement>(null);
   const drag = useRef<{ dx: number; dy: number } | null>(null);
 
@@ -63,7 +70,7 @@ export default function Popup({ title, subtitle, modeLabel, initial, width = 400
           <span className="rounded-sm border border-white/70 px-2 py-0.5 text-[11.5px] font-bold tracking-wide">{modeLabel}</span>
         )}
         {foldable && (
-          <button onClick={() => setFolded((f) => !f)} aria-label={folded ? "Expand" : "Fold"} className="px-1 text-[18px] leading-none">
+          <button onClick={() => setManual({ folded: !folded, over: autoFold })} aria-label={folded ? "Expand" : "Fold"} className="px-1 text-[18px] leading-none">
             {folded ? "▴" : "▾"}
           </button>
         )}
@@ -73,7 +80,7 @@ export default function Popup({ title, subtitle, modeLabel, initial, width = 400
           </button>
         )}
       </div>
-      {!folded && <div className="min-h-0 overflow-y-auto">{children}</div>}
+      {folded ? foldedBar && <div className="px-4 py-2">{foldedBar}</div> : <div className="min-h-0 overflow-y-auto">{children}</div>}
     </div>
   );
 }

@@ -27,7 +27,7 @@ export type LedgerCommand =
   | { cmd: "save_decision"; request_id: string; allow: boolean; title?: string; message?: string; fields?: string[]; note?: string }
   | { cmd: "highlight"; fields: string[]; message?: string }
   | { cmd: "clear_highlight" }
-  | { cmd: "switch_user"; user: "paul" | "lena" }
+  | { cmd: "switch_user"; user: "paul" | "maya" }
   | { cmd: "open_document"; doc_id: string }
   | { cmd: "reset" }
   | { cmd: "new_session" }

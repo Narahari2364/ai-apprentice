@@ -8,10 +8,9 @@ import Link from "next/link";
 import { ConversationProvider } from "@elevenlabs/react";
 import { resetSession, subscribe } from "@/lib/events";
 import { sendCommand } from "@/lib/ledgerline";
-import { loadWorkMap } from "@/lib/session";
+import { loadTeachingMap } from "@/lib/session";
 import { useVoiceAgent } from "@/lib/useVoiceAgent";
 import { redact } from "@/lib/redact";
-import { sampleWorkMap } from "@/data/sampleWorkMap";
 import type { GuardrailResult, RuleKey } from "@/lib/types";
 import Popup, { ListeningBars } from "@/features/apprentice/Popup";
 import StartCard from "@/features/apprentice/StartCard";
@@ -48,7 +47,7 @@ function Tutor({ stage, setStage, violations, progress, onReset }: Props) {
   const [showProgress, setShowProgress] = useState(false);
   const [report, setReport] = useState<ReturnType<typeof masteryReport> | null>(null);
   const agentRef = useRef(agent);
-  const map = loadWorkMap() ?? sampleWorkMap;
+  const map = loadTeachingMap();
   const step = violations.length ? map.steps.find((s) => s.id === violations[0].stepId) : undefined;
 
   useEffect(() => {
@@ -57,12 +56,12 @@ function Tutor({ stage, setStage, violations, progress, onReset }: Props) {
 
   useEffect(() => {
     if (!agent.connected) return;
-    agentRef.current.sendContextualUpdate(`[WORKMAP] ${JSON.stringify(loadWorkMap() ?? sampleWorkMap)}`);
+    agentRef.current.sendContextualUpdate(`[WORKMAP] ${JSON.stringify(loadTeachingMap())}`);
     return subscribe((e) => {
       if (e.type === "save_blocked") {
         setShowReplay(false);
         agentRef.current.sendUserMessage(
-          redact(`[BLOCKED] Lena tried to save but: ${e.description}. A replay of Paul's screen moment is available; offer it. Step in now.`),
+          redact(`[BLOCKED] Maya tried to save but: ${e.description}. A replay of Paul's screen moment is available; offer it. Step in now.`),
         );
       } else {
         agentRef.current.sendContextualUpdate(redact(`[SCREEN] ${e.time} ${e.description}`));
@@ -83,7 +82,7 @@ function Tutor({ stage, setStage, violations, progress, onReset }: Props) {
     setReport(r);
     if (agent.connected) {
       agent.sendUserMessage(
-        `[DONE] Lena is finished. Mastered: ${r.mastered.join("; ") || "nothing yet"}. Practise next: ${r.practise.join("; ") || "nothing"}. Give her the short closing now.`,
+        `[DONE] Maya is finished. Mastered: ${r.mastered.join("; ") || "nothing yet"}. Practise next: ${r.practise.join("; ") || "nothing"}. Give her the short closing now.`,
       );
     }
   }
@@ -91,7 +90,7 @@ function Tutor({ stage, setStage, violations, progress, onReset }: Props) {
   function replay() {
     const next = !showReplay;
     setShowReplay(next);
-    // Show the document Paul looked at in this step, inside Lena's Ledgerline.
+    // Show the document Paul looked at in this step, inside Maya's Ledgerline.
     if (next && step?.docId) sendCommand({ cmd: "open_document", doc_id: step.docId });
     if (next && step && agent.connected) {
       agent.sendContextualUpdate(`[SCREEN] Replaying Paul's screen moment ${step.time}: ${step.decision || step.title}.`);
@@ -133,7 +132,7 @@ function Tutor({ stage, setStage, violations, progress, onReset }: Props) {
   return (
     <Popup
       title="Apprentice"
-      subtitle="Coaching Lena with Paul's Work Map"
+      subtitle="Coaching Maya with Paul's Work Map"
       modeLabel="TEACHING MODE"
       initial={{ left: 24, bottom: 110 }}
       width={430}

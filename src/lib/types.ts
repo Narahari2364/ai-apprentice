@@ -76,6 +76,8 @@ export interface WorkMap {
   steps: WorkMapStep[];
   gaps: string[]; // open questions for the debrief
   confirmed: boolean; // expert confirmed the teach-back
+  offRecord?: { from: string; to: string }[]; // "mm:ss" ranges the expert took off the record (shown as gaps)
+  published?: boolean; // expert approved the map; Teaching mode uses only published maps
 }
 
 export type RuleKey = "approval" | "delivery_docs";

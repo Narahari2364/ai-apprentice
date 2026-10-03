@@ -3,6 +3,7 @@
 // Ledgerline (open_document command) next to the map.
 
 import { useRef, useState, useSyncExternalStore } from "react";
+import Link from "next/link";
 import WorkMapView from "@/features/workmap/WorkMapView";
 import LedgerlineFrame from "@/features/erp/LedgerlineFrame";
 import { downloadText, toAgentMarkdown } from "@/features/workmap/exportAgent";
@@ -23,6 +24,13 @@ export default function MapPage() {
   const raw = useSyncExternalStore(() => () => {}, readRaw, () => null);
   const map: WorkMap = raw ? JSON.parse(raw) : sampleWorkMap;
   const [selected, setSelected] = useState<WorkMapStep | null>(null);
+  const [justPublished, setJustPublished] = useState(false);
+  const published = !raw || map.published || justPublished; // the prepared sample counts as published
+
+  function publish() {
+    localStorage.setItem(KEY, JSON.stringify({ ...map, published: true }));
+    setJustPublished(true);
+  }
   const ready = useRef(false);
 
   function select(step: WorkMapStep) {
@@ -65,6 +73,25 @@ export default function MapPage() {
               </button>
             )}
           </div>
+          {raw && !published ? (
+            <div className="flex items-center gap-4 border-l-[5px] border-indigo bg-white px-4 py-3 shadow-sm">
+              <div className="flex-1 text-[14.5px]">
+                <b>Review mode.</b> Check what the Apprentice learned from Paul. Nobody else sees it until he approves.
+              </div>
+              <button className="h-10 rounded-sm bg-indigo px-4 text-[15px] text-white hover:bg-indigo-dark" onClick={publish}>
+                Approve &amp; publish
+              </button>
+            </div>
+          ) : (
+            <div className="flex items-center gap-4 border-l-[5px] border-ok bg-white px-4 py-3 shadow-sm">
+              <div className="flex-1 text-[14.5px]">
+                <b>{raw ? "Published." : "Prepared Work Map."}</b> Teaching mode coaches new hires with this map.
+              </div>
+              <Link href="/teach" className="flex h-10 items-center rounded-sm bg-brand px-4 text-[15px] text-white hover:bg-brand-dark">
+                Open Teaching mode →
+              </Link>
+            </div>
+          )}
           <WorkMapView map={map} selectedId={selected?.id ?? null} onSelect={select} />
         </div>
       </div>

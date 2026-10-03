@@ -29,7 +29,7 @@ const agents = [
     envKey: "ELEVENLABS_TUTOR_AGENT_ID",
     name: "AI Apprentice - Tutor",
     prompt: tutorPrompt,
-    firstMessage: "Hi Lena! Here's a new one: a dinner you ordered through Bitebox. Let's walk through it together. First step: what do you upload?",
+    firstMessage: "Hi Maya! Here's a new one: a dinner you ordered through Bitebox. Let's walk through it together. First step: what do you upload?",
   },
 ];
 

@@ -14,7 +14,7 @@ import { attachLedgerline, embedCss, injectApprenticeButton, sendCommand, type E
 const MOCK_WIDTH = 1180;
 
 interface Props {
-  /** Query string for Ledgerline, e.g. "user=paul" or "user=lena&guard=1". */
+  /** Query string for Ledgerline, e.g. "user=paul" or "user=maya&guard=1". */
   query: string;
   mode: EmbedMode;
   /** Adds the Apprentice button to Ledgerline's top bar. */

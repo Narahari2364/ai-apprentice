@@ -21,7 +21,7 @@ export default function Home() {
           <ModeCard
             href="/teach"
             bar="New hire mode"
-            title="Lena Brandt · Associate"
+            title="Maya Brandt · Associate"
             text="Submit a new delivery-order expense with a voice tutor. It asks you to predict each step the way Paul does it and stops a wrong save before finance rejects it."
             cta="Start learning"
           />

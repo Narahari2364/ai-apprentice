@@ -9,7 +9,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ConversationProvider } from "@elevenlabs/react";
-import { getHistory, onActivity, resetSession, subscribe, useScreenEvents } from "@/lib/events";
+import { elapsed, getHistory, onActivity, resetSession, subscribe, useScreenEvents } from "@/lib/events";
 import { fieldFor, sendCommand } from "@/lib/ledgerline";
 import { attachDocs, attachScreenshots, saveSession, saveWorkMap } from "@/lib/session";
 import { useVoiceAgent } from "@/lib/useVoiceAgent";
@@ -69,6 +69,7 @@ function Interviewer({ stage, setStage }: Props) {
   const highlighted = useRef(false);
   const offRecordEvents = useRef(new Set<ScreenEvent>());
   const shots = useRef<Record<string, string>>({});
+  const offRanges = useRef<{ from: string; to: string }[]>([]);
 
   useEffect(() => {
     agentRef.current = agent;
@@ -182,6 +183,7 @@ function Interviewer({ stage, setStage }: Props) {
     setStarting(true);
     resetSession();
     shots.current = {};
+    offRanges.current = [];
     try {
       await startScreenCapture(() => setSharing(false));
       setSharing(true);
@@ -203,6 +205,9 @@ function Interviewer({ stage, setStage }: Props) {
     setOffRecord(next);
     agent.setMuted(next);
     setCapturePaused(next);
+    // Remember the window so the Work Map can show it as a gap.
+    if (next) offRanges.current.push({ from: elapsed(), to: "" });
+    else if (offRanges.current.length) offRanges.current[offRanges.current.length - 1].to = elapsed();
     sendToAgent(next ? "[SCREEN] Paul went off the record." : "[SCREEN] Paul is back on the record.");
   }
 
@@ -215,6 +220,10 @@ function Interviewer({ stage, setStage }: Props) {
         .join("\n")}\nStart the debrief now.`,
       { respond: true },
     );
+  }
+
+  function offRecordRanges() {
+    return offRanges.current.map((r) => ({ from: r.from, to: r.to || elapsed() }));
   }
 
   async function buildMap() {
@@ -231,7 +240,7 @@ function Interviewer({ stage, setStage }: Props) {
       });
       const data = await res.json();
       if (!res.ok || !data.steps?.length) throw new Error(data.error || "The Work Map came back empty.");
-      saveWorkMap(attachDocs(attachScreenshots(data, shots.current), events));
+      saveWorkMap({ ...attachDocs(attachScreenshots(data, shots.current), events), offRecord: offRecordRanges(), published: false });
       router.push("/map");
     } catch (e) {
       // Safety net for the live demo: retry, or fall back to the prepared map.
@@ -242,7 +251,7 @@ function Interviewer({ stage, setStage }: Props) {
 
   function loadPreparedMap() {
     // Prepared map from the rehearsal (sample), with this session's screen moments where they fit.
-    saveWorkMap(attachScreenshots(sampleWorkMap, shots.current));
+    saveWorkMap({ ...attachScreenshots(sampleWorkMap, shots.current), offRecord: offRecordRanges(), published: false });
     router.push("/map");
   }
 
@@ -282,6 +291,12 @@ function Interviewer({ stage, setStage }: Props) {
 
   const lastAgent = [...agent.transcript].reverse().find((t) => t.speaker === "agent");
   const review = phase !== "task";
+  // Folds to a small bar while Paul works; opens while the agent speaks and keeps its
+  // question visible until Paul answers or does the next thing on screen.
+  const lastEvent = seenEvents[seenEvents.length - 1];
+  const questionShowing = lastLine?.speaker === "agent" && !(lastEvent && lastEvent.time > lastLine.time);
+  const autoFold = phase === "task" && agent.connected && !agent.isSpeaking && !questionShowing && !offRecord && !buildError && !agent.error;
+  const statusLabel = ui === "listening" || ui === "debrief" ? "Listening…" : STATE_LABEL[ui];
 
   return (
     <Popup
@@ -291,6 +306,13 @@ function Interviewer({ stage, setStage }: Props) {
       initial={{ left: 24, bottom: 120 }}
       width={420}
       foldable
+      autoFold={autoFold}
+      foldedBar={
+        <span className="flex items-center gap-2 text-[14px] text-indigo">
+          {ui === "listening" && <ListeningBars active />}
+          {statusLabel} <span className="text-muted">· I&apos;ll ask when you pause</span>
+        </span>
+      }
     >
       <div className="px-4 pb-3 pt-3">
         {lastAgent ? (
@@ -325,7 +347,7 @@ function Interviewer({ stage, setStage }: Props) {
       <div className="flex items-center gap-2 border-t border-line px-4 py-2.5">
         <span className="flex min-w-0 flex-1 items-center gap-2 text-[14px] text-indigo">
           {(ui === "listening" || ui === "debrief") && <ListeningBars active />}
-          <span className="truncate">{ui === "listening" || ui === "debrief" ? "Listening…" : STATE_LABEL[ui]}</span>
+          <span className="truncate">{statusLabel}</span>
         </span>
         {phase === "task" && (
           <>

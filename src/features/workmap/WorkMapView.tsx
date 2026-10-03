@@ -31,10 +31,14 @@ export default function WorkMapView({ map, selectedId, onSelect }: Props) {
       </div>
 
       <ol className="flex flex-col gap-2">
-        {map.steps.map((step) => {
+        {map.steps.map((step, i) => {
           const open = step.id === selectedId;
+          // Off-the-record windows that started before this step (and after the previous one).
+          const prev = map.steps[i - 1]?.time ?? "";
+          const gapsHere = (map.offRecord ?? []).filter((g) => g.from >= prev && g.from < step.time);
           return (
-            <li key={step.id}>
+            <li key={step.id} className="flex flex-col gap-2">
+              {gapsHere.map((g) => <OffRecordGap key={g.from} from={g.from} to={g.to} />)}
               <button
                 onClick={() => onSelect(step)}
                 className={`w-full rounded-sm border bg-white text-left transition hover:border-brand ${open ? "border-brand shadow-[0_0_0_1px_#2F74D0]" : "border-line"}`}
@@ -78,6 +82,13 @@ export default function WorkMapView({ map, selectedId, onSelect }: Props) {
             </li>
           );
         })}
+        {(map.offRecord ?? [])
+          .filter((g) => g.from >= (map.steps[map.steps.length - 1]?.time ?? ""))
+          .map((g) => (
+            <li key={g.from}>
+              <OffRecordGap from={g.from} to={g.to} />
+            </li>
+          ))}
       </ol>
 
       {map.gaps.length > 0 && (
@@ -88,6 +99,16 @@ export default function WorkMapView({ map, selectedId, onSelect }: Props) {
           </ul>
         </div>
       )}
+    </div>
+  );
+}
+
+function OffRecordGap({ from, to }: { from: string; to: string }) {
+  return (
+    <div className="flex items-center gap-3 rounded-sm border border-dashed border-[#b9bdc4] bg-white/60 px-4 py-2.5 text-[14px] text-[#555]">
+      <span className="pill bg-[#EEF1F4] text-[#444]">Off the record</span>
+      <span className="font-mono text-[13px]">{from}–{to}</span>
+      <span>Paul took this part off the record. Nothing was saved and no questions were asked.</span>
     </div>
   );
 }

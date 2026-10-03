@@ -1,5 +1,5 @@
 "use client";
-// Teach (Module 3): Ledgerline full screen as Lena with ?guard=1, so every Save waits for us.
+// Teach (Module 3): Ledgerline full screen as Maya with ?guard=1, so every Save waits for us.
 // save_requested → checkGuardrails → save_decision (allow, or block in Paul's words + fields to highlight).
 
 import { useEffect, useRef, useState } from "react";
@@ -7,9 +7,8 @@ import LedgerlineFrame from "@/features/erp/LedgerlineFrame";
 import TutorPanel, { type TeachStage } from "@/features/teach/TutorPanel";
 import { checkGuardrails } from "@/features/teach/checkGuardrails";
 import { useTeachProgress } from "@/features/teach/progress";
-import { sampleWorkMap } from "@/data/sampleWorkMap";
 import { onLedgerlineEvent, sendCommand } from "@/lib/ledgerline";
-import { loadWorkMap } from "@/lib/session";
+import { loadTeachingMap } from "@/lib/session";
 import type { ExpenseSnapshot, GuardrailResult } from "@/lib/types";
 
 export default function TeachPage() {
@@ -26,7 +25,7 @@ export default function TeachPage() {
     () =>
       onLedgerlineEvent((e) => {
         if (e.type !== "save_requested") return;
-        const result = checkGuardrails(e.expense as ExpenseSnapshot, loadWorkMap() ?? sampleWorkMap);
+        const result = checkGuardrails(e.expense as ExpenseSnapshot, loadTeachingMap());
         setViolations(result.violations);
         recordRef.current(result);
         sendCommand(
@@ -49,7 +48,7 @@ export default function TeachPage() {
   return (
     <div className="h-full">
       <LedgerlineFrame
-        query="user=lena&guard=1"
+        query="user=maya&guard=1"
         mode="teach"
         apprenticeOn={stage !== "closed"}
         onApprenticeClick={() => setStage(stage === "closed" ? "intro" : stage)}

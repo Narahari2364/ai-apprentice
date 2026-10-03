@@ -6,7 +6,7 @@ Times are `"mm:ss"` since the session started. Money is a plain number plus an I
 
 ## The work app: Ledgerline
 
-`public/ledgerline/index.html` is the team's fake expense tool (read its header comment for the full API). Only its story data (CONFIG users, DOCS, seed) was changed to follow the demo script: Paul Adler (expert) and Lena Brandt (new hire); its storage key is `expense-demo-v2`.
+`public/ledgerline/index.html` is the team's fake expense tool (read its header comment for the full API). Only its story data (CONFIG users, DOCS, seed) was changed to follow the demo script: Paul Adler (expert) and Maya Brandt (new hire); its storage key is `expense-demo-v2`.
 Our app embeds it in an iframe (`src/features/erp/LedgerlineFrame.tsx`, scaled to fit its 1180px minimum) and talks to it only through
 `src/lib/ledgerline.ts`:
 
@@ -17,7 +17,7 @@ Our app embeds it in an iframe (`src/features/erp/LedgerlineFrame.tsx`, scaled t
 | `sendCommand({cmd, ...})` | Posts `{target: 'expense-demo', cmd, ...}`: `save_decision`, `open_document`, `highlight`, `switch_user`, `reset`, `new_session`, ... |
 | `toScreenEvent(e)` | Ledgerline event → ScreenEvent; every event is published on the shared bus, `user_activity` goes to `markActivity()` for pause detection |
 
-URLs: `/ledgerline/index.html?user=paul` (Capture, /map) and `?user=lena&guard=1` (Teach: every Save waits for our `save_decision`).
+URLs: `/ledgerline/index.html?user=paul` (Capture, /map) and `?user=maya&guard=1` (Teach: every Save waits for our `save_decision`).
 Hidden demo controls inside Ledgerline: Alt+Shift+D (reset data, switch user, test a blocked save).
 The Apprentice is injected into Ledgerline's top bar (indigo button) and opens as floating popups (`src/features/apprentice/`).
 
@@ -72,11 +72,13 @@ All events go through the bus in `src/lib/events.ts`:
 ## WorkMap
 
 ```ts
-{ task, steps: WorkMapStep[], gaps: string[], confirmed: boolean }
+{ task, steps: WorkMapStep[], gaps: string[], confirmed: boolean, offRecord?, published? }
 ```
 
 - `gaps`: open questions the debrief still needs to ask.
 - `confirmed`: true once the expert accepted the teach-back.
+- `offRecord`: `{from, to}` windows the expert took off the record; /map shows them as gaps.
+- `published`: the expert approved the map on /map ("Approve & publish"). Teaching mode uses only a published map, otherwise the prepared sample.
 
 ## GuardrailResult (Teach)
 
