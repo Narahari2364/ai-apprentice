@@ -82,6 +82,8 @@ export function embedCss(mode: EmbedMode): string {
 .appr-btn{height:42px;display:flex;align-items:center;gap:8px;padding:0 14px;border:1px solid ${INDIGO};background:#f1f0ff;color:${INDIGO};font-size:15px;border-radius:2px}
 .appr-btn:hover{background:#e6e3ff}
 .appr-btn.on{background:${INDIGO};color:#fff}
+.appr-link{background:none;border:0;color:#2F74D0;font-size:15px;padding:6px 4px;white-space:nowrap}
+.appr-link:hover{text-decoration:underline}
 ${mode === "view" ? ".top{display:none!important}.main{height:100vh!important}" : ""}
 ${mode === "capture" ? `.hl{outline:3px solid ${INDIGO}!important;outline-offset:-3px;background:#f5f3ff!important;animation:none!important}.hlnote{border-color:${INDIGO}!important;background:#f5f3ff!important}` : ""}
 `;
@@ -89,8 +91,13 @@ ${mode === "capture" ? `.hl{outline:3px solid ${INDIGO}!important;outline-offset
 
 const BUTTON_ICON = `<svg width="18" height="16" viewBox="0 0 18 16" aria-hidden="true"><path d="M1.5 1.5h15v10H6L1.5 15z" fill="currentColor"/><path d="M5 5h8M5 8h5" stroke="#f1f0ff" stroke-width="1.4"/></svg>`;
 
-/** Put an "Apprentice" button into Ledgerline's top bar; re-adds it when Ledgerline re-renders. */
-export function injectApprenticeButton(doc: Document, onClick: () => void): (on: boolean) => void {
+/** Put an "Apprentice" button (and optional links, e.g. "Work Map") into Ledgerline's top bar;
+ *  re-adds them when Ledgerline re-renders. */
+export function injectApprenticeButton(
+  doc: Document,
+  onClick: () => void,
+  links: { label: string; onClick: () => void }[] = [],
+): (on: boolean) => void {
   let on = false;
   const place = () => {
     const right = doc.querySelector(".top-right");
@@ -104,6 +111,16 @@ export function injectApprenticeButton(doc: Document, onClick: () => void): (on:
       onClick();
     });
     right.prepend(btn);
+    for (const l of [...links].reverse()) {
+      const a = doc.createElement("button");
+      a.className = "appr-link";
+      a.textContent = l.label;
+      a.addEventListener("click", (e) => {
+        e.stopPropagation();
+        l.onClick();
+      });
+      right.prepend(a);
+    }
   };
   place();
   const top = doc.getElementById("top");

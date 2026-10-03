@@ -9,6 +9,7 @@
 //   onApprenticeClick, an indigo "Apprentice" button is added to Ledgerline's top bar.
 
 import { useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import { attachLedgerline, embedCss, injectApprenticeButton, sendCommand, type EmbedMode } from "@/lib/ledgerline";
 
 const MOCK_WIDTH = 1180;
@@ -26,6 +27,8 @@ interface Props {
 }
 
 export default function LedgerlineFrame({ query, mode, onApprenticeClick, apprenticeOn = false, onReady }: Props) {
+  const router = useRouter();
+  const routerRef = useRef(router);
   const wrap = useRef<HTMLDivElement>(null);
   const frame = useRef<HTMLIFrameElement>(null);
   const onReadyRef = useRef(onReady);
@@ -36,6 +39,7 @@ export default function LedgerlineFrame({ query, mode, onApprenticeClick, appren
   useEffect(() => {
     onReadyRef.current = onReady;
     onClickRef.current = onApprenticeClick;
+    routerRef.current = router;
   });
 
   useEffect(() => {
@@ -65,7 +69,12 @@ export default function LedgerlineFrame({ query, mode, onApprenticeClick, appren
         style.id = "apprentice-embed";
         style.textContent = embedCss(mode);
         doc.head.appendChild(style);
-        if (onClickRef.current) setButtonOn.current = injectApprenticeButton(doc, () => onClickRef.current?.());
+        if (onClickRef.current) {
+          // Our top bar is hidden on these pages, so the way to the Work Map lives in Ledgerline's.
+          setButtonOn.current = injectApprenticeButton(doc, () => onClickRef.current?.(), [
+            { label: "Work Map", onClick: () => routerRef.current.push("/map") },
+          ]);
+        }
       }
       sendCommand({ cmd: "new_session" });
       onReadyRef.current?.();
