@@ -45,6 +45,15 @@ export default function WorkMapView({ map }: { map: WorkMap }) {
                   <span className="font-mono text-sm text-slate-500">{step.time}</span>
                 </div>
                 {open && (
+                  <>
+                  {step.screenshot && (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={step.screenshot}
+                      alt={`Screen at ${step.time}`}
+                      className="mt-4 w-full rounded-lg border border-slate-200"
+                    />
+                  )}
                   <dl className="mt-4 grid grid-cols-[8rem_1fr] gap-x-4 gap-y-2 text-base">
                     {step.decision && (
                       <>
@@ -69,6 +78,7 @@ export default function WorkMapView({ map }: { map: WorkMap }) {
                       </>
                     )}
                   </dl>
+                  </>
                 )}
               </button>
             </li>

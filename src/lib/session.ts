@@ -24,6 +24,25 @@ export interface CapturedSession {
   transcript: TranscriptLine[];
 }
 
+const seconds = (t: string) => {
+  const [m, s] = t.split(":").map(Number);
+  return m * 60 + s;
+};
+
+/** Give each step the screenshot taken closest to its screen moment. */
+export function attachScreenshots(map: WorkMap, shots: Record<string, string>): WorkMap {
+  const times = Object.keys(shots);
+  if (!times.length) return map;
+  return {
+    ...map,
+    steps: map.steps.map((step) => {
+      const t = seconds(step.time);
+      const best = times.reduce((a, b) => (Math.abs(seconds(b) - t) < Math.abs(seconds(a) - t) ? b : a));
+      return { ...step, screenshot: shots[best] };
+    }),
+  };
+}
+
 export const loadSession = () => read<CapturedSession>(SESSION_KEY);
 export const saveSession = (s: CapturedSession) => write(SESSION_KEY, s);
 export const loadWorkMap = () => read<WorkMap>(WORKMAP_KEY);

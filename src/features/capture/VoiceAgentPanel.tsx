@@ -8,7 +8,8 @@ import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ConversationProvider } from "@elevenlabs/react";
 import { getHistory, resetSession, subscribe } from "@/lib/events";
-import { saveSession, saveWorkMap } from "@/lib/session";
+import { attachScreenshots, saveSession, saveWorkMap } from "@/lib/session";
+import { setCapturePaused, snapshot, startScreenCapture, stopScreenCapture } from "./screenCapture";
 import { useVoiceAgent } from "@/lib/useVoiceAgent";
 import type { ScreenEvent } from "@/lib/types";
 
@@ -38,6 +39,8 @@ function Interviewer() {
   const lastActivity = useRef(0);
   const lastQuestion = useRef(0);
   const offRecordEvents = useRef(new Set<ScreenEvent>());
+  const shots = useRef<Record<string, string>>({});
+  const [sharing, setSharing] = useState(false);
 
   useEffect(() => {
     agentRef.current = agent;
@@ -79,6 +82,11 @@ function Interviewer() {
         return;
       }
       agentRef.current.sendContextualUpdate(`[SCREEN] ${e.time} ${e.description}`);
+      // Screen moment: grab the frame a beat later so the change is visible on it.
+      setTimeout(() => {
+        const shot = snapshot();
+        if (shot && !shots.current[e.time]) shots.current[e.time] = shot;
+      }, 600);
       if (e.type === "field_changed" || e.type === "status_changed") {
         pending.current = e;
         setDetector("waiting for a pause");
@@ -107,8 +115,15 @@ function Interviewer() {
     return getHistory().filter((e) => !offRecordEvents.current.has(e));
   }
 
-  function start() {
+  async function start() {
     resetSession();
+    shots.current = {};
+    try {
+      await startScreenCapture(() => setSharing(false));
+      setSharing(true);
+    } catch {
+      // Sharing declined: the agent still gets DOM events, just no vision/screenshots.
+    }
     agent.start();
   }
 
@@ -116,6 +131,7 @@ function Interviewer() {
     const next = !offRecord;
     setOffRecord(next);
     agent.setMuted(next);
+    setCapturePaused(next);
     agent.sendContextualUpdate(next ? "[SCREEN] Sabine went off the record." : "[SCREEN] Sabine is back on the record.");
   }
 
@@ -131,6 +147,8 @@ function Interviewer() {
   async function buildMap() {
     setPhase("building");
     agent.endSession();
+    stopScreenCapture();
+    setSharing(false);
     const res = await fetch("/api/workmap", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -142,7 +160,7 @@ function Interviewer() {
       alert(data.error);
       return;
     }
-    saveWorkMap(data);
+    saveWorkMap(attachScreenshots(data, shots.current));
     router.push("/map");
   }
 
@@ -165,6 +183,9 @@ function Interviewer() {
         <>
           <div className="text-sm text-sky-800">
             Pause detector: <b>{detector}</b> · questions asked: <b>{questions}</b>
+          </div>
+          <div className="text-sm text-sky-800">
+            Screen: <b>{sharing ? (offRecord ? "⏸ paused (off the record)" : "🟢 shared, vision on") : "not shared (app events only)"}</b>
           </div>
           <div className="flex flex-wrap gap-2">
             <button

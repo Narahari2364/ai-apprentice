@@ -8,19 +8,26 @@ import { resetSession, subscribe } from "@/lib/events";
 import { loadWorkMap } from "@/lib/session";
 import { useVoiceAgent } from "@/lib/useVoiceAgent";
 import { sampleWorkMap } from "@/data/sampleWorkMap";
+import type { GuardrailResult } from "@/lib/types";
 
-export default function TutorPanel() {
+interface Props {
+  violations: GuardrailResult["violations"];
+}
+
+export default function TutorPanel({ violations }: Props) {
   return (
     <ConversationProvider>
-      <Tutor />
+      <Tutor violations={violations} />
     </ConversationProvider>
   );
 }
 
-function Tutor() {
+function Tutor({ violations }: Props) {
   const agent = useVoiceAgent("tutor");
-  const [blocked, setBlocked] = useState<string | null>(null);
+  const [showReplay, setShowReplay] = useState(false);
   const agentRef = useRef(agent);
+  const map = loadWorkMap() ?? sampleWorkMap;
+  const step = violations.length ? map.steps.find((s) => s.id === violations[0].stepId) : undefined;
 
   useEffect(() => {
     agentRef.current = agent;
@@ -31,10 +38,11 @@ function Tutor() {
     agentRef.current.sendContextualUpdate(`[WORKMAP] ${JSON.stringify(loadWorkMap() ?? sampleWorkMap)}`);
     return subscribe((e) => {
       if (e.type === "save_blocked") {
-        setBlocked(e.description);
-        agentRef.current.sendUserMessage(`[BLOCKED] Lena tried to save but: ${e.description}. Step in now.`);
+        setShowReplay(false);
+        agentRef.current.sendUserMessage(
+          `[BLOCKED] Lena tried to save but: ${e.description}. A replay of Sabine's screen moment is available on screen; offer it. Step in now.`,
+        );
       } else {
-        if (e.type === "saved") setBlocked(null);
         agentRef.current.sendContextualUpdate(`[SCREEN] ${e.time} ${e.description}`);
       }
     });
@@ -62,10 +70,32 @@ function Tutor() {
           End session
         </button>
       )}
-      {blocked && (
-        <div className="rounded-lg border-2 border-red-400 bg-red-50 p-3 text-red-800">
+      {violations.length > 0 && (
+        <div className="flex flex-col gap-2 rounded-lg border-2 border-red-400 bg-red-50 p-3 text-red-800">
           <div className="font-bold">✋ Sabine would stop here.</div>
-          <div className="text-sm">{blocked}</div>
+          {violations.map((v) => (
+            <div key={v.rule} className="text-sm">
+              <b>{v.rule}</b> {v.explanation}
+            </div>
+          ))}
+          {step && (
+            <button
+              onClick={() => setShowReplay((s) => !s)}
+              className="self-start rounded-lg bg-white px-3 py-1.5 text-sm font-semibold text-red-800 border border-red-300"
+            >
+              {showReplay ? "Hide" : "▶ Replay"} Sabine&apos;s screen moment ({step.time})
+            </button>
+          )}
+          {showReplay && step && (
+            step.screenshot ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={step.screenshot} alt={`Sabine's screen at ${step.time}`} className="rounded border border-red-200" />
+            ) : (
+              <p className="text-sm italic">
+                {step.time} · {step.decision || step.title} — “{step.expertQuote}” (no screenshot in this Work Map; capture a session with screen sharing to get one)
+              </p>
+            )
+          )}
         </div>
       )}
       {agent.error && <p className="rounded bg-red-50 p-2 text-sm text-red-700">{agent.error}</p>}
