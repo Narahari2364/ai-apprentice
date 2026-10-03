@@ -18,17 +18,20 @@ Data formats: [docs/formats.md](docs/formats.md). Fake data in `src/data/` means
 
 ## Folder ownership
 
-| Path | Owner | What |
+Two people build the app. The split is **AI & voice** (logic, APIs, agents) vs **UI & experience** (everything you see).
+
+| Track | Owns | What |
 |---|---|---|
-| `src/features/capture/` | CS 1 | Screen capture, vision, voice agent, pause detection |
-| `src/features/erp/`, `src/features/workmap/`, `src/features/teach/` | CS 2 | Mock ERP, Work Map, tutor and guardrail check |
-| `docs/agents.md` | MBA 1 | Interviewer and Tutor system prompts |
-| `docs/pitch.md` | MBA 2 | Pitch and demo script |
-| `src/lib/`, `src/data/`, `src/app/` | shared | Change only with a heads-up in the team chat |
+| AI & voice (branch `ai-voice`) | `src/app/api/`, `src/features/capture/` logic, `src/features/teach/checkGuardrails.ts`, `src/features/workmap/buildWorkMap.ts`, `docs/agents.md` | ElevenLabs Interviewer + Tutor, pause detection, events → agent, debrief → Work Map (Gemini), guardrail rules |
+| UI & experience (branch `ui`) | `src/app/**/page.tsx` layouts, `src/features/erp/`, `src/features/workmap/WorkMapView.tsx`, all `*Panel.tsx` visuals, `globals.css` | Design system, realistic ERP, Work Map timeline, agent/tutor panels, blocked-save alert, end-of-session scorecard |
+| Pitch | `docs/pitch.md` | Pitch and demo script |
+| shared | `src/lib/`, `src/data/` | Change only with a heads-up |
+
+UI components take their data as **props** and render fake data until the AI track wires the real thing. That way neither side waits.
 
 ## Team rules
 
-- One branch per person: `capture`, `erp-map-teach`, `agents`, `pitch`.
+- Two branches: `ai-voice` and `ui`.
 - Merge to `main` only when it runs (`npm run build` passes).
 - `main` must always work.
 - Stay in your own folder. Changes to `src/lib/types.ts` must also update `docs/formats.md`.
