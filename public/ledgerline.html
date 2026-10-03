@@ -1,0 +1,1726 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ledgerline enterprise</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,300;0,400;0,500;0,700;1,400&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;font-family:Roboto,"Segoe UI",Helvetica,Arial,sans-serif;font-size:16px;color:#212121;background:#fff;min-width:1180px;overflow:hidden}
+button{font:inherit;color:inherit;cursor:pointer}
+input,textarea{font:inherit;color:inherit}
+a{cursor:pointer}
+.r{text-align:right}
+
+/* header */
+.top{height:84px;display:flex;align-items:center;padding:0 26px 0 30px;border-bottom:1px solid #e4e4e4;background:#fff;position:relative;z-index:20}
+.burger{background:none;border:0;padding:6px;margin-right:20px;display:flex}
+.logo{display:flex;align-items:center;gap:9px;font-size:30px;letter-spacing:-.4px;color:#1f2d3d;text-decoration:none}
+.logo b{font-weight:500}.logo span span{font-weight:300}
+.top-right{margin-left:auto;display:flex;align-items:center;gap:20px}
+.helpbtn{position:relative;background:none;border:0;padding:4px;display:flex}
+.badge{position:absolute;top:-7px;right:-9px;background:#D32F2F;color:#fff;font-size:12px;font-weight:700;width:20px;height:20px;border-radius:50%;display:grid;place-items:center;box-shadow:0 0 0 3px #f6d5d5}
+.userbtn{background:none;border:0;text-align:right;padding:0;line-height:1.3;display:flex;flex-direction:column;align-items:flex-end}
+.userbtn .n{font-size:17px;display:flex;align-items:center;gap:8px}
+.userbtn .c{font-size:13px;color:#333;padding-right:24px}
+
+/* layout */
+.main{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);height:calc(100vh - 84px)}
+.left{position:relative;background:#F8F8F8;border-right:1px solid #e2e2e2;padding:10px 12px 0 16px;display:flex;flex-direction:column;min-height:0}
+.left.dim::after{content:"";position:absolute;inset:0;background:rgba(72,72,72,.62);z-index:5}
+.right{position:relative;display:flex;flex-direction:column;min-height:0;background:#fff}
+.scroll{flex:1;overflow:auto;min-height:0}
+
+/* home */
+.card{background:#fff;border:1px solid #e3e3e3;border-radius:3px}
+.cardbar{height:60px;background:#2F74D0;color:#fff;display:flex;align-items:center;gap:16px;padding:0 16px 0 20px;font-weight:700;font-size:18px;border-radius:3px 3px 0 0}
+.cardbar .create{margin-left:auto;background:none;border:0;color:#fff;font-size:18px;display:flex;align-items:center;gap:8px;font-weight:400}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);text-align:center;padding:14px 0 48px}
+.stat{background:none;border:0;padding:6px;position:relative}
+.stat .num{display:block;font-size:44px;font-weight:300;line-height:1.1}
+.stat .lab{display:block;font-size:17px}
+.stat.ret .num,.stat.ret .lab{color:#C62828}
+.stat .ii{position:absolute;top:8px;left:calc(50% + 26px)}
+.stat.va{padding-top:26px;font-size:17px;line-height:1.45}
+.lastlogin{margin-top:auto;padding:14px 2px;font-size:17px}
+.notices{padding:34px 30px 30px 22px}
+.co-logo{display:flex;justify-content:center;align-items:center;gap:18px;margin:16px 0 70px;color:#0F5257}
+.co-logo .co-name{font-size:30px;font-weight:500;letter-spacing:.02em;line-height:1.05}
+.co-logo .co-name small{display:block;font-size:15px;letter-spacing:.32em;font-weight:400;margin-top:6px}
+.spaced{text-align:center;letter-spacing:.55em;color:#8a9199;font-size:15px;margin:44px 0 30px;text-transform:uppercase}
+.notices p{font-size:15.5px;line-height:1.5;margin:0 0 18px}
+.notices .g{color:#1E6B3C;font-size:19px}
+.notices a{color:#3a72d8;text-decoration:none}
+
+/* report panel */
+.rep{flex:1;display:flex;flex-direction:column;min-height:0;background:#fff;border:1px solid #e3e3e3;margin-bottom:0}
+.repbar{height:75px;flex:none;background:#2F74D0;color:#fff;display:flex;align-items:stretch}
+.repbar .back{width:82px;border:0;background:none;display:grid;place-items:center;border-right:1px solid rgba(255,255,255,.28)}
+.repbar .ttl{flex:1;padding:17px 22px;line-height:1.12;min-width:0}
+.repbar .ttl small{display:block;font-size:14.5px;opacity:.88}
+.repbar .ttl div{font-size:20px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.repbar .ic{width:84px;border:0;border-left:1px solid rgba(255,255,255,.28);background:none;display:grid;place-items:center}
+.rephead{padding:12px 22px 9px;border-bottom:1px solid #e8e8e8;display:flex;align-items:flex-start;min-height:62px;position:relative}
+.rephead h2{margin:0;font-size:23px;font-weight:400;line-height:1.2}
+.rephead .info{margin-left:auto;background:none;border:0;padding:6px 4px;display:flex}
+.meta{display:flex;gap:18px;font-size:12.5px;color:#444;margin-top:5px}
+.meta span{display:flex;align-items:center;gap:5px}
+.cols,.erow{display:grid;grid-template-columns:94px minmax(0,1fr) 128px 90px 30px 32px 34px;align-items:center;padding:0 18px 0 34px}
+.cols{height:38px;flex:none;font-size:13px;font-weight:700;color:#444;border-bottom:1px solid #eee;text-transform:uppercase}
+.cols>span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cols svg{display:block}
+.erows{flex:1;overflow:auto;min-height:0}
+.erow{height:61px;border-bottom:1px solid #e9e9e9;cursor:pointer;font-size:15px}
+.erow:hover{background:#F2F7FD}
+.erow.sel{background:#E3F0FC}
+.erow.ret{background:#FDF0DA}
+.erow.muted{color:#9a9a9a}
+.erow.muted svg{opacity:.45}
+.erow .d{font-size:14px;line-height:1.1}
+.erow .d small{display:block;font-size:12.5px}
+.erow .x{display:flex;align-items:center;gap:12px;font-size:15.5px}
+.erow .amt{text-align:right;line-height:1.05;padding-right:26px}
+.erow .amt small{display:block;font-size:12.5px}
+.erow .pm{text-align:right;padding-right:8px}
+.empty{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;color:#333;font-size:17px;padding:0 70px;line-height:1.15}
+.btn-add{margin-top:22px;background:#2D6FC8;color:#fff;border:0;height:45px;padding:0 10px 0 14px;font-size:18px;display:flex;align-items:center;gap:9px}
+.repfoot{display:grid;grid-template-columns:1fr 1fr 1fr;flex:none;border-top:1px solid #e3e3e3;background:#F7F7F7;min-height:74px}
+.repfoot>div{padding:12px 13px;border-right:1px solid #e3e3e3;font-size:16px;line-height:1.5}
+.repfoot .big{font-size:26px;font-weight:500}
+.submit{margin:12px 14px;background:#2E7D4F;color:#fff;border:0;font-size:17px}
+.submit:disabled{opacity:.45;cursor:default}
+.rl{grid-template-columns:minmax(0,1fr) 150px 120px 110px}
+.rlrow{display:grid;grid-template-columns:minmax(0,1fr) 150px 120px 110px;align-items:center;padding:0 18px 0 34px;height:61px;border-bottom:1px solid #e9e9e9;cursor:pointer}
+.rlrow:hover{background:#F2F7FD}
+.status{font-size:13px;font-weight:500;padding:3px 8px;border-radius:3px;justify-self:start}
+.status.draft{background:#EEF1F4;color:#444}.status.returned{background:#FBE3E3;color:#B71C1C}.status.submitted{background:#E3F2E8;color:#1E6B3C}
+
+/* right panel chrome */
+.actbar{height:88px;flex:none;background:#EEF2F6;border-bottom:1px solid #e1e5ea;display:flex;align-items:center;justify-content:flex-end;gap:13px;padding:0 30px}
+.actbar .lefty{margin-right:auto}
+.btn{height:45px;min-width:90px;padding:0 22px;border:1px solid #2C7BD6;background:#fff;color:#2C7BD6;font-size:16px;border-radius:2px}
+.btn.pri{background:#2C7BD6;color:#fff}
+.btn:disabled{opacity:.6;cursor:default}
+.fhead{display:flex;align-items:center;gap:26px;padding:8px 24px;border-bottom:1px solid #e6e6e6;min-height:84px}
+.fhead .tico{width:68px;height:66px;border:1px solid #e3e3e3;border-radius:3px;display:grid;place-items:center;position:relative;flex:none}
+.fhead .tico.plain{border:0}
+.fhead .tico .car{position:absolute;bottom:3px;left:50%;margin-left:-4px;border:4px solid transparent;border-top:5px solid #555}
+.fhead h1{font-size:31px;font-weight:400;color:#2F74D0;margin:0;line-height:1.15}
+.frow{display:grid;grid-template-columns:263px minmax(0,1fr);align-items:start;padding:12px 30px 12px 24px;border-bottom:1px solid #EDEFF2;min-height:71px;position:relative}
+.frow.nb{border-bottom:0;min-height:64px}
+.frow>label,.frow>.lab{padding-top:10px;font-size:17px}
+.frow .val{padding-top:10px;font-size:17px;white-space:pre-wrap}
+.inp{height:45px;border:1px solid #9aa0a6;background:#fff;padding:0 12px;font-size:17px;width:100%;border-radius:0}
+.inp.num{width:187px;text-align:right}
+.inp.date{width:187px}
+.inp::placeholder{color:#777}
+.inp:focus,.dd-btn:focus,.pin:focus{outline:none;border-color:#2C7BD6;box-shadow:0 0 0 1px #2C7BD6}
+textarea.inp{height:113px;padding:10px 12px;resize:vertical;display:block}
+.spent{display:flex}
+.spent .inp{border-right:0}
+.err .inp,.err .dd-btn{border-color:#D32F2F}
+.errmsg{color:#C62828;font-size:14px;margin-top:6px}
+.banner{margin:14px 24px 0;padding:12px 16px;font-size:16px;border-left:5px solid}
+.banner.err{background:#FDECEC;border-color:#D32F2F;color:#8E1B1B}
+.hold{position:sticky;top:0;z-index:26;margin:0;padding:12px 24px 12px 20px;font-size:16px;background:#FFF6DB;border-left:5px solid #E2A100;border-bottom:1px solid #F0D58A;display:flex;gap:12px;align-items:flex-start;box-shadow:0 2px 8px rgba(0,0,0,.08)}
+.hold b{display:block;margin-bottom:2px}
+.hold button{margin-left:auto;background:none;border:0;font-size:22px;line-height:1;color:#7a5a00}
+.sec{background:#F6F7F9;padding:18px 24px;font-size:19px;font-weight:700;border-bottom:1px solid #E7E9EC;border-top:1px solid #E7E9EC;display:flex;align-items:center;gap:12px}
+
+/* dropdown */
+.dd{position:relative;width:309px}
+.dd-btn{width:100%;height:45px;border:1px solid #9aa0a6;background:#fff;text-align:left;padding:0 36px 0 12px;font-size:17px;position:relative;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;border-radius:0}
+.dd-btn .ph{color:#555}
+.dd-btn.arrow::after{content:"";position:absolute;right:15px;top:19px;border:6px solid transparent;border-top:7px solid #222}
+.dd.open .dd-btn{border-color:#2C7BD6;box-shadow:0 0 0 1px #2C7BD6}
+.dd-list{position:absolute;left:0;right:0;top:100%;background:#fff;border:1px solid #9aa0a6;z-index:30;max-height:310px;overflow:auto;box-shadow:0 4px 12px rgba(0,0,0,.14)}
+.dd-opt{padding:13px 12px;font-size:17px;border-bottom:1px solid #eee;cursor:pointer;white-space:nowrap}
+.dd-opt:hover,.dd-opt.act{background:#CFE4F8}
+.cur{width:62px}
+.cur .dd-btn{background:#F1F3F5;padding:0 10px;text-align:center;color:#444}
+.gk{width:160px}
+.gk .dd-btn{background:#E8E9EB;border-right:0}
+.attdd{width:auto}
+.attdd .dd-list{left:auto;width:240px}
+
+/* project + guests */
+.psearch{padding:12px 24px;position:relative}
+.prow{display:grid;grid-template-columns:150px minmax(0,1fr) auto 34px;gap:10px;align-items:start;padding:14px 24px;border-bottom:1px solid #EDEFF2;font-size:15px}
+.prow b{font-weight:700}
+.prow .pp{display:flex;align-items:center;gap:6px}
+.prow .pp input{width:80px}
+.addalloc{display:flex;align-items:center;gap:10px;padding:10px 24px 18px;color:#bbb;font-size:17px;background:none;border:0}
+.addalloc.on{color:#2F74D0}
+.gadd{display:flex;padding:12px 24px 6px}
+.gin-wrap{flex:1;position:relative}
+.gin-wrap .inp{border-left-color:#9aa0a6}
+.sugg{position:absolute;left:0;right:0;top:100%;background:#fff;border:1px solid #9aa0a6;border-top:0;z-index:30;box-shadow:0 4px 12px rgba(0,0,0,.14);max-height:320px;overflow:auto}
+.sg{padding:10px 12px;border-bottom:1px solid #eee;cursor:pointer;line-height:1.3}
+.sg:hover,.sg.act{background:#CFE4F8}
+.sg i{color:#555}
+.csv{display:inline-block;padding:2px 24px 8px;color:#2F74D0;font-size:17px;background:none;border:0}
+.grow{display:grid;grid-template-columns:92px 36px minmax(0,1fr) 90px 97px;gap:6px;align-items:start;padding:10px 24px;font-size:17px}
+.grow .gx{background:none;border:0;font-size:20px;line-height:1;padding:2px 6px;color:#333}
+.grow .who{line-height:1.2}
+.grow .who i{display:block}
+.pin{height:45px;border:1px solid #9aa0a6;text-align:right;padding:0 10px;font-weight:700;font-size:17px;width:100%;border-radius:0}
+.gtot{display:grid;grid-template-columns:1fr 90px 97px;gap:6px;padding:4px 30px 20px 24px;color:#777;font-weight:700;text-align:right;font-size:17px}
+
+/* attachments */
+.att-tools{margin-left:auto;display:flex;gap:12px}
+.att-tools button{background:none;border:0;padding:2px;display:flex;opacity:.55}
+.att-tools button.on{opacity:1}
+.att-body{padding:18px 24px 26px;display:flex;flex-direction:column;align-items:center;gap:16px}
+.att-body.drag{background:#EAF3FD;outline:2px dashed #2F74D0;outline-offset:-8px}
+.att-drop{display:flex;align-items:center;gap:22px;font-size:17px;color:#333}
+.btn-att{height:45px;background:#2C7BD6;color:#fff;border:0;padding:0 16px;font-size:17px;display:flex;align-items:center;gap:10px}
+.btn-att::after{content:"";border:5px solid transparent;border-top:6px solid #fff;margin-top:6px}
+.att-grid{display:flex;flex-wrap:wrap;gap:14px;width:100%}
+.att-list{width:100%}
+.att-li{display:flex;align-items:center;gap:12px;padding:10px 6px;border-bottom:1px solid #eee;cursor:pointer}
+.thumb{width:142px;border:1px solid #d9dde2;background:#fff;cursor:pointer;position:relative}
+.thumb:hover{border-color:#2F74D0}
+.pv{position:relative;overflow:hidden;background:#E9ECEF}
+.pv .pz{position:absolute;left:5px;top:5px;transform-origin:0 0;pointer-events:none}
+.pv img{width:100%;height:100%;object-fit:cover;display:block}
+.pv .pdf{position:absolute;inset:0;display:grid;place-items:center;font-weight:700;color:#B71C1C}
+.thumb .fn{font-size:12px;padding:6px 8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;border-top:1px solid #eee}
+.thumb .rm{position:absolute;top:5px;right:5px;width:24px;height:24px;border-radius:50%;border:0;background:rgba(0,0,0,.62);color:#fff;font-size:15px;line-height:1;z-index:2}
+
+/* add expenses */
+.addwrap{display:grid;grid-template-columns:286px minmax(0,1fr);flex:1;min-height:0}
+.addnav{background:#F4F5F7;border-right:1px solid #e3e3e3;overflow:auto}
+.addnav h1{font-size:28px;color:#2F74D0;font-weight:400;line-height:1.05;margin:20px 16px 22px}
+.navitem{display:flex;align-items:center;gap:10px;padding:13px 38px;font-size:18px;background:none;border:0;width:100%;text-align:left}
+.navitem:hover{background:#E8EEF5}
+.navitem.top{font-weight:700;padding:14px 18px}
+.navitem.on{background:#CDE4FA}
+.navgrp{font-weight:700;color:#444;padding:18px 16px 8px;font-size:18px;border-top:1px solid #e3e3e3}
+.navitem .dot{width:8px;height:8px;border-radius:50%;background:#2E7D4F;margin-left:-20px}
+.addmain{overflow:auto;padding:4px 14px 20px}
+.search{position:relative;width:464px;max-width:100%;border:2px solid #2F74D0;border-radius:3px;height:51px;margin:14px 0 12px;display:flex;align-items:center}
+.search .fl{position:absolute;top:-11px;left:12px;background:#fff;padding:0 5px;font-size:14px;color:#2F74D0}
+.search input{border:0;outline:0;flex:1;height:100%;padding:0 14px;font-size:17px;background:transparent}
+.search svg{margin-right:12px}
+.faster{background:#EAF4FD;border:1px solid #d7e8f8;padding:14px 16px;margin-bottom:14px;font-size:14.5px;line-height:1.45}
+.faster b{display:block;margin-bottom:2px}
+.faster .acts{display:flex;align-items:center;gap:18px;margin-top:10px}
+.btn-up{height:38px;background:#2C7BD6;color:#fff;border:0;padding:0 14px;font-weight:700;display:flex;align-items:center;gap:8px;font-size:15px}
+.lnk{background:none;border:0;color:#2F74D0;display:flex;align-items:center;gap:6px;font-size:15px;padding:0}
+.tiles{display:grid;grid-template-columns:repeat(auto-fill,147px);gap:13px}
+.tile{height:148px;border:1px solid #e1e4e8;background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.06);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;font-size:13.5px;color:#444;text-transform:uppercase;text-align:center;line-height:1.05;padding:8px}
+.tile:hover{border-color:#2F74D0}
+.tile .tc{border:4px solid transparent;border-top:5px solid #555;margin-top:-8px}
+.ewempty{padding:60px 20px;color:#666;text-align:center;font-size:17px}
+
+/* detail */
+.vrow{display:grid;grid-template-columns:263px minmax(0,1fr);padding:14px 30px 14px 24px;border-bottom:1px solid #EDEFF2;font-size:17px}
+.vrow .v{white-space:pre-wrap}
+.gv{display:grid;grid-template-columns:90px minmax(0,1fr) 120px;gap:8px;padding:12px 30px 12px 24px;font-size:17px;line-height:1.2}
+.gv i{display:block}
+.gv .a{text-align:right;font-weight:700}
+.tax{display:grid;grid-template-columns:100px minmax(0,1fr);border-top:1px solid #EDEFF2;border-bottom:1px solid #EDEFF2}
+.tax .tl{display:flex;align-items:center;padding-left:14px;font-size:17px}
+.tax .tr{background:#EEF2F6;display:grid;grid-template-columns:1fr 1fr 1fr;row-gap:16px;padding:16px 60px 16px 70px;font-size:17px}
+.cmt{padding:16px 24px;border-bottom:1px solid #eee}
+.cmt b{font-size:15px}.cmt time{color:#999;font-size:13px;margin-left:8px}
+.cmt p{margin:6px 0 0;font-size:16px}
+.cadd{display:flex;gap:14px;padding:18px 24px 26px}
+.cadd .btn{background:#E9EBEE;border-color:#E9EBEE;color:#999;min-width:186px}
+.cadd .btn.on{background:#2C7BD6;border-color:#2C7BD6;color:#fff}
+.pager{height:58px;flex:none;border-top:1px solid #e3e3e3;background:#F6F7F9;display:flex;align-items:center;justify-content:space-between;padding:0 30px;font-size:19px}
+.pager button{background:none;border:0;color:#2F74D0;font-size:19px;display:flex;align-items:center;gap:10px}
+.pager button:disabled{color:#bbb;cursor:default}
+
+/* modal + popovers */
+.modal-bg{position:fixed;inset:0;background:rgba(20,28,38,.55);z-index:100;display:flex;align-items:center;justify-content:center}
+.modal{background:#fff;width:min(1120px,94vw);max-height:92vh;display:flex;flex-direction:column;box-shadow:0 10px 40px rgba(0,0,0,.3)}
+.modal.sm{width:520px}
+.mhead{display:flex;align-items:center;gap:14px;padding:14px 20px;border-bottom:1px solid #e5e5e5;font-size:20px}
+.mhead .x{margin-left:auto;background:none;border:0;font-size:28px;line-height:1;color:#555}
+.mhead .zm{display:flex;gap:6px;margin-left:auto}
+.mhead .zm+.x{margin-left:12px}
+.mhead .zm button{width:36px;height:32px;border:1px solid #ccc;background:#fff;font-size:18px}
+.mbody{overflow:auto;padding:20px;flex:1;min-height:0}
+.mbody p{margin:0 0 10px;font-size:16px;line-height:1.5}
+.mfoot{display:flex;justify-content:flex-end;align-items:center;gap:12px;padding:14px 20px;border-top:1px solid #e5e5e5;background:#f7f8fa}
+.mfoot .hint{margin-right:auto;color:#666;font-size:14px}
+.gal{display:grid;grid-template-columns:repeat(auto-fill,minmax(178px,1fr));gap:16px}
+.galitem{border:2px solid #e1e4e8;cursor:pointer;position:relative;background:#fff}
+.galitem.on{border-color:#2F74D0;box-shadow:0 0 0 2px #cfe4f8}
+.galitem .chk{position:absolute;top:8px;left:8px;width:24px;height:24px;border-radius:3px;border:2px solid #fff;background:rgba(0,0,0,.35);z-index:2;display:grid;place-items:center;color:#fff;font-size:15px}
+.galitem.on .chk{background:#2F74D0}
+.galitem .eye{position:absolute;top:8px;right:8px;z-index:2;border:0;background:rgba(0,0,0,.55);color:#fff;font-size:12px;padding:4px 8px;border-radius:3px}
+.galitem .cap{padding:8px 10px;font-size:13px;line-height:1.3;border-top:1px solid #eee}
+.galitem .cap div{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.galitem .cap small{color:#777}
+.used{display:inline-block;background:#E3F2E8;color:#1E6B3C;font-size:11px;padding:1px 6px;border-radius:2px;margin-left:4px}
+.stage{background:#5F6368;display:flex;justify-content:center;align-items:flex-start;padding:30px;min-height:100%}
+.stage .upimg{max-width:100%;display:block;background:#fff}
+.vfoot{display:flex;justify-content:space-between;align-items:center;padding:10px 20px;border-top:1px solid #e5e5e5}
+.vfoot button{background:none;border:0;color:#2F74D0;font-size:17px}
+.vfoot button:disabled{color:#bbb}
+.pop{position:fixed;z-index:90;background:#fff;border:1px solid #d5d9de;box-shadow:0 6px 20px rgba(0,0,0,.16);min-width:260px}
+.pop .pi{display:flex;align-items:center;gap:10px;width:100%;padding:12px 16px;background:none;border:0;border-bottom:1px solid #eee;text-align:left;font-size:15px}
+.pop .pi:hover{background:#F2F7FD}
+.pop .pi small{display:block;color:#777;font-size:12.5px}
+.pop .pt{padding:14px 16px;font-size:14.5px;line-height:1.5}
+.drawer-bg{position:fixed;inset:0;background:rgba(0,0,0,.35);z-index:95}
+.drawer{position:fixed;top:0;left:0;bottom:0;width:300px;background:#fff;z-index:96;box-shadow:4px 0 20px rgba(0,0,0,.2);padding-top:84px}
+.drawer .pi{display:block;width:100%;padding:16px 24px;background:none;border:0;border-bottom:1px solid #eee;text-align:left;font-size:17px}
+.drawer .pi:hover{background:#F2F7FD}
+.toast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%);background:#323232;color:#fff;padding:12px 20px;border-radius:3px;z-index:200;font-size:15px;box-shadow:0 4px 14px rgba(0,0,0,.3)}
+
+/* tutor hooks */
+.hl{outline:3px solid #E2A100;outline-offset:-3px;background:#FFFBEE;animation:hlp 1.6s ease-in-out infinite}
+@keyframes hlp{50%{outline-color:rgba(226,161,0,.3)}}
+.hlnote{display:block;max-width:440px;margin-top:8px;background:#FFF6DB;border:1px solid #E2A100;padding:8px 12px;font-size:14.5px;line-height:1.4}
+.hlnote.sec-note{margin:0 24px 14px}
+@media (prefers-reduced-motion:reduce){.hl{animation:none}}
+
+/* documents */
+.paper{background:#fff;color:#111;box-shadow:0 1px 3px rgba(0,0,0,.3);text-align:left}
+.paper p{font-size:inherit;line-height:inherit}
+.thermal{width:400px;padding:28px 26px 30px;font:14px/1.5 "Courier New",Courier,monospace}
+.thermal .c{text-align:center}.thermal .b{font-weight:700}.thermal .lg{font-size:16.5px}
+.thermal .lr{display:flex;justify-content:space-between;gap:12px}
+.thermal .hr{border-top:1px dashed #555;margin:8px 0}
+.thermal table{width:100%;border-collapse:collapse;font:inherit}
+.thermal td{padding:0;text-align:right}.thermal td:first-child{text-align:left}
+.a4{width:640px;min-height:860px;padding:44px 50px 36px;font:12.5px/1.45 Arial,Helvetica,sans-serif;display:flex;flex-direction:column}
+.a4 .ah{display:flex;justify-content:space-between;gap:20px;margin-bottom:26px}
+.a4 .lhn{font-size:20px;font-weight:700;margin-bottom:4px;letter-spacing:.01em}
+.a4 .brand{display:flex;align-items:center;gap:8px;font-size:19px;font-weight:700}
+.a4 .ar{text-align:right;color:#444}
+.a4 .behalf{background:#F4F5F6;padding:10px 12px;margin-bottom:16px}
+.a4 .recip{min-height:58px;margin-bottom:18px}
+.a4 .recip .sm{font-size:10.5px;color:#666;text-decoration:underline}
+.a4 h3{font-size:21px;margin:0 0 10px}
+.a4 table{width:100%;border-collapse:collapse;font:inherit}
+.a4 .m2 td{padding:1px 0}.a4 .m2 td:first-child{width:150px;color:#555}
+.a4 .its{margin-top:16px}
+.a4 .its th{text-align:left;border-bottom:1.5px solid #222;padding:5px 4px;font-size:11.5px}
+.a4 .its th.r{text-align:right}
+.a4 p{margin:12px 0 0}
+.a4 .its td{border-bottom:1px solid #ddd;padding:5px 4px}
+.a4 .r{text-align:right}
+.a4 .vb{width:62%;margin:18px 0 0 auto;border:2px solid #222}
+.a4 .vb td,.a4 .vb th{padding:5px 8px;font-size:12px}
+.a4 .vb th{border-bottom:1px solid #222;text-align:right}
+.a4 .vb tr.b td{font-weight:700;border-top:1px solid #222}
+.a4 .note{background:#FFF4D6;padding:6px 10px;margin:10px 0 0}
+.a4 .af{margin-top:auto;padding-top:24px;border-top:1px solid #ccc;color:#666;font-size:10.5px;text-align:center}
+.app{width:420px;padding:26px 26px 22px;font:14px/1.45 -apple-system,"Segoe UI",Roboto,Arial,sans-serif}
+.app .hd{display:flex;align-items:center;gap:8px;font-size:19px;font-weight:700;margin-bottom:18px}
+.app .hd small{margin-left:auto;font-size:11px;color:#777;font-weight:400;text-align:right}
+.app h2{font-size:22px;margin:0}
+.app .mt{color:#555;margin-bottom:14px}
+.app .tot{display:flex;justify-content:space-between;font-size:20px;font-weight:700;border-top:1px solid #ddd;border-bottom:1px solid #ddd;padding:10px 0;margin-bottom:10px}
+.app .lr{display:flex;justify-content:space-between;gap:10px;padding:3px 0}
+.app .q{display:inline-block;min-width:20px;border:1px solid #ccc;text-align:center;font-size:12px;margin-right:6px}
+.app .sep{border-top:1px solid #eee;margin:8px 0}
+.app .pay{border:2px solid #3EC6C9;padding:8px 10px;margin:12px 0}
+.app .od{color:#444;font-size:13px}
+.app .disc{margin-top:16px;color:#888;font-size:11.5px;border-top:1px solid #eee;padding-top:10px}
+.mail{width:640px;font:14px/1.55 "Segoe UI",Arial,sans-serif}
+.mail .ms{font-size:19px;font-weight:600;padding:20px 24px 14px;border-bottom:1px solid #e5e5e5}
+.mail .msg{padding:16px 24px;border-bottom:1px solid #eee}
+.mail .mf{display:flex;gap:12px;align-items:center;margin-bottom:10px}
+.mail .av{width:38px;height:38px;border-radius:50%;background:#5C6BC0;color:#fff;display:grid;place-items:center;font-weight:700;font-size:14px;flex:none}
+.mail .mm{color:#666;font-size:12.5px}
+.mail p{margin:0 0 8px}
+.mail .chip{display:inline-flex;align-items:center;gap:6px;border:1px solid #ccc;padding:5px 10px;font-size:12.5px;margin-top:4px}
+
+/* hidden demo controls */
+.dev{position:fixed;right:16px;bottom:16px;width:460px;max-height:82vh;background:#14202B;color:#E8EEF3;z-index:300;font:12.5px/1.45 ui-monospace,Menlo,Consolas,monospace;border-radius:6px;box-shadow:0 10px 30px rgba(0,0,0,.45);display:flex;flex-direction:column}
+.dev .dh{display:flex;align-items:center;gap:10px;padding:10px 12px;border-bottom:1px solid #2B3A48}
+.dev .dh span{color:#8FA3B5}
+.dev .dh button{margin-left:auto;background:none;border:0;color:#fff;font-size:20px;line-height:1}
+.dev .db{padding:8px 12px 12px;overflow:auto}
+.dev .dr{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin:6px 0}
+.dev .dr>span{color:#8FA3B5;width:86px}
+.dev button.b{background:#24384A;border:1px solid #39536B;color:#E8EEF3;padding:4px 8px;border-radius:3px;font:inherit}
+.dev button.b.on{background:#2F74D0;border-color:#2F74D0}
+.dev button.b.warn{background:#7A4B00;border-color:#A86C00}
+.dev input[type=text]{flex:1;min-width:0;background:#0D161F;border:1px solid #39536B;color:#E8EEF3;padding:4px 6px;font:inherit}
+.dev .ok{color:#6FD39A}.dev .no{color:#F2A0A0}
+.dev pre{background:#0D161F;margin:8px 0 0;padding:8px;max-height:300px;overflow:auto;white-space:pre-wrap;word-break:break-all;font-size:11.5px}
+</style>
+</head>
+<body>
+<header class="top" id="top"></header>
+<main class="main"><section class="left" id="left"></section><section class="right" id="right"></section></main>
+<div id="layer"></div>
+<div id="toast" class="toast" hidden></div>
+<aside id="dev" class="dev" hidden></aside>
+<input type="file" id="fileIn" accept="image/*,application/pdf" multiple hidden>
+<script>
+'use strict';
+/* =====================================================================
+   LEDGERLINE – fake expense tool for the AI Apprentice demo
+   ---------------------------------------------------------------------
+   Everything here is fictional: product, company, people, projects and
+   receipts. Change the story in CONFIG, DOCS and seed() below.
+
+   EVENTS OUT  (every meaningful user action)
+     1. window event      window.addEventListener('expense-demo', e => e.detail)
+     2. JS API            ExpenseDemo.on(evt => ...)
+     3. postMessage       to window.parent (if iframed) and window.opener:
+                          {source:'expense-demo', event}
+     4. BroadcastChannel  new BroadcastChannel('expense-demo')  (same-origin tabs)
+     5. HTTP POST         open with ?events=http://localhost:8787/events
+     Shape: {id, type, t (seconds since session start), at (ISO), session_id,
+             user, role ('expert' | 'new_hire'), screen, ...payload}
+     Main types: screen_changed, report_created, expense_form_opened,
+       field_changed, dropdown_opened, guest_added, guest_removed,
+       allocation_changed, project_selected, attachment_added,
+       document_opened, document_closed, save_clicked, save_requested,
+       save_blocked, expense_saved, report_submitted, comment_posted,
+       user_activity (typing / pointer / scroll, max 1 per second per kind)
+
+   COMMANDS IN  (postMessage, BroadcastChannel or ExpenseDemo.command)
+     {target:'expense-demo', cmd:'guard', enabled:true}   tutor takes over Save
+     {target:'expense-demo', cmd:'save_decision', request_id, allow:false,
+        message:'Sabine would stop here…', fields:['type_of_meal']}
+     {target:'expense-demo', cmd:'highlight', fields:['type_of_meal'], message}
+     {target:'expense-demo', cmd:'clear_highlight'}
+     {target:'expense-demo', cmd:'switch_user', user:'lena'}
+     {target:'expense-demo', cmd:'open_document', doc_id:'r1-inv'}
+     {target:'expense-demo', cmd:'reset'}  /  {…, cmd:'new_session'}
+     {target:'expense-demo', cmd:'get_state'}            → emits type 'state'
+
+   SAVE GUARD  With no guard connected, Save works instantly. Once a guard
+     is connected (command above, ExpenseDemo.setSaveGuard(fn) or ?guard=1),
+     Save emits save_requested and waits up to CONFIG.guardTimeoutMs for a
+     save_decision, then saves anyway (fail-open, so the demo never hangs).
+
+   URL options  ?user=lena  ?dev=1  ?guard=1  ?reset=1  ?events=<url>
+   Hidden demo controls: Alt+Shift+D
+   ===================================================================== */
+
+const CHANNEL = 'expense-demo';
+
+const CONFIG = {
+  product: {name: 'ledgerline', suffix: 'enterprise'},
+  company: 'Nordhaven Consulting Group',
+  legalEntity: {name: 'Nordhaven Consulting GmbH', address: 'Friedrichstraße 112, 10117 Berlin'},
+  homeCountry: 'Germany',
+  vat: {reduced: 7, standard: 19},
+  guardTimeoutMs: 20000,
+  users: {
+    sabine: {id: 'sabine', name: 'Sabine Keller', title: 'CONS', role: 'expert', office: 'BERLIN', lastLogin: '09/30/2026 at 6:12 PM'},
+    lena: {id: 'lena', name: 'Lena Brandt', title: 'ASC', role: 'new_hire', office: 'BERLIN', lastLogin: '10/02/2026 at 9:03 AM'},
+  },
+  colleagues: [
+    {name: 'Sabine Keller', title: 'CONS'}, {name: 'Lena Brandt', title: 'ASC'},
+    {name: 'Jonas Weber', title: 'PL'}, {name: 'Ana Souza', title: 'PL'},
+    {name: 'Mira Okafor', title: 'ASC'}, {name: 'Tobias Lindqvist', title: 'CONS'},
+    {name: 'Felix Krämer', title: 'CONS'}, {name: 'Clara Nguyen', title: 'CONS'},
+    {name: 'Elif Demir', title: 'ASC'}, {name: 'Max Oberle', title: 'ASC'},
+    {name: 'Ruben Hartmann', title: 'ASC'}, {name: 'Hanna Petrov', title: 'PRIN'},
+    {name: 'David Achterberg', title: 'MDP'},
+  ],
+  projects: [
+    {code: '61004827.1.1', name: 'Halden AG: Pricing Diagnostic', unit: '4120000 Industrial Goods: Germany'},
+    {code: '61005112.1.1', name: 'Vireo Health: Post-Merger Integration', unit: '4310000 Health Care: DACH'},
+    {code: '61003390.2.1', name: 'Kessler Mobility: Cost Transformation', unit: '4150000 Automotive: Germany'},
+    {code: '39280000.1.1', name: 'Industrial Goods Practice (internal)', unit: '3928000 IG Practice: Germany'},
+    {code: '39100000.1.1', name: 'Berlin Office: Team Events (internal)', unit: '3910000 Office Berlin'},
+  ],
+  offices: ['BERLIN', 'DÜSSELDORF', 'FRANKFURT', 'HAMBURG', 'MUNICH', 'VIENNA'],
+  currencies: [
+    {code: 'EUR', label: 'EUR - European Monetary Union'}, {code: 'CHF', label: 'CHF - Swiss Franc'},
+    {code: 'CZK', label: 'CZK - Czech Koruna'}, {code: 'GBP', label: 'GBP - British Pound'},
+    {code: 'USD', label: 'USD - US Dollar'},
+  ],
+  locations: ['Germany', 'Austria', 'Switzerland', 'Czech Republic', 'France', 'Netherlands', 'United Kingdom', 'United States'],
+  mealTypes: ['Take Away', 'Eat In'],
+};
+
+const LABELS = {
+  transaction_date: 'Transaction Date', spent: 'Spent', currency: 'Currency', location: 'Location',
+  business_purpose: 'Business Purpose', meal_amount: 'Meal Amount', drink_amount: 'Drink Amount',
+  tip_amount: 'Tip Amount', restaurant_name: 'Restaurant Name', restaurant_address: 'Restaurant Address',
+  type_of_meal: 'Type of Meal', project: 'Project', guests: 'Guests / Recipients', attachments: 'Attachments',
+};
+const NUM_FIELDS = ['spent', 'meal_amount', 'drink_amount', 'tip_amount'];
+
+/* ---------- small utilities ---------- */
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'}[c]));
+const round2 = x => Math.round((x + Number.EPSILON) * 100) / 100;
+const cents = x => Math.round(x * 100);
+const uid = (p = 'id') => p + '_' + Math.random().toString(36).slice(2, 9);
+const money = n => (Number(n) || 0).toFixed(2);
+const de = n => (Number(n) || 0).toFixed(2).replace('.', ',');
+const pad = n => String(n).padStart(2, '0');
+const isoToday = () => { const d = new Date(); return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`; };
+const usDate = iso => { if (!iso) return ''; const [y, m, d] = iso.split('-'); return `${m}/${d}/${y}`; };
+const deDate = iso => { const [y, m, d] = iso.split('-'); return `${d}.${m}.${y}`; };
+const weekday = iso => ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][new Date(iso + 'T12:00:00').getDay()];
+const pctTxt = p => (Math.abs(p - Math.round(p)) < 0.001 ? Math.round(p) : p.toFixed(2)) + ' %';
+const clone = o => JSON.parse(JSON.stringify(o));
+const initials = n => n.split(/\s+/).map(w => w[0]).slice(0, 2).join('').toUpperCase();
+function parseNum(s) {
+  if (typeof s === 'number') return s;
+  s = String(s || '').replace(/[%€\s]/g, '');
+  if (!s) return 0;
+  if (s.includes(',') && s.includes('.')) s = s.lastIndexOf(',') > s.lastIndexOf('.') ? s.replace(/\./g, '').replace(',', '.') : s.replace(/,/g, '');
+  else s = s.replace(',', '.');
+  const n = parseFloat(s);
+  return isFinite(n) ? round2(n) : 0;
+}
+
+/* ---------- icons ---------- */
+const ICON = {
+  menu: `<svg width="26" height="20" viewBox="0 0 26 20" aria-hidden="true"><path d="M1 2h24M1 10h24M1 18h24" stroke="#333" stroke-width="2.6" stroke-linecap="round"/></svg>`,
+  help: `<svg width="30" height="30" viewBox="0 0 30 30" aria-hidden="true"><circle cx="15" cy="15" r="12" fill="none" stroke="#222" stroke-width="2.2"/><path d="M11.6 11.8a3.5 3.5 0 1 1 5.2 3.1c-1.1.6-1.8 1.3-1.8 2.6v.8" fill="none" stroke="#222" stroke-width="2.2" stroke-linecap="round"/><circle cx="15" cy="21.6" r="1.4" fill="#222"/></svg>`,
+  chev: `<svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M3 6l5 5 5-5" fill="none" stroke="#222" stroke-width="2.2"/></svg>`,
+  logo: `<svg width="34" height="34" viewBox="0 0 34 34" aria-hidden="true"><rect width="34" height="34" rx="6" fill="#2F8FE6"/><path d="M10 6.5h14v21l-2.33-1.6-2.33 1.6-2.34-1.6-2.33 1.6-2.34-1.6L10 27.5z" fill="#fff"/><path d="M13.5 12h7M13.5 16h7M13.5 20h4.5" stroke="#2F8FE6" stroke-width="1.9" stroke-linecap="round"/></svg>`,
+  listDoc: (s = 24, c = '#fff') => `<svg width="${s}" height="${s}" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="2.5" width="18" height="19" rx="1.5" fill="none" stroke="${c}" stroke-width="2"/><path d="M7 8h1.5M7 12h1.5M7 16h1.5M11 8h6M11 12h6M11 16h6" stroke="${c}" stroke-width="2" stroke-linecap="round"/></svg>`,
+  plusSq: (c = '#2F74D0') => `<svg width="22" height="22" viewBox="0 0 22 22" aria-hidden="true"><rect width="22" height="22" rx="2" fill="#fff"/><path d="M11 5v12M5 11h12" stroke="${c}" stroke-width="2.4"/></svg>`,
+  back: `<svg width="30" height="30" viewBox="0 0 30 30" aria-hidden="true"><path d="M26 15H6M14 6l-9 9 9 9" fill="none" stroke="#fff" stroke-width="3"/></svg>`,
+  sort: `<svg width="32" height="24" viewBox="0 0 32 24" aria-hidden="true"><path d="M2 3h28M2 12h20M2 21h12" stroke="#fff" stroke-width="3"/></svg>`,
+  plusCircle: `<svg width="36" height="36" viewBox="0 0 36 36" aria-hidden="true"><circle cx="18" cy="18" r="15" fill="none" stroke="#fff" stroke-width="2.6"/><path d="M18 10v16M10 18h16" stroke="#fff" stroke-width="2.6"/></svg>`,
+  info: `<svg width="28" height="28" viewBox="0 0 28 28" aria-hidden="true"><circle cx="14" cy="14" r="11.5" fill="none" stroke="#222" stroke-width="2"/><path d="M14 12.5v7" stroke="#222" stroke-width="2.4"/><circle cx="14" cy="8.6" r="1.5" fill="#222"/></svg>`,
+  infoSm: `<svg width="20" height="20" viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="8.2" fill="none" stroke="#333" stroke-width="1.4"/><path d="M10 8.8v5.4" stroke="#333" stroke-width="1.8"/><circle cx="10" cy="6.2" r="1.1" fill="#333"/></svg>`,
+  infoGrey: `<svg width="20" height="20" viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="9" fill="#8e8e8e"/><path d="M10 8.8v5.4" stroke="#fff" stroke-width="2"/><circle cx="10" cy="5.9" r="1.2" fill="#fff"/></svg>`,
+  comment: (c = '#2F5FB3', s = 14) => `<svg width="${s}" height="${s}" viewBox="0 0 16 16" aria-hidden="true"><path d="M1.5 2h13v9.5H5L1.5 14.5z" fill="${c}"/><path d="M4 5h8M4 8h6" stroke="#fff" stroke-width="1.3"/></svg>`,
+  clip: (c = '#2F5FB3', s = 14) => `<svg width="${s}" height="${s * 1.2}" viewBox="0 0 14 17" aria-hidden="true"><path d="M10.5 5.5v6.2a3.5 3.5 0 0 1-7 0V4a2.3 2.3 0 0 1 4.6 0v7.4a1.1 1.1 0 0 1-2.2 0V5.5" fill="none" stroke="${c}" stroke-width="1.5" stroke-linecap="round"/></svg>`,
+  warn: (c = '#333', s = 20) => `<svg width="${s}" height="${s}" viewBox="0 0 20 20" aria-hidden="true"><path d="M10 1.8L19 18H1z" fill="${c}"/><path d="M10 7.2v5.3" stroke="#fff" stroke-width="2"/><circle cx="10" cy="15.1" r="1.1" fill="#fff"/></svg>`,
+  check: `<svg width="20" height="20" viewBox="0 0 20 20" aria-hidden="true"><path d="M3 10.5l4.5 4.5L17.5 5" fill="none" stroke="#2E7D4F" stroke-width="2.2"/></svg>`,
+  search: `<svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true"><circle cx="10" cy="10" r="7" fill="none" stroke="#999" stroke-width="2"/><path d="M15.2 15.2L22 22" stroke="#999" stroke-width="2.2"/></svg>`,
+  grid: `<svg width="26" height="20" viewBox="0 0 26 20" aria-hidden="true"><g fill="#2F74D0"><rect x="0" y="0" width="7" height="5"/><rect x="9" y="0" width="7" height="5"/><rect x="18" y="0" width="7" height="5"/><rect x="0" y="7" width="7" height="5"/><rect x="9" y="7" width="7" height="5"/><rect x="18" y="7" width="7" height="5"/><rect x="0" y="14" width="7" height="5"/><rect x="9" y="14" width="7" height="5"/><rect x="18" y="14" width="7" height="5"/></g></svg>`,
+  listv: `<svg width="28" height="22" viewBox="0 0 28 22" aria-hidden="true"><rect x="1" y="1" width="26" height="20" fill="none" stroke="#222" stroke-width="2" stroke-dasharray="4 3"/><rect x="7" y="6" width="14" height="10" fill="none" stroke="#222" stroke-width="2"/></svg>`,
+  upload: `<svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true"><path d="M9 13V2M4.5 6.5L9 2l4.5 4.5M2 16h14" fill="none" stroke="#fff" stroke-width="2.2"/></svg>`,
+  galleryIc: `<svg width="18" height="16" viewBox="0 0 18 16" aria-hidden="true"><rect x="1" y="1" width="16" height="12" fill="none" stroke="#2F74D0" stroke-width="1.8"/><path d="M5 15h8" stroke="#2F74D0" stroke-width="1.8"/></svg>`,
+  createNew: `<svg width="20" height="22" viewBox="0 0 20 22" aria-hidden="true"><path d="M2 1h11l5 5v15H2z" fill="#1F4E8C"/><path d="M10 9v8M6 13h8" stroke="#fff" stroke-width="2.2"/></svg>`,
+  coMark: `<svg width="64" height="64" viewBox="0 0 64 64" aria-hidden="true"><circle cx="32" cy="32" r="30" fill="#0F5257"/><path d="M12 38c6-6 12-6 20 0s14 6 20 0" fill="none" stroke="#9FD6C9" stroke-width="4" stroke-linecap="round"/><path d="M12 28c6-6 12-6 20 0s14 6 20 0" fill="none" stroke="#fff" stroke-width="4" stroke-linecap="round"/><path d="M32 8v10" stroke="#fff" stroke-width="4" stroke-linecap="round"/></svg>`,
+  bitebox: `<svg width="26" height="26" viewBox="0 0 26 26" aria-hidden="true"><circle cx="13" cy="13" r="13" fill="#1DB954"/><path d="M9 6v14h5.5a4 4 0 0 0 0-8H9" fill="none" stroke="#fff" stroke-width="2.6" stroke-linejoin="round"/></svg>`,
+};
+const TILE_ICONS = {
+  airfare: `<svg width="50" height="50" viewBox="0 0 48 48" aria-hidden="true"><path d="M41 7c-1.8-1.8-4.6-1.2-6.4.6L28 14.2 11.5 9.4 7.8 13.1l12.6 7.7-6.7 6.7-5-1-2.8 2.8 6.6 3.8 3.8 6.6 2.8-2.8-1-5 6.7-6.7 7.7 12.6 3.7-3.7-4.8-16.5 6.6-6.6C42.2 11.6 42.8 8.8 41 7z" fill="#5AA9F0" stroke="#1F3B57" stroke-width="2" stroke-linejoin="round"/></svg>`,
+  ground: `<svg width="50" height="50" viewBox="0 0 48 48" aria-hidden="true"><path d="M8 27l4-10.5c.6-1.6 2-2.5 3.7-2.5h16.6c1.7 0 3.1.9 3.7 2.5L40 27v9H8z" fill="#E0412E" stroke="#5a1a12" stroke-width="2"/><path d="M14 17.5h20l2.6 7.5H11.4z" fill="#BFE3F8" stroke="#5a1a12" stroke-width="1.6"/><rect x="10" y="35" width="7" height="5" rx="1" fill="#333"/><rect x="31" y="35" width="7" height="5" rx="1" fill="#333"/><circle cx="14" cy="30.5" r="2.2" fill="#FFD25A"/><circle cx="34" cy="30.5" r="2.2" fill="#FFD25A"/></svg>`,
+  hotel: `<svg width="50" height="50" viewBox="0 0 48 48" aria-hidden="true"><rect x="13" y="7" width="22" height="37" fill="#B9C0C8" stroke="#3f464d" stroke-width="2"/><rect x="17" y="3" width="14" height="5" fill="#59616a"/><g fill="#59616a"><rect x="17" y="12" width="4" height="4"/><rect x="22" y="12" width="4" height="4"/><rect x="27" y="12" width="4" height="4"/><rect x="17" y="19" width="4" height="4"/><rect x="22" y="19" width="4" height="4"/><rect x="27" y="19" width="4" height="4"/><rect x="17" y="26" width="4" height="4"/><rect x="22" y="26" width="4" height="4"/><rect x="27" y="26" width="4" height="4"/></g><rect x="21" y="35" width="6" height="9" fill="#E8B03A" stroke="#3f464d" stroke-width="1.5"/></svg>`,
+  meals: `<svg width="50" height="50" viewBox="0 0 48 48" aria-hidden="true"><path d="M8 6v11c0 2 1.4 3.2 3 3.2V42" stroke="#2b3138" stroke-width="2.6" fill="none" stroke-linecap="round"/><path d="M5.2 6v8.5M10.8 6v8.5" stroke="#2b3138" stroke-width="2.2" stroke-linecap="round"/><path d="M18.5 42V6c3.2 2 5.2 7 5.2 14h-5.2" fill="#9aa3ad" stroke="#2b3138" stroke-width="2" stroke-linejoin="round"/><circle cx="35" cy="14" r="6" fill="#F5C089" stroke="#2b3138" stroke-width="2"/><path d="M25.5 42v-8c0-6 4.3-10 9.5-10s9.5 4 9.5 10v8z" fill="#3E86D6" stroke="#2b3138" stroke-width="2"/><path d="M35 25l-2 5 2 6 2-6z" fill="#E8B03A"/></svg>`,
+  telecom: `<svg width="50" height="50" viewBox="0 0 48 48" aria-hidden="true"><path d="M6 17c0-5 8-8 18-8s18 3 18 8v3h-8v-4H14v4H6z" fill="#2b3138"/><path d="M12 22h24l4 18H8z" fill="#3a4148" stroke="#2b3138" stroke-width="2"/><circle cx="24" cy="31" r="6.5" fill="#d9dde2" stroke="#2b3138" stroke-width="1.6"/><circle cx="24" cy="31" r="2" fill="#2b3138"/></svg>`,
+  other: `<svg width="50" height="50" viewBox="0 0 48 48" aria-hidden="true"><rect x="4" y="9" width="32" height="24" rx="2" fill="#3E86D6" stroke="#1F3B57" stroke-width="2"/><circle cx="14" cy="18" r="4" fill="#F5C089"/><path d="M8 28c1-4 3.5-5.5 6-5.5s5 1.5 6 5.5z" fill="#fff"/><path d="M23 16h9M23 21h9" stroke="#fff" stroke-width="2"/><g stroke="#8a6a12" stroke-width="1.4"><ellipse cx="37" cy="40" rx="8" ry="3" fill="#F2C230"/><ellipse cx="37" cy="36" rx="8" ry="3" fill="#F2C230"/><ellipse cx="37" cy="32" rx="8" ry="3" fill="#F7D560"/></g></svg>`,
+  relocation: `<svg width="50" height="50" viewBox="0 0 48 48" aria-hidden="true"><rect x="3" y="12" width="26" height="22" fill="#E0412E" stroke="#5a1a12" stroke-width="2"/><path d="M29 18h9l6 8v8H29z" fill="#E0412E" stroke="#5a1a12" stroke-width="2"/><path d="M32 20h5l4 6h-9z" fill="#BFE3F8"/><circle cx="12" cy="37" r="4.5" fill="#333"/><circle cx="36" cy="37" r="4.5" fill="#333"/><rect x="8" y="16" width="16" height="9" fill="#fff" opacity=".85"/></svg>`,
+  perdiem: `<svg width="50" height="50" viewBox="0 0 48 48" aria-hidden="true"><path d="M6 14h28v28H6z" fill="#fff" stroke="#3f464d" stroke-width="2"/><path d="M10 22h14M10 28h18M10 34h12" stroke="#3E86D6" stroke-width="2"/><path d="M40 4l4 4-18 18-6 2 2-6z" fill="#3E86D6" stroke="#1F3B57" stroke-width="1.8"/></svg>`,
+  entertainment: `<svg width="50" height="50" viewBox="0 0 48 48" aria-hidden="true"><path d="M6 14l12-3 3 12c.8 3.4-1.3 6.8-4.7 7.6s-6.8-1.3-7.6-4.7z" fill="#F7B547" stroke="#7a4a00" stroke-width="2"/><path d="M42 14l-12-3-3 12c-.8 3.4 1.3 6.8 4.7 7.6s6.8-1.3 7.6-4.7z" fill="#F7B547" stroke="#7a4a00" stroke-width="2"/><path d="M13 31l2 9M35 31l-2 9M11 40h7M30 40h7" stroke="#7a4a00" stroke-width="2"/><path d="M20 6l2-3M24 6V2M28 6l-2-3" stroke="#7a4a00" stroke-width="1.6"/></svg>`,
+};
+const TILES = [
+  {id: 'airfare', label: 'Airfare'}, {id: 'ground', label: 'Ground Transportation', caret: true},
+  {id: 'hotel', label: 'Hotel'}, {id: 'meals', label: 'Meals / Drinks'},
+  {id: 'telecom', label: 'Internet / Telecom'}, {id: 'other', label: 'Other Business Expenses', caret: true},
+  {id: 'relocation', label: 'Relocation Expenses', caret: true}, {id: 'perdiem', label: 'Per Diems', caret: true},
+  {id: 'entertainment', label: 'Entertainment - Non Meals'},
+];
+const mealsIcon = s => TILE_ICONS.meals.replace(/width="50" height="50"/, `width="${s}" height="${s}"`);
+
+/* ---------- receipts and other documents ---------- */
+const DOCS = {};
+const doc = d => (DOCS[d.id] = d);
+const PL_SAB = {from: 'Jonas Weber', email: 'jonas.weber@nordhaven.example'};
+const PL_LEN = {from: 'Ana Souza', email: 'ana.souza@nordhaven.example'};
+function approval(id, pl, to, date, time, subject, lines, file) {
+  return doc({id, kind: 'approval_email', style: 'mail', file, date, subject,
+    messages: [{...pl, to, date, time, body: lines}]});
+}
+
+// Expert session (Sabine)
+doc({id: 'r1-inv', kind: 'invoice', style: 'thermal', file: 'Receipt – Trattoria da Lupo.jpg', date: '2026-09-29', time: '13:42',
+  supplier: {name: 'Trattoria da Lupo', address: 'Bergmannstraße 21, 10961 Berlin', phone: '030 6912 4471', taxNo: '29/417/03821'},
+  number: '4471', table: 'Tisch 12', server: 'Marco', consumption: 'im Haus', payment: 'EC-Karte',
+  items: [[2, 'Pasta al limone', 14.50, 7], [1, 'Risotto ai funghi', 16.90, 7], [1, 'Insalata mista', 6.50, 7], [2, 'Acqua minerale 0,75l', 6.50, 19], [3, 'Espresso', 2.60, 19]], tip: 4.80});
+approval('r1-ok', PL_SAB, 'Sabine Keller', '2026-09-29', '15:06', 'RE: Approval – team lunch 29.09. at Trattoria da Lupo',
+  ['Hi Sabine,', 'approved – team lunch at Trattoria da Lupo on 09/29/2026, EUR 78.00 incl. tip.', 'Participants: Sabine Keller, Mira Okafor, Tobias Lindqvist.', 'Thanks,', 'Jonas'], 'Approval – lunch 29.09. (J. Weber).msg');
+
+doc({id: 'r2-conf', kind: 'order_confirmation', style: 'app', file: 'Bitebox order confirmation 48213.pdf', date: '2026-09-30', time: '22:41',
+  platform: 'Bitebox', orderNo: '48213', customer: 'Sabine', restaurant: 'Saigon Kitchen', restaurantAddress: 'Kantstraße 30, 10623 Berlin',
+  deliverTo: 'Nordhaven Consulting, Friedrichstraße 112, 10117 Berlin', card: 'Visa •••• 4417',
+  items: [[1, 'Pho Bo', 15.90], [1, 'Bun Cha', 14.50], [1, 'Com Ga', 13.90], [1, 'Curry Tofu', 16.90], [2, 'Frühlingsrollen', 5.50], [4, 'Hausgemachte Limonade', 3.90]],
+  fees: [['Delivery fee', 2.99], ['Service fee', 1.99]], tip: 5.00});
+doc({id: 'r2-inv', kind: 'invoice', style: 'a4', file: 'Bitebox invoice BBX-DE-2026-48213.pdf', date: '2026-09-30', issueDate: '2026-09-30',
+  brand: 'Bitebox', letterhead: {name: 'Bitebox Germany GmbH', lines: ['Kastanienallee 5', '10435 Berlin']},
+  onBehalf: {name: 'Saigon Kitchen', address: 'Kantstraße 30, 10623 Berlin', taxNo: '27/588/10342'},
+  customer: 'Sabine Keller', number: 'BBX-DE-2026-48213', payment: 'Visa',
+  items: [[1, 'Pho Bo', 15.90, 7], [1, 'Bun Cha', 14.50, 7], [1, 'Com Ga', 13.90, 7], [1, 'Curry Tofu', 16.90, 7], [2, 'Frühlingsrollen', 5.50, 7], [4, 'Hausgemachte Limonade', 3.90, 19], [1, 'Liefergebühr', 2.99, 19], [1, 'Servicegebühr', 1.99, 19], [1, 'Trinkgeld Kurier', 5.00, 0]],
+  footer: 'Bitebox Germany GmbH · Kastanienallee 5 · 10435 Berlin · Rechnung im Namen und für Rechnung des Restaurants'});
+approval('r2-ok', PL_SAB, 'Sabine Keller', '2026-09-30', '23:02', 'RE: Approval – team dinner delivery 30.09.',
+  ['Hi Sabine,', 'approved – dinner delivery from Saigon Kitchen via Bitebox on 09/30/2026, EUR 97.78 incl. courier tip.', 'Participants: Sabine Keller, Jonas Weber, Mira Okafor, Tobias Lindqvist.', 'Jonas'], 'Approval – dinner 30.09. (J. Weber).msg');
+
+doc({id: 'r3-inv', kind: 'invoice', style: 'thermal', file: 'Receipt – Brauhaus Kesselmann.jpg', date: '2026-10-01', time: '22:17',
+  supplier: {name: 'Brauhaus Kesselmann', address: 'Rosenthaler Straße 40, 10178 Berlin', phone: '030 2809 5531', taxNo: '30/226/71904'},
+  number: '20871', table: 'Tisch 7', server: 'Jana', consumption: 'im Haus', payment: 'Kreditkarte',
+  items: [[1, 'Schweinshaxe', 21.50, 7], [1, 'Wiener Schnitzel', 22.90, 7], [1, 'Käsespätzle', 17.90, 7], [1, 'Rinderroulade', 19.50, 7], [1, 'Bratwurst-Teller', 18.90, 7], [6, 'Pils 0,4l', 4.60, 19], [3, 'Apfelschorle 0,4l', 3.80, 19]], tip: 14.30});
+
+doc({id: 'r4-inv', kind: 'invoice', style: 'a4', file: 'Restaurant Kranich – Rechnung 2026-0912.pdf', date: '2026-09-23', issueDate: '2026-09-23',
+  letterhead: {name: 'Restaurant Kranich', lines: ['Paul-Lincke-Ufer 8', '10999 Berlin', 'Tel. 030 6107 2290', 'St.-Nr. 16/349/58210']},
+  number: '2026-0912', intro: 'Bewirtung von 9 Personen am 23.09.2026', payment: 'Kreditkarte',
+  items: [[9, 'Herbstmenü (3 Gänge)', 19.90, 7], [2, 'Riesling trocken 0,75l', 27.00, 19], [4, 'Mineralwasser 0,75l', 5.50, 19]], tip: 12.90,
+  footer: 'Restaurant Kranich · Paul-Lincke-Ufer 8 · 10999 Berlin · Vielen Dank für Ihren Besuch'});
+approval('r4-ok', PL_SAB, 'Sabine Keller', '2026-09-23', '17:45', 'RE: Approval – workshop dinner 23.09. Restaurant Kranich',
+  ['Hi Sabine,', 'approved – workshop dinner at Restaurant Kranich on 09/23/2026, EUR 268.00 incl. tip, 9 participants (attendee list attached to your request).', 'Jonas'], 'Approval – dinner 23.09. (J. Weber).msg');
+doc({id: 'r4-corr', kind: 'correction_email', style: 'mail', file: 'Correction request – Restaurant Kranich.msg', date: '2026-09-28',
+  subject: 'Bitte um Rechnungskorrektur – Rechnung Nr. 2026-0912',
+  messages: [
+    {from: 'Sabine Keller', email: 'sabine.keller@nordhaven.example', to: 'info@restaurant-kranich.example', date: '2026-09-24', time: '09:12',
+      body: ['Sehr geehrte Damen und Herren,', 'für unsere Bewirtung am 23.09.2026 (Rechnung Nr. 2026-0912, 255,10 €) benötigen wir eine Rechnung, die auf unser Unternehmen ausgestellt ist:', 'Nordhaven Consulting GmbH, Friedrichstraße 112, 10117 Berlin', 'Könnten Sie uns bitte eine korrigierte Rechnung senden? Vielen Dank!', 'Sabine Keller']},
+    {from: 'Restaurant Kranich', email: 'info@restaurant-kranich.example', to: 'Sabine Keller', date: '2026-09-28', time: '16:40',
+      body: ['Liebe Frau Keller,', 'anbei die korrigierte Rechnung.', 'Herzliche Grüße', 'Ihr Team vom Restaurant Kranich'], attach: 'Rechnung_2026-0912-K.pdf'},
+  ]});
+doc({id: 'r4-inv2', kind: 'invoice', style: 'a4', file: 'Restaurant Kranich – Rechnung 2026-0912-K (korrigiert).pdf', date: '2026-09-23', issueDate: '2026-09-28',
+  letterhead: {name: 'Restaurant Kranich', lines: ['Paul-Lincke-Ufer 8', '10999 Berlin', 'Tel. 030 6107 2290', 'St.-Nr. 16/349/58210']},
+  recipient: {name: CONFIG.legalEntity.name, address: CONFIG.legalEntity.address},
+  number: '2026-0912-K', correctionOf: '2026-0912 vom 23.09.2026', intro: 'Bewirtung von 9 Personen am 23.09.2026', payment: 'Kreditkarte',
+  items: [[9, 'Herbstmenü (3 Gänge)', 19.90, 7], [2, 'Riesling trocken 0,75l', 27.00, 19], [4, 'Mineralwasser 0,75l', 5.50, 19]], tip: 12.90,
+  footer: 'Restaurant Kranich · Paul-Lincke-Ufer 8 · 10999 Berlin · Vielen Dank für Ihren Besuch'});
+
+// New-hire session (Lena)
+doc({id: 'n1-inv', kind: 'invoice', style: 'thermal', file: 'Receipt – Café Nordlicht.jpg', date: '2026-10-01', time: '12:51',
+  supplier: {name: 'Café Nordlicht', address: 'Torstraße 133, 10119 Berlin', phone: '030 4405 1187', taxNo: '31/502/66417'},
+  number: '7712', table: 'Tisch 4', server: 'Ole', consumption: 'im Haus', payment: 'EC-Karte',
+  items: [[3, 'Quiche Lorraine', 9.80, 7], [1, 'Zimtschnecke', 4.50, 7], [3, 'Cappuccino', 3.90, 19]], tip: 2.40});
+approval('n1-ok', PL_LEN, 'Lena Brandt', '2026-10-01', '14:20', 'RE: Approval – lunch 01.10. Café Nordlicht',
+  ['Hi Lena,', 'approved – lunch at Café Nordlicht on 10/01/2026, EUR 48.00 incl. tip.', 'Participants: Lena Brandt, Elif Demir, Max Oberle.', 'Ana'], 'Approval – lunch 01.10. (A. Souza).msg');
+doc({id: 'n2-inv', kind: 'invoice', style: 'thermal', file: 'Receipt – Osteria Ponte Vecchio.jpg', date: '2026-09-30', time: '21:14',
+  supplier: {name: 'Osteria Ponte Vecchio', address: 'Spielhagenstraße 3, 10585 Berlin', phone: '030 3427 9010', taxNo: '27/615/40028'},
+  number: '3390', table: 'Tisch 2', server: 'Luca', consumption: 'im Haus', payment: 'Kreditkarte',
+  items: [[1, 'Tagliatelle al ragù', 19.90, 7], [1, 'Saltimbocca', 24.50, 7], [1, 'Branzino', 22.50, 7], [1, 'Gnocchi', 21.00, 7], [1, 'Montepulciano 0,75l', 32.00, 19], [2, 'Acqua frizzante 0,75l', 5.50, 19]], tip: 9.10});
+approval('n2-ok', PL_LEN, 'Lena Brandt', '2026-09-30', '22:05', 'RE: Approval – team dinner 30.09.',
+  ['Hi Lena,', 'approved – team dinner at Osteria Ponte Vecchio on 09/30/2026, EUR 140.00 incl. tip.', 'Participants: Lena Brandt, Elif Demir, Max Oberle, Ruben Hartmann.', 'Ana'], 'Approval – dinner 30.09. (A. Souza).msg');
+doc({id: 'n3-conf', kind: 'order_confirmation', style: 'app', file: 'Bitebox order confirmation 51907.pdf', date: '2026-10-02', time: '21:37',
+  platform: 'Bitebox', orderNo: '51907', customer: 'Lena', restaurant: 'Burger Werk', restaurantAddress: 'Simon-Dach-Straße 9, 10245 Berlin',
+  deliverTo: 'Nordhaven Consulting, Friedrichstraße 112, 10117 Berlin', card: 'Mastercard •••• 2290',
+  items: [[1, 'Classic Cheeseburger', 13.90], [1, 'Veggie Burger', 12.90], [2, 'Süßkartoffel-Pommes', 4.50], [2, 'Cola 0,33l', 3.20]],
+  fees: [['Delivery fee', 2.49], ['Service fee', 1.49]], tip: 3.00});
+approval('n3-ok', PL_LEN, 'Lena Brandt', '2026-10-02', '21:50', 'RE: Approval – late dinner 02.10.',
+  ['Hi Lena,', 'approved – dinner delivery from Burger Werk via Bitebox on 10/02/2026, EUR 49.18 incl. courier tip.', 'Participants: Lena Brandt, Ruben Hartmann.', 'Ana'], 'Approval – dinner 02.10. (A. Souza).msg');
+
+// History documents for Sabine's returned September report
+doc({id: 'h1-inv', kind: 'invoice', style: 'thermal', file: 'Receipt – Deli Hafenblick.jpg', date: '2026-09-14', time: '12:58',
+  supplier: {name: 'Deli Hafenblick', address: 'Am Kupfergraben 4, 10117 Berlin', phone: '030 2061 3380', taxNo: '34/118/20563'},
+  number: '1186', consumption: 'außer Haus', payment: 'EC-Karte',
+  items: [[3, 'Mittagstisch', 18.25, 7], [2, 'Apfelschorle 0,4l', 3.20, 19], [1, 'Wasser 0,5l', 2.50, 19]], tip: 0});
+doc({id: 'h2-inv', kind: 'invoice', style: 'thermal', file: 'Receipt – Ristorante Sole.jpg', date: '2026-09-15', time: '21:40',
+  supplier: {name: 'Ristorante Sole', address: 'Oranienburger Straße 32, 10117 Berlin', phone: '030 2830 4419', taxNo: '30/731/22816'},
+  number: '5530', table: 'Tisch 9', consumption: 'im Haus', payment: 'Kreditkarte',
+  items: [[4, 'Menù del giorno', 42.50, 7]], tip: 4.98});
+approval('h2-ok', PL_SAB, 'Sabine Keller', '2026-09-15', '22:10', 'RE: Approval – dinner 15.09. Ristorante Sole',
+  ['Hi Sabine,', 'approved – dinner at Ristorante Sole on 09/15/2026, EUR 174.98 incl. tip.', 'Participants: Sabine Keller, Jonas Weber, Felix Krämer, Clara Nguyen.', 'Jonas'], 'Approval – dinner 15.09. (J. Weber).msg');
+doc({id: 'h3-inv', kind: 'invoice', style: 'thermal', file: 'Receipt – Soupkultur.jpg', date: '2026-09-17', time: '13:05',
+  supplier: {name: 'Soupkultur', address: 'Kurfürstendamm 224, 10719 Berlin', phone: '030 8862 9273', taxNo: '24/409/33175'},
+  number: '0921', consumption: 'außer Haus', payment: 'EC-Karte',
+  items: [[2, 'Lunch Bowl', 13.90, 7], [2, 'Suppe des Tages', 9.50, 7], [2, 'Ingwer-Shot', 3.70, 19]], tip: 0});
+
+/* ---------- document maths and facts (also sent with events) ---------- */
+function groupsOf(items) {
+  const g = {};
+  for (const [q, , u, r] of items) g[r] = (g[r] || 0) + q * cents(u);
+  return Object.keys(g).map(Number).sort((a, b) => ((a === 0) - (b === 0)) || a - b).map(r => {
+    const gross = g[r] / 100, net = round2(gross / (1 + r / 100));
+    return {rate: r, gross: round2(gross), net, vat: round2(gross - net)};
+  });
+}
+function appTotals(d) {
+  const sub = d.items.reduce((s, [q, , u]) => s + q * cents(u), 0) / 100;
+  const fees = d.fees.reduce((s, [, a]) => s + cents(a), 0) / 100;
+  return {sub: round2(sub), fees: round2(fees), total: round2(sub + fees + d.tip)};
+}
+function factsOf(d) {
+  if (!d) return null;
+  if (d.kind === 'invoice') {
+    const g = groupsOf(d.items), total = round2(g.reduce((s, x) => s + x.gross, 0)), tip = d.tip || 0;
+    const sup = d.onBehalf || d.supplier || d.letterhead;
+    return {kind: 'invoice', supplier: sup.name, supplier_address: sup.address || (d.letterhead ? d.letterhead.lines.slice(0, 2).join(', ') : ''),
+      issued_by: d.onBehalf ? d.letterhead.name : null, invoice_no: d.number, service_date: d.date, invoice_date: d.issueDate || d.date,
+      consumption: d.consumption || null, vat_breakdown: g, invoice_total: total, tip, total_paid: round2(total + tip),
+      addressed_to: d.recipient ? `${d.recipient.name}, ${d.recipient.address}` : null, corrects: d.correctionOf || null, is_tax_invoice: true};
+  }
+  if (d.kind === 'order_confirmation') {
+    const t = appTotals(d);
+    return {kind: 'order_confirmation', platform: d.platform, supplier: d.restaurant, supplier_address: d.restaurantAddress, order_no: d.orderNo,
+      service_date: d.date, invoice_date: d.date, total_paid: t.total, tip: d.tip, vat_breakdown: null, is_tax_invoice: false,
+      note: 'States that it is not a tax invoice; invoice is downloadable on the platform website.'};
+  }
+  if (d.kind === 'approval_email' || d.kind === 'correction_email')
+    return {kind: d.kind, subject: d.subject, messages: d.messages.map(m => ({from: m.from, date: m.date, text: m.body.join(' ')}))};
+  if (d.kind === 'upload') return {kind: 'upload', file: d.file, mime: d.mime};
+  return null;
+}
+
+/* ---------- document rendering ---------- */
+const PAPER_W = {thermal: 400, a4: 640, app: 420, mail: 640};
+function renderDoc(d) {
+  if (!d) return '<div class="paper" style="width:400px;padding:40px">Document not available.</div>';
+  if (d.style === 'thermal') return renderThermal(d);
+  if (d.style === 'a4') return renderA4(d);
+  if (d.style === 'app') return renderApp(d);
+  if (d.style === 'mail') return renderMail(d);
+  if (d.kind === 'upload') {
+    if (d.mime && d.mime.startsWith('image/') && d.dataUrl) return `<img class="upimg" src="${d.dataUrl}" alt="${esc(d.file)}">`;
+    if (d.dataUrl) return `<object data="${d.dataUrl}" type="application/pdf" width="820" height="1060"><div class="paper" style="width:400px;padding:40px">${esc(d.file)}</div></object>`;
+    return `<div class="paper" style="width:400px;padding:40px">${esc(d.file)}<br><br>File content is not available after a reload.</div>`;
+  }
+  return '';
+}
+function renderThermal(d) {
+  const g = groupsOf(d.items), sum = round2(g.reduce((s, x) => s + x.gross, 0)), tip = d.tip || 0;
+  const code = r => ({7: 'A', 19: 'B', 0: 'C'}[r] || '');
+  const lr = (l, r, c = '') => `<div class="lr ${c}"><span>${l}</span><span>${r}</span></div>`;
+  return `<div class="paper thermal">
+<div class="c b lg">${esc(d.supplier.name)}</div><div class="c">${esc(d.supplier.address)}</div>
+<div class="c">Tel. ${esc(d.supplier.phone)}</div><div class="c">St.-Nr. ${esc(d.supplier.taxNo)}</div>
+<div class="hr"></div>
+${lr('RECHNUNG Nr. ' + esc(d.number), esc(d.table || ''))}
+${lr(deDate(d.date) + ' ' + d.time, d.server ? 'Bed.: ' + esc(d.server) : '')}
+${d.consumption ? `<div>Verzehr: ${esc(d.consumption)}</div>` : ''}
+<div class="hr"></div>
+${d.items.map(([q, n, u, r]) => lr(`${q} x ${esc(n)}`, `${de(q * cents(u) / 100)} ${code(r)}`)).join('')}
+<div class="hr"></div>
+${lr('SUMME', de(sum) + ' €', 'b')}
+<div class="hr"></div>
+<table><tr><td>MwSt</td><td>Netto</td><td>MwSt</td><td>Brutto</td></tr>
+${g.map(x => `<tr><td>${code(x.rate)} ${x.rate}%</td><td>${de(x.net)}</td><td>${de(x.vat)}</td><td>${de(x.gross)}</td></tr>`).join('')}</table>
+<div class="hr"></div>
+${tip ? lr('Trinkgeld', de(tip) + ' €') : ''}
+${lr('GESAMT', de(round2(sum + tip)) + ' €', 'b lg')}
+${lr('Zahlart: ' + esc(d.payment), '')}
+<div class="hr"></div><div class="c">Vielen Dank für Ihren Besuch!</div></div>`;
+}
+function renderA4(d) {
+  const g = groupsOf(d.items), sum = round2(g.reduce((s, x) => s + x.gross, 0)), tip = d.tip || 0;
+  const head = d.brand
+    ? `<div><div class="brand">${ICON.bitebox}${esc(d.brand)}</div><div>${esc(d.letterhead.name)}<br>${d.letterhead.lines.map(esc).join('<br>')}</div></div>`
+    : `<div><div class="lhn">${esc(d.letterhead.name)}</div>${d.letterhead.lines.map(esc).join('<br>')}</div>`;
+  return `<div class="paper a4">
+<div class="ah">${head}<div class="ar">Seite 1 von 1</div></div>
+${d.onBehalf ? `<div class="behalf">Rechnung ausgestellt von ${esc(d.letterhead.name)} im Namen und für Rechnung von:<br><b>${esc(d.onBehalf.name)}</b>, ${esc(d.onBehalf.address)} · St.-Nr. ${esc(d.onBehalf.taxNo)}</div>` : ''}
+<div class="recip">${d.recipient ? `<div class="sm">Rechnungsempfänger</div><b>${esc(d.recipient.name)}</b><br>${esc(d.recipient.address)}` : d.customer ? `<div class="sm">Kunde</div>${esc(d.customer)}` : ''}</div>
+<h3>Rechnung</h3>
+<table class="m2"><tr><td>Rechnungsnummer</td><td>${esc(d.number)}</td></tr><tr><td>Rechnungsdatum</td><td>${deDate(d.issueDate || d.date)}</td></tr><tr><td>Leistungsdatum</td><td>${deDate(d.date)}</td></tr></table>
+${d.correctionOf ? `<div class="note">Korrigierte Rechnung – ersetzt Rechnung Nr. ${esc(d.correctionOf)}.</div>` : ''}
+${d.intro ? `<p>${esc(d.intro)}</p>` : ''}
+<table class="its"><thead><tr><th>Menge</th><th>Beschreibung</th><th class="r">Einzelpreis</th><th class="r">USt</th><th class="r">Gesamt</th></tr></thead>
+<tbody>${d.items.map(([q, n, u, r]) => `<tr><td>${q}</td><td>${esc(n)}</td><td class="r">${de(u)} €</td><td class="r">${r} %</td><td class="r">${de(q * cents(u) / 100)} €</td></tr>`).join('')}</tbody></table>
+<table class="vb"><thead><tr><th style="text-align:left"></th><th>Netto</th><th>USt</th><th>Brutto</th></tr></thead><tbody>
+${g.map(x => `<tr><td>USt ${x.rate} %</td><td class="r">${de(x.net)} €</td><td class="r">${de(x.vat)} €</td><td class="r">${de(x.gross)} €</td></tr>`).join('')}
+<tr class="b"><td>Rechnungsbetrag</td><td></td><td></td><td class="r">${de(sum)} €</td></tr>
+${tip ? `<tr><td>Trinkgeld</td><td></td><td></td><td class="r">${de(tip)} €</td></tr><tr class="b"><td>Bezahlt (${esc(d.payment)})</td><td></td><td></td><td class="r">${de(round2(sum + tip))} €</td></tr>` : ''}
+</tbody></table>
+<div class="af">${esc(d.footer || '')}</div></div>`;
+}
+function renderApp(d) {
+  const t = appTotals(d);
+  const lr = (l, r) => `<div class="lr"><span>${l}</span><span>${r}</span></div>`;
+  return `<div class="paper app">
+<div class="hd">${ICON.bitebox}${esc(d.platform)}<small>${usDate(d.date)}<br>${d.time}</small></div>
+<h2>Thanks for ordering, ${esc(d.customer)}</h2><div class="mt">Here's your receipt for ${esc(d.restaurant)}.</div>
+<div class="tot"><span>Total</span><span>€${money(t.total)}</span></div>
+${d.items.map(([q, n, u]) => lr(`<span class="q">${q}</span>${esc(n)}`, '€' + money(q * cents(u) / 100))).join('')}
+<div class="sep"></div>
+${lr('Subtotal', '€' + money(t.sub))}${d.fees.map(([n, a]) => lr(esc(n), '€' + money(a))).join('')}${lr('Courier tip', '€' + money(d.tip))}
+<div class="pay"><b>Payments</b>${lr(`${esc(d.card)}<br><small>${usDate(d.date)} ${d.time}</small>`, '€' + money(t.total))}</div>
+<div class="od"><b>Order details</b><br>Delivered to ${esc(d.deliverTo)}<br>From ${esc(d.restaurant)}, ${esc(d.restaurantAddress)}</div>
+<div class="disc">Order confirmation #${esc(d.orderNo)}. This document confirms your payment. It is not a tax invoice. Your invoice can be downloaded on bitebox.app under Orders.</div></div>`;
+}
+function renderMail(d) {
+  return `<div class="paper mail"><div class="ms">${esc(d.subject)}</div>
+${d.messages.map(m => `<div class="msg"><div class="mf"><span class="av">${initials(m.from)}</span><div><b>${esc(m.from)}</b> &lt;${esc(m.email)}&gt;<div class="mm">To: ${esc(m.to)} · ${usDate(m.date)} ${m.time}</div></div></div>
+${m.body.map(p => `<p>${esc(p)}</p>`).join('')}${m.attach ? `<div class="chip">${ICON.clip('#555', 12)} ${esc(m.attach)}</div>` : ''}</div>`).join('')}</div>`;
+}
+
+/* ---------- seed data ---------- */
+function mkExp(o) {
+  return Object.assign({id: uid('exp'), expense_type: 'Meals / Drinks', transaction_date: isoToday(), spent: 0, currency: 'EUR', location: '',
+    business_purpose: '', meal_amount: 0, drink_amount: 0, tip_amount: 0, restaurant_name: '', restaurant_address: '', type_of_meal: '',
+    projects: [], guests: [], alloc_mode: 'equal', attachments: [], comments: [], returned: false}, o);
+}
+function guestFor(name, kind = 'internal', org) {
+  const c = CONFIG.colleagues.find(x => x.name === name);
+  return {id: uid('g'), name, title: c ? c.title : '', org: org || CONFIG.company, kind, pct: 0, amount: 0};
+}
+function withGuests(e, names) { e.guests = names.map(n => guestFor(n)); recalcGuests(e); return e; }
+const proj = i => ({...CONFIG.projects[i], pct: 100});
+function seed() {
+  const sab = {reports: [], gallery: ['r1-inv', 'r1-ok', 'r2-conf', 'r2-inv', 'r2-ok', 'r3-inv', 'r4-inv', 'r4-ok', 'r4-corr', 'r4-inv2'], uploads: {}};
+  sab.reports.push({id: uid('rep'), number: '010053880417', name: 'Food – August', pay_in: 'EUR', office: 'BERLIN', status: 'submitted', created: '2026-08-28', expenses: [
+    withGuests(mkExp({transaction_date: '2026-08-12', spent: 41.20, location: 'Germany', business_purpose: 'Case team lunch – workplan review', meal_amount: 33.80, drink_amount: 7.40,
+      restaurant_name: 'Kantine Spreeufer', restaurant_address: 'Holzmarktstraße 25, 10243 Berlin', type_of_meal: 'Take Away', projects: [proj(0)]}), ['Sabine Keller', 'Mira Okafor']),
+    withGuests(mkExp({transaction_date: '2026-08-19', spent: 88.50, location: 'Germany', business_purpose: 'Team dinner after client steering committee', meal_amount: 70.30, drink_amount: 14.20, tip_amount: 4.00,
+      restaurant_name: 'Lokal am Gleis', restaurant_address: 'Möckernstraße 26, 10963 Berlin', type_of_meal: 'Take Away', projects: [proj(0)]}), ['Sabine Keller', 'Tobias Lindqvist', 'Mira Okafor']),
+  ]});
+  sab.reports.push({id: uid('rep'), number: '010054913286', name: 'Food – September', pay_in: 'EUR', office: 'BERLIN', status: 'returned', created: '2026-09-18', expenses: [
+    withGuests(mkExp({transaction_date: '2026-09-14', spent: 63.65, location: 'Germany', business_purpose: 'Case team lunch – interview synthesis', meal_amount: 54.75, drink_amount: 8.90,
+      restaurant_name: 'Deli Hafenblick', restaurant_address: 'Am Kupfergraben 4, 10117 Berlin', type_of_meal: 'Take Away', projects: [proj(0)], attachments: ['h1-inv']}), ['Sabine Keller', 'Mira Okafor', 'Tobias Lindqvist']),
+    withGuests(mkExp({transaction_date: '2026-09-15', spent: 174.98, location: 'Germany', business_purpose: 'Dinner after diagnostic readout', meal_amount: 170.00, tip_amount: 4.98,
+      restaurant_name: 'Ristorante Sole', restaurant_address: 'Oranienburger Straße 32, 10117 Berlin', type_of_meal: 'Take Away', projects: [proj(0)], attachments: ['h2-inv', 'h2-ok'], returned: true,
+      comments: [{by: 'Global Audit', at: '2026-09-22T07:59:00', text: 'Please submit this via your PL. The small-meals rule only covers up to EUR 30.00 per person for associates and consultants. Thanks!'}]}),
+    ['Sabine Keller', 'Jonas Weber', 'Felix Krämer', 'Clara Nguyen']),
+    withGuests(mkExp({transaction_date: '2026-09-17', spent: 54.20, location: 'Germany', business_purpose: 'Working lunch – model review', meal_amount: 46.80, drink_amount: 7.40,
+      restaurant_name: 'Soupkultur', restaurant_address: 'Kurfürstendamm 224, 10719 Berlin', type_of_meal: 'Take Away', projects: [proj(0)], attachments: ['h3-inv']}), ['Sabine Keller', 'Mira Okafor']),
+  ]});
+  const len = {reports: [], gallery: ['n1-inv', 'n1-ok', 'n2-inv', 'n2-ok', 'n3-conf', 'n3-ok'], uploads: {}};
+  len.reports.push({id: uid('rep'), number: '010055120764', name: 'Onboarding week', pay_in: 'EUR', office: 'BERLIN', status: 'submitted', created: '2026-09-29', expenses: [
+    withGuests(mkExp({transaction_date: '2026-09-28', spent: 18.40, location: 'Germany', business_purpose: 'Lunch on first day (onboarding)', meal_amount: 15.90, drink_amount: 2.50,
+      restaurant_name: 'Mittagsküche Mitte', restaurant_address: 'Linienstraße 40, 10119 Berlin', type_of_meal: 'Take Away', projects: [proj(4)]}), ['Lena Brandt']),
+  ]});
+  return {version: 1, userId: 'sabine', users: {sabine: sab, lena: len}};
+}
+
+/* ---------- state ---------- */
+const STORE_KEY = 'expense-demo-v1';
+const params = new URLSearchParams(location.search);
+let S = null;
+function loadState() {
+  if (params.has('reset')) return seed();
+  try { const s = JSON.parse(localStorage.getItem(STORE_KEY) || 'null'); if (s && s.version === 1 && s.users) return s; } catch (e) { /* storage unavailable */ }
+  return seed();
+}
+function persist() { try { localStorage.setItem(STORE_KEY, JSON.stringify(S)); } catch (e) { /* in-memory only */ } }
+const V = {
+  screen: 'home', listFilter: null, reportId: null, right: 'notices', addNav: 'create', typeQuery: '',
+  expenseId: null, draft: null, isNew: false, committed: {}, errors: {}, hold: null, saving: false,
+  openDD: null, ddActive: -1, projAdding: false, guestKind: 'Internal', attView: 'grid',
+  newRep: null, modal: null, highlight: null, guardRemote: params.has('guard'), localGuard: null,
+  devActivity: false, fileTarget: null, lastScreen: '',
+};
+const U = () => CONFIG.users[S.userId];
+const UD = () => S.users[S.userId];
+const R = () => UD().reports.find(r => r.id === V.reportId) || null;
+const getDoc = id => DOCS[id] || UD().uploads[id] || null;
+const findExp = id => (R() ? R().expenses.find(e => e.id === id) : null);
+
+/* ---------- event bus ---------- */
+let seq = 0, t0 = Date.now(), sessionId = uid('ses');
+const LOG = [], listeners = new Set();
+let hookUrl = params.get('events') || '';
+let bc = null;
+try { bc = new BroadcastChannel(CHANNEL); } catch (e) { bc = null; }
+function screenName() {
+  let s = V.screen === 'home' ? 'home' : V.screen === 'list' ? 'report_list' : V.screen === 'newReport' ? 'new_report'
+    : ({add: 'add_expenses', form: 'expense_form', detail: 'expense_detail'}[V.right] || 'report');
+  return s;
+}
+function overlayName() { return V.modal ? ({gallery: 'receipt_gallery', viewer: 'document_viewer', confirm: 'confirm_dialog'}[V.modal.type] || null) : null; }
+function emit(type, payload = {}, quiet = false) {
+  const u = U();
+  const evt = {id: ++seq, type, t: +((Date.now() - t0) / 1000).toFixed(2), at: new Date().toISOString(), session_id: sessionId,
+    user: u.name, role: u.role, screen: screenName(), overlay: overlayName(), ...payload};
+  if (!quiet || V.devActivity) { LOG.push(evt); if (LOG.length > 600) LOG.shift(); scheduleDev(); }
+  listeners.forEach(fn => { try { fn(evt); } catch (e) { console.error(e); } });
+  try { window.dispatchEvent(new CustomEvent(CHANNEL, {detail: evt})); } catch (e) { /* ignore */ }
+  const msg = {source: CHANNEL, event: evt};
+  if (window.parent !== window) { try { window.parent.postMessage(msg, '*'); } catch (e) { /* ignore */ } }
+  if (window.opener) { try { window.opener.postMessage(msg, '*'); } catch (e) { /* ignore */ } }
+  if (bc) { try { bc.postMessage(msg); } catch (e) { /* ignore */ } }
+  if (hookUrl) { try { fetch(hookUrl, {method: 'POST', mode: 'no-cors', keepalive: true, headers: {'Content-Type': 'text/plain'}, body: JSON.stringify(evt)}).catch(() => {}); } catch (e) { /* ignore */ } }
+  return evt;
+}
+
+/* ---------- calculations ---------- */
+function recalcGuests(d) {
+  const n = d.guests.length;
+  if (!n) return;
+  const c = Math.round((d.spent || 0) * 100);
+  if (d.alloc_mode !== 'manual') {
+    const base = Math.floor(c / n), rem = c - base * n, pb = Math.floor(10000 / n), pr = 10000 - pb * n;
+    d.guests.forEach((g, i) => { g.amount = (base + (i === 0 ? rem : 0)) / 100; g.pct = (pb + (i === 0 ? pr : 0)) / 100; });
+  } else {
+    d.guests.forEach(g => { g.amount = round2((d.spent || 0) * g.pct / 100); });
+  }
+}
+function taxLines(e) {
+  const red = CONFIG.vat.reduced, std = CONFIG.vat.standard;
+  const tax = (g, r) => round2(g - round2(g / (1 + r / 100)));
+  if (e.location && e.location !== CONFIG.homeCountry) return [{code: 'V0', rate: 0, amount: 0, applies_to: 'all (foreign)'}];
+  if (e.type_of_meal === 'Take Away') return [
+    {code: 'V2', rate: red, amount: tax(e.meal_amount, red), applies_to: 'meal'},
+    {code: 'V1', rate: std, amount: tax(e.drink_amount, std), applies_to: 'drink'},
+    {code: 'V0', rate: 0, amount: 0, applies_to: 'tip'}];
+  if (e.type_of_meal === 'Eat In') return [
+    {code: 'V1', rate: std, amount: tax(e.meal_amount, std), applies_to: 'meal'},
+    {code: 'V1', rate: std, amount: tax(e.drink_amount, std), applies_to: 'drink'},
+    {code: 'V0', rate: 0, amount: 0, applies_to: 'tip'}];
+  return [];
+}
+function docBrief(id) { const d = getDoc(id); return d ? {id, file: d.file, kind: d.kind, facts: factsOf(d)} : {id, missing: true}; }
+function snapshot(e) {
+  const n = e.guests.length;
+  return {id: e.id, expense_type: e.expense_type, transaction_date: e.transaction_date, spent: e.spent, currency: e.currency,
+    location: e.location || null, business_purpose: e.business_purpose, meal_amount: e.meal_amount, drink_amount: e.drink_amount,
+    tip_amount: e.tip_amount, components_total: round2(e.meal_amount + e.drink_amount + e.tip_amount),
+    restaurant_name: e.restaurant_name, restaurant_address: e.restaurant_address, type_of_meal: e.type_of_meal || null,
+    projects: e.projects.map(p => ({code: p.code, name: p.name, pct: p.pct})),
+    guests: e.guests.map(g => ({name: g.name, title: g.title, kind: g.kind, org: g.org, pct: g.pct, amount: g.amount})),
+    guest_count: n, amount_per_person: n ? round2(e.spent / n) : null, tax_lines: taxLines(e),
+    attachments: e.attachments.map(docBrief), comments: e.comments, returned: !!e.returned};
+}
+function reportSummary(r) {
+  return {id: r.id, number: r.number, name: r.name, status: r.status, office: r.office,
+    total: round2(r.expenses.reduce((s, e) => s + e.spent, 0)), expense_count: r.expenses.length};
+}
+function validate(d) {
+  const e = {};
+  if (!d.transaction_date) e.transaction_date = 'Enter the transaction date.';
+  if (!(d.spent > 0)) e.spent = 'Enter the amount spent.';
+  if (!d.location) e.location = 'Select a location.';
+  if (!d.business_purpose.trim()) e.business_purpose = 'Enter a business purpose.';
+  const comp = round2(d.meal_amount + d.drink_amount + d.tip_amount);
+  if (d.spent > 0 && Math.abs(comp - d.spent) > 0.005)
+    e.meal_amount = `Meal, Drink and Tip add up to ${money(comp)}, but Spent is ${money(d.spent)}.`;
+  if (!d.restaurant_name.trim()) e.restaurant_name = 'Enter the restaurant name.';
+  if (!d.restaurant_address.trim()) e.restaurant_address = 'Enter the restaurant address.';
+  if (!d.type_of_meal) e.type_of_meal = 'Select a type of meal.';
+  if (!d.projects.length) e.project = 'Select a project.';
+  else if (Math.abs(d.projects.reduce((s, p) => s + p.pct, 0) - 100) > 0.01) e.project = 'Project allocations must add up to 100 %.';
+  if (!d.guests.length) e.guests = 'Add at least one guest or recipient.';
+  else if (Math.abs(d.guests.reduce((s, g) => s + g.pct, 0) - 100) > 0.05) e.guests = 'Guest allocations must add up to 100 %.';
+  return e;
+}
+const isComplete = e => !Object.keys(validate(e)).length && e.attachments.length > 0;
+
+/* ---------- rendering helpers ---------- */
+function ddOptions(key) {
+  if (key === 'location') return CONFIG.locations.map(v => ({v, l: v}));
+  if (key === 'type_of_meal') return CONFIG.mealTypes.map(v => ({v, l: v}));
+  if (key === 'currency') return CONFIG.currencies.map(c => ({v: c.code, l: c.code}));
+  if (key === 'pay_in') return CONFIG.currencies.map(c => ({v: c.code, l: c.label}));
+  if (key === 'report_office') return CONFIG.offices.map(v => ({v, l: v}));
+  if (key === 'guest_kind') return [{v: 'Internal', l: 'Internal'}, {v: 'External', l: 'External'}];
+  return [];
+}
+function ddValue(key) {
+  if (key === 'pay_in' || key === 'report_office') return V.newRep ? V.newRep[key] : '';
+  if (key === 'guest_kind') return V.guestKind;
+  return V.draft ? V.draft[key] : '';
+}
+function dd(key, opts = {}) {
+  const val = ddValue(key), options = ddOptions(key), cur = options.find(o => o.v === val), open = V.openDD === key;
+  return `<div class="dd ${opts.cls || ''} ${open ? 'open' : ''}" data-ddwrap="${key}">
+<button type="button" class="dd-btn ${opts.arrow ? 'arrow' : ''}" id="f_${key}" data-action="dd-toggle" data-dd="${key}" aria-haspopup="listbox" aria-expanded="${open}">${cur ? esc(cur.l) : '<span class="ph">-- Select --</span>'}</button>
+${open ? `<div class="dd-list" role="listbox">${options.map((o, i) => `<div class="dd-opt ${i === V.ddActive ? 'act' : ''}" role="option" data-action="dd-pick" data-dd="${key}" data-value="${esc(o.v)}">${esc(o.l)}</div>`).join('')}</div>` : ''}</div>`;
+}
+function frow(field, label, control, cls = '') {
+  const err = V.errors[field];
+  return `<div class="frow ${cls} ${err ? 'err' : ''}" data-field="${field}"><label for="f_${field}">${label}</label><div class="ctl">${control}${err ? `<div class="errmsg">${esc(err)}</div>` : ''}</div></div>`;
+}
+const numVal = (f, v) => f === 'spent' ? money(v) : (v ? money(v) : '0');
+function thumbHTML(id, w = 132, h = 165) {
+  const d = getDoc(id);
+  if (!d) return `<div class="pv" style="height:${h}px"></div>`;
+  if (d.kind === 'upload') {
+    if (d.mime && d.mime.startsWith('image/') && d.dataUrl) return `<div class="pv" style="height:${h}px"><img src="${d.dataUrl}" alt=""></div>`;
+    return `<div class="pv" style="height:${h}px"><div class="pdf">PDF</div></div>`;
+  }
+  const s = (w - 10) / PAPER_W[d.style];
+  return `<div class="pv" style="height:${h}px"><div class="pz" style="transform:scale(${s.toFixed(4)})">${renderDoc(d)}</div></div>`;
+}
+
+/* ---------- top bar ---------- */
+function renderTop() {
+  $('#top').innerHTML = `<button class="burger" data-action="drawer" aria-label="Main menu">${ICON.menu}</button>
+<a class="logo" data-action="home" aria-label="Home">${ICON.logo}<span><b>${esc(CONFIG.product.name)}</b> <span>${esc(CONFIG.product.suffix)}</span></span></a>
+<div class="top-right"><button class="helpbtn" data-action="help" aria-label="Help">${ICON.help}<span class="badge">1</span></button>
+<button class="userbtn" data-action="usermenu" aria-label="Account menu"><span class="n">${esc(U().name)} ${ICON.chev}</span><span class="c">${esc(CONFIG.company)}</span></button></div>`;
+}
+
+/* ---------- left panel ---------- */
+function renderLeft() {
+  const el = $('#left');
+  el.classList.toggle('dim', V.screen === 'newReport' || (V.screen === 'report' && V.right === 'form'));
+  if (V.screen === 'home') {
+    const reps = UD().reports, n = s => reps.filter(r => r.status === s).length;
+    el.innerHTML = `<div class="card"><div class="cardbar">${ICON.listDoc(22)} Expenses<button class="create" data-action="create">${ICON.plusSq()} Create</button></div>
+<div class="stats"><button class="stat" data-action="list" data-filter="draft"><span class="num">${n('draft')}</span><span class="lab">Draft</span></button>
+<button class="stat ret" data-action="list" data-filter="returned"><span class="num">${n('returned')}</span><span class="lab">Returned</span><span class="ii">${ICON.infoGrey}</span></button>
+<button class="stat va" data-action="list" data-filter="submitted">View All<br>Submitted</button></div></div>
+<div class="lastlogin">Last Login on ${esc(U().lastLogin)}</div>`;
+    return;
+  }
+  if (V.screen === 'list') {
+    const f = V.listFilter, reps = UD().reports.filter(r => !f || r.status === f);
+    const title = {draft: 'Draft', returned: 'Returned', submitted: 'Submitted'}[f] || 'All reports';
+    el.innerHTML = `<div class="rep"><div class="repbar"><button class="back" data-action="home" aria-label="Back">${ICON.back}</button><div class="ttl"><small>Expense Reports</small><div>${title}</div></div></div>
+<div class="cols rl"><span>Report</span><span>Number</span><span class="r">Total</span><span>Status</span></div>
+${reps.length ? `<div class="erows">${reps.map(r => `<div class="rlrow" data-action="open-report" data-id="${r.id}"><span>${esc(r.name)}</span><span>${r.number}</span><span class="r">${money(reportSummary(r).total)} EUR</span><span class="status ${r.status}">${r.status[0].toUpperCase() + r.status.slice(1)}</span></div>`).join('')}</div>`
+      : `<div class="empty">No ${title.toLowerCase()} reports.</div>`}</div>`;
+    return;
+  }
+  el.innerHTML = reportCard(V.screen === 'newReport' ? null : R());
+}
+function reportCard(r) {
+  const exps = r ? r.expenses : [], total = exps.reduce((s, e) => s + e.spent, 0);
+  const ncom = exps.reduce((s, e) => s + e.comments.length, 0), natt = exps.reduce((s, e) => s + e.attachments.length, 0);
+  const locked = r && r.status === 'submitted';
+  const canSubmit = r && exps.length && !locked;
+  const rows = exps.map(e => {
+    const cls = [e.id === V.expenseId && V.right === 'detail' ? 'sel' : '', r.status === 'returned' ? (e.returned ? 'ret' : 'muted') : ''].join(' ');
+    return `<div class="erow ${cls}" data-action="exp-open" data-id="${e.id}">
+<div class="d">${weekday(e.transaction_date)}<small>${usDate(e.transaction_date)}</small></div>
+<div class="x">${mealsIcon(22)} Meals / Drinks</div>
+<div class="amt">${money(e.spent)}<small>${esc(e.currency)}</small></div><div class="pm">${money(e.spent)}</div>
+<div>${e.attachments.length ? ICON.clip('#555', 13) : ''}</div><div>${e.comments.length ? ICON.comment('#2F5FB3', 16) : ''}</div>
+<div>${isComplete(e) ? ICON.check : ICON.warn('#C98A00', 18)}</div></div>`;
+  }).join('');
+  return `<div class="rep"><div class="repbar"><button class="back" data-action="home" aria-label="Back">${ICON.back}</button>
+<div class="ttl"><small>Expenses For</small><div>${esc(U().name)}</div></div>
+<button class="ic" data-action="noop" aria-label="Sort">${ICON.sort}</button>${locked ? '' : `<button class="ic" data-action="add-open" aria-label="Add expense">${ICON.plusCircle}</button>`}</div>
+<div class="rephead"><div>${r ? `<h2>${esc(r.name)}</h2>` : ''}<div class="meta"><span>${ICON.comment('#2F5FB3', 13)} ${ncom} Comments</span><span>${ICON.clip('#2F5FB3', 11)} ${natt} Attachments</span></div></div>
+<button class="info" data-action="repinfo" aria-label="Report details">${ICON.info}</button></div>
+<div class="cols"><span>Transaction Date</span><span>Expense</span><span class="r" style="padding-right:26px">Spent</span><span class="r">Pay Me</span><span>${ICON.clip('#555', 13)}</span><span>${ICON.comment('#444', 15)}</span><span>${ICON.warn('#333', 18)}</span></div>
+${exps.length ? `<div class="erows">${rows}</div>` : `<div class="empty">You have not added any expenses. Click Add Expense below or drag and drop items from the eWallet to get started.<button class="btn-add" data-action="add-open">${ICON.plusSq('#2D6FC8')} Add Expense</button></div>`}
+<div class="repfoot"><div>Expense Report<br>${r ? r.number : ''}</div><div>Total Pay Me Amount<br><span class="big">${money(total)}</span> EUR</div>
+<button class="submit" data-action="submit" ${canSubmit ? '' : 'disabled'}>${locked ? 'Submitted' : 'Submit'}</button></div></div>`;
+}
+
+/* ---------- right panel ---------- */
+function renderRight() {
+  const el = $('#right'), prev = el.querySelector('.scroll'), key = V.right + (V.draft ? V.draft.id : '') + (V.expenseId || '');
+  const keep = prev && el.dataset.k === key ? prev.scrollTop : 0;
+  if (V.screen === 'home' || V.screen === 'list') el.innerHTML = noticesHTML();
+  else if (V.screen === 'newReport') el.innerHTML = newReportHTML();
+  else if (V.right === 'add') el.innerHTML = addHTML();
+  else if (V.right === 'form') el.innerHTML = formHTML();
+  else if (V.right === 'detail') el.innerHTML = detailHTML();
+  else el.innerHTML = noticesHTML();
+  el.dataset.k = key;
+  const sc = el.querySelector('.scroll');
+  if (sc && keep) sc.scrollTop = keep;
+}
+function noticesHTML() {
+  return `<div class="scroll notices"><div class="co-logo">${ICON.coMark}<div class="co-name">NORDHAVEN<small>CONSULTING GROUP</small></div></div>
+<div class="spaced">Important notices</div>
+<p><b class="g">${esc(CONFIG.product.name)} mobile app :</b> Capture receipts on the go. Photos you take land in your receipt gallery and can be attached to any expense.</p>
+<p>Reports are reviewed by Global Audit. Returned items show a comment on the expense line. Reply in the comment and resubmit the report so the reviewer can see your answer.</p>
+<div class="spaced">Helpful links</div>
+<p>Email receipts to <a>receipts@eu1.ledgerline.example</a><br>Browser access: <a>https://expenses.nordhaven.example/</a><br>Find reference guides and FAQs on the <a>Expense Microsite</a><br>Explore <a>Tips and Tricks</a> about features that can help you save time</p></div>`;
+}
+function newReportHTML() {
+  return `<div class="actbar"><button class="btn" data-action="newrep-cancel">Cancel</button><button class="btn pri" data-action="newrep-save">Save</button></div>
+<div class="scroll"><div class="fhead" style="border:0"><div class="tico plain">${ICON.listDoc(40, '#222')}</div><h1>Expenses For ${esc(U().name)}</h1></div>
+${frow('report_name', 'Report Name', `<input class="inp" id="f_report_name" data-nr="name" value="${esc(V.newRep.name)}" autocomplete="off">`, 'nb')}
+${frow('pay_in', 'Pay Me In', dd('pay_in', {arrow: true}), 'nb')}
+${frow('report_office', 'Report Office', dd('report_office', {arrow: true}), 'nb')}</div>`;
+}
+function addHTML() {
+  const nav = (id, label, dot) => `<button class="navitem ${V.addNav === id ? 'on' : ''}" data-action="add-nav" data-nav="${id}">${dot ? '<span class="dot"></span>' : ''}${label}</button>`;
+  let main;
+  if (V.addNav === 'create') {
+    const q = V.typeQuery.trim().toLowerCase(), tiles = TILES.filter(t => !q || t.label.toLowerCase().includes(q));
+    main = `<div class="search"><span class="fl">Search Expense Type</span><input data-typeq value="${esc(V.typeQuery)}" aria-label="Search Expense Type" autocomplete="off">${ICON.search}</div>
+<div class="faster"><b>There's a faster way to create expenses</b>Upload a receipt to automatically create and fill in the expense. If you already have one, select it from the receipt gallery.
+<div class="acts"><button class="btn-up" data-action="upload-create">${ICON.upload} Upload receipt</button><button class="lnk" data-action="gallery" data-ctx="create">${ICON.galleryIc} Select from receipt gallery</button></div></div>
+<div class="tiles" id="tiles">${tiles.map(t => `<button class="tile" data-action="tile" data-type="${t.id}">${TILE_ICONS[t.id]}<span>${t.label}</span>${t.caret ? '<span class="tc"></span>' : ''}</button>`).join('') || '<div class="ewempty">No expense types match.</div>'}</div>`;
+  } else {
+    main = `<div class="ewempty">No items in ${esc({all: 'your eWallet', trips: 'Trips', card: 'Credit Card', offline: 'Offline', recycle: 'the Recycle Bin'}[V.addNav])}.</div>`;
+  }
+  return `<div class="addwrap"><div class="addnav"><h1>Add<br>Expenses</h1>
+<button class="navitem top ${V.addNav === 'create' ? 'on' : ''}" data-action="add-nav" data-nav="create">${ICON.createNew} Create New</button>
+<div class="navgrp">eWallet</div>${nav('all', 'All')}${nav('trips', 'Trips')}${nav('card', 'Credit Card')}${nav('offline', 'Offline', true)}${nav('recycle', 'Recycle Bin')}
+<div class="navgrp">eReceipts</div><button class="navitem" data-action="gallery" data-ctx="create"><span class="dot"></span>Receipt Gallery</button></div>
+<div class="addmain">${main}</div></div>`;
+}
+function formHTML() {
+  const d = V.draft, errs = Object.keys(V.errors).length;
+  const num = f => `<input class="inp num" id="f_${f}" data-f="${f}" inputmode="decimal" value="${numVal(f, d[f])}" autocomplete="off">`;
+  return `<div class="actbar"><button class="btn" data-action="form-cancel">Cancel</button><button class="btn pri" data-action="form-save" ${V.saving ? 'disabled' : ''}>${V.saving ? 'Saving…' : 'Save'}</button></div>
+<div class="scroll" id="formScroll">
+${errs ? `<div class="banner err">Correct the highlighted fields before saving.</div>` : ''}
+${V.hold ? `<div class="hold"><div><b>${esc(V.hold.title || 'Hold on before saving')}</b>${esc(V.hold.message || '')}</div><button data-action="hold-close" aria-label="Dismiss">×</button></div>` : ''}
+<div class="fhead"><div class="tico">${mealsIcon(44)}<span class="car"></span></div><h1>Meals / Drinks</h1></div>
+${frow('transaction_date', 'Transaction Date', `<input class="inp date" type="date" id="f_transaction_date" data-f="transaction_date" value="${esc(d.transaction_date)}">`)}
+${frow('spent', 'Spent', `<div class="spent">${num('spent')}${dd('currency', {cls: 'cur'})}</div>`)}
+${frow('location', 'Location', dd('location'))}
+${frow('business_purpose', 'Business Purpose', `<textarea class="inp" id="f_business_purpose" data-f="business_purpose">${esc(d.business_purpose)}</textarea>`)}
+${frow('meal_amount', 'Meal Amount', num('meal_amount'))}
+${frow('drink_amount', 'Drink Amount', num('drink_amount'))}
+${frow('tip_amount', 'Tip Amount', num('tip_amount'))}
+${frow('restaurant_name', 'Restaurant Name', `<input class="inp" id="f_restaurant_name" data-f="restaurant_name" value="${esc(d.restaurant_name)}" autocomplete="off">`)}
+${frow('restaurant_address', 'Restaurant Address', `<input class="inp" id="f_restaurant_address" data-f="restaurant_address" value="${esc(d.restaurant_address)}" autocomplete="off">`)}
+${frow('type_of_meal', 'Type of Meal', dd('type_of_meal'))}
+<div class="sec">Project</div>${projectHTML(d)}
+<div class="sec">Guests / Recipients (${d.guests.length}) ${ICON.infoSm}</div>${guestsHTML(d)}
+<div class="sec">Attachments (${d.attachments.length})<span class="att-tools"><button class="${V.attView === 'grid' ? 'on' : ''}" data-action="att-view" data-mode="grid" aria-label="Grid view">${ICON.grid}</button><button class="${V.attView === 'list' ? 'on' : ''}" data-action="att-view" data-mode="list" aria-label="List view">${ICON.listv}</button></span></div>
+${attachmentsHTML(d)}
+<div style="height:40px"></div></div>`;
+}
+function projectHTML(d) {
+  const err = V.errors.project, multi = d.projects.length > 1;
+  const rows = d.projects.map((p, i) => `<div class="prow"><span>${esc(p.code)}</span><span><b>${esc(p.name)}</b><br>${esc(p.unit || '')}</span>
+${multi ? `<span class="pp"><input class="pin" data-ppct="${i}" value="${p.pct}" aria-label="Allocation for ${esc(p.code)}"> %</span>` : '<span></span>'}
+<button class="gx" style="background:none;border:0;font-size:20px" data-action="proj-remove" data-i="${i}" aria-label="Remove project">×</button></div>`).join('');
+  const search = (!d.projects.length || V.projAdding) ? `<div class="psearch"><input class="inp" id="f_project" data-pin placeholder="Search for Project Name or Number" autocomplete="off"><div class="sugg" id="psugg" hidden style="left:24px;right:24px"></div></div>` : '';
+  return `<div data-field="project" class="${err ? 'err' : ''}" style="position:relative">${rows}${search}
+${err ? `<div class="errmsg" style="padding:0 24px 8px">${esc(err)}</div>` : ''}
+<button class="addalloc ${d.projects.length ? 'on' : ''}" data-action="add-alloc" ${d.projects.length ? '' : 'disabled'}><svg width="26" height="26" viewBox="0 0 26 26" aria-hidden="true"><circle cx="13" cy="13" r="12" fill="currentColor" opacity=".35"/><path d="M13 7v12M7 13h12" stroke="#fff" stroke-width="2.4"/></svg> Add Allocation</button></div>`;
+}
+function guestsHTML(d) {
+  const err = V.errors.guests, sp = d.guests.reduce((s, g) => s + g.pct, 0), sa = d.guests.reduce((s, g) => s + g.amount, 0);
+  return `<div data-field="guests" style="position:relative"><div class="gadd">${dd('guest_kind', {arrow: true, cls: 'gk'})}<div class="gin-wrap"><input class="inp" data-gin placeholder="Add Guests" autocomplete="off" aria-label="Add Guests"><div class="sugg" id="gsugg" hidden></div></div></div>
+<button class="csv" data-action="csv">Upload CSV</button>
+${d.guests.map((g, i) => `<div class="grow"><span>${g.kind === 'internal' ? 'Internal' : 'External'}</span><button class="gx" data-action="guest-remove" data-i="${i}" aria-label="Remove ${esc(g.name)}">×</button>
+<div class="who"><b>${esc(g.name)}</b><i>${esc(g.title || '')}</i><i>${esc(g.org || '')}</i></div>
+<input class="pin" data-gpct="${i}" value="${pctTxt(g.pct)}" aria-label="Share for ${esc(g.name)}"><input class="pin" data-gamt="${i}" value="${money(g.amount)}" aria-label="Amount for ${esc(g.name)}"></div>`).join('')}
+${d.guests.length ? `<div class="gtot"><span></span><span id="gtp">${pctTxt(round2(sp))}</span><span id="gta">${money(sa)}</span></div>` : ''}
+${err ? `<div class="errmsg" style="padding:0 24px 14px">${esc(err)}</div>` : ''}</div>`;
+}
+function attachmentsHTML(d) {
+  const items = d.attachments.map(id => { const doc = getDoc(id); return {id, file: doc ? doc.file : id}; });
+  const list = !items.length ? '' : V.attView === 'grid'
+    ? `<div class="att-grid">${items.map(a => `<div class="thumb" data-action="att-open" data-id="${a.id}" title="${esc(a.file)}">${thumbHTML(a.id)}<div class="fn">${esc(a.file)}</div><button class="rm" data-action="att-remove" data-id="${a.id}" aria-label="Remove ${esc(a.file)}">×</button></div>`).join('')}</div>`
+    : `<div class="att-list">${items.map(a => `<div class="att-li" data-action="att-open" data-id="${a.id}">${ICON.clip('#555', 13)}<span style="flex:1">${esc(a.file)}</span><button class="gx" style="background:none;border:0;font-size:20px" data-action="att-remove" data-id="${a.id}" aria-label="Remove ${esc(a.file)}">×</button></div>`).join('')}</div>`;
+  const open = V.openDD === 'att_add';
+  return `<div class="att-body" data-field="attachments" data-drop>${list}<div class="att-drop">Drag image here to upload
+<div class="dd attdd ${open ? 'open' : ''}" data-ddwrap="att_add"><button class="btn-att" data-action="dd-toggle" data-dd="att_add">Add Attachments</button>
+${open ? `<div class="dd-list"><div class="dd-opt" data-action="upload-attach">Upload from Computer</div><div class="dd-opt" data-action="gallery" data-ctx="attach">Receipt Gallery</div></div>` : ''}</div></div></div>`;
+}
+function detailHTML() {
+  const e = findExp(V.expenseId), r = R();
+  if (!e) return addHTML();
+  const locked = r.status === 'submitted', idx = r.expenses.indexOf(e);
+  const vr = (l, v) => `<div class="vrow"><span>${l}</span><span class="v">${v}</span></div>`;
+  const tl = taxLines(e);
+  return `<div class="actbar"><button class="btn lefty" data-action="images">Images</button>${locked ? '' : `<button class="btn pri" data-action="exp-delete">Delete</button><button class="btn pri" data-action="exp-edit">Edit</button>`}</div>
+<div class="scroll"><div class="fhead"><div class="tico">${mealsIcon(44)}</div><h1>Meals / Drinks</h1></div>
+${vr('Transaction Date', usDate(e.transaction_date))}${vr('Spent', money(e.spent) + ' ' + esc(e.currency))}${vr('Location', esc(e.location))}
+${vr('Business Purpose', esc(e.business_purpose))}${vr('Meal Amount', money(e.meal_amount))}${vr('Drink Amount', money(e.drink_amount))}${vr('Tip Amount', money(e.tip_amount))}
+${vr('Restaurant Name', esc(e.restaurant_name))}${vr('Restaurant Address', esc(e.restaurant_address))}${vr('Type of Meal', esc(e.type_of_meal))}
+<div class="sec">Project</div>${e.projects.map(p => `<div class="prow" style="grid-template-columns:150px minmax(0,1fr) auto"><span>${esc(p.code)}</span><span><b>${esc(p.name)}</b><br>${esc(p.unit || '')}</span><span>${e.projects.length > 1 ? p.pct + ' %' : ''}</span></div>`).join('')}
+<div class="sec">Guests / Recipients (${e.guests.length}) ${ICON.infoSm}</div>
+${e.guests.map(g => `<div class="gv"><span>${g.kind === 'internal' ? 'Internal' : 'External'}</span><span><b>${esc(g.name)}</b><i>${esc(g.title || '')}</i><i>${esc(g.org || '')}</i></span><span class="a">${money(g.amount)}</span></div>`).join('')}
+${tl.length ? `<div class="tax"><div class="tl">Tax</div><div class="tr">${tl.map(l => `<span>${l.code}</span><span>${l.rate}%</span><span class="r">${l.amount ? money(l.amount) : '0'} EUR</span>`).join('')}</div></div>` : ''}
+<div class="sec">Comments (${e.comments.length})</div>
+${e.comments.map(c => `<div class="cmt"><b>${esc(c.by)}</b><time>${usDate(c.at.slice(0, 10))} ${new Date(c.at).toLocaleTimeString('en-US', {hour: '2-digit', minute: '2-digit'})}</time><p>${esc(c.text)}</p></div>`).join('')}
+<div class="cadd"><input class="inp" data-comment placeholder="Add Comment" aria-label="Add Comment"><button class="btn" data-action="comment-post" id="postBtn">Post</button></div></div>
+<div class="pager"><button data-action="pager" data-dir="-1" ${idx <= 0 ? 'disabled' : ''}>‹ Previous</button><span>${idx + 1} of ${r.expenses.length}</span><button data-action="pager" data-dir="1" ${idx >= r.expenses.length - 1 ? 'disabled' : ''}>Next ›</button></div>`;
+}
+
+/* ---------- overlays ---------- */
+function renderLayer() {
+  const m = V.modal, el = $('#layer');
+  if (!m) { el.innerHTML = ''; return; }
+  if (m.type === 'gallery') {
+    const ids = UD().gallery, used = new Set(UD().reports.flatMap(r => r.expenses.flatMap(e => e.attachments)));
+    const title = m.ctx === 'attach' ? 'Attach from Receipt Gallery' : 'Receipt Gallery';
+    el.innerHTML = `<div class="modal-bg" data-action="modal-bg"><div class="modal" role="dialog" aria-label="${title}"><div class="mhead">${title}<button class="x" data-action="modal-close" aria-label="Close">×</button></div>
+<div class="mbody">${ids.length ? `<div class="gal">${ids.map(id => { const d = getDoc(id); if (!d) return ''; const on = m.sel.includes(id);
+      return `<div class="galitem ${on ? 'on' : ''}" data-action="gal-toggle" data-id="${id}">${m.ctx !== 'view' ? `<span class="chk">${on ? '✓' : ''}</span>` : ''}<button class="eye" data-action="gal-view" data-id="${id}">View</button>${thumbHTML(id, 174, 200)}
+<div class="cap"><div>${esc(d.file)}</div><small>${usDate(d.date)}${used.has(id) ? '<span class="used">Attached</span>' : ''}</small></div></div>`; }).join('')}</div>` : '<p>Your receipt gallery is empty.</p>'}</div>
+<div class="mfoot"><span class="hint">${m.ctx === 'view' ? '' : `${m.sel.length} selected`}</span><button class="btn" data-action="modal-close">${m.ctx === 'view' ? 'Close' : 'Cancel'}</button>
+${m.ctx === 'create' ? `<button class="btn pri" data-action="gal-confirm" ${m.sel.length ? '' : 'disabled'}>Create Meals / Drinks expense</button>` : ''}
+${m.ctx === 'attach' ? `<button class="btn pri" data-action="gal-confirm" ${m.sel.length ? '' : 'disabled'}>Attach (${m.sel.length})</button>` : ''}</div></div></div>`;
+  } else if (m.type === 'viewer') {
+    const id = m.ids[m.i], d = getDoc(id);
+    el.innerHTML = `<div class="modal-bg" data-action="modal-bg"><div class="modal" role="dialog" aria-label="Document viewer" style="height:92vh"><div class="mhead"><span style="font-size:17px">${esc(d ? d.file : id)}</span>
+<span class="zm"><button data-action="zoom" data-z="-1" aria-label="Zoom out">−</button><button data-action="zoom" data-z="1" aria-label="Zoom in">+</button></span><button class="x" data-action="modal-close" aria-label="Close">×</button></div>
+<div class="mbody" style="padding:0"><div class="stage"><div style="zoom:${m.zoom}">${renderDoc(d)}</div></div></div>
+<div class="vfoot"><button data-action="viewer-nav" data-dir="-1" ${m.i <= 0 ? 'disabled' : ''}>‹ Previous</button><span>${m.i + 1} of ${m.ids.length}</span><button data-action="viewer-nav" data-dir="1" ${m.i >= m.ids.length - 1 ? 'disabled' : ''}>Next ›</button></div></div></div>`;
+  } else if (m.type === 'confirm') {
+    el.innerHTML = `<div class="modal-bg" data-action="modal-bg"><div class="modal sm" role="dialog" aria-label="${esc(m.title)}"><div class="mhead">${esc(m.title)}<button class="x" data-action="modal-close" aria-label="Close">×</button></div>
+<div class="mbody">${m.lines.map(l => `<p>${esc(l)}</p>`).join('')}</div><div class="mfoot"><button class="btn" data-action="modal-close">Cancel</button><button class="btn pri" data-action="confirm-yes">${esc(m.yes)}</button></div></div></div>`;
+  } else if (m.type === 'drawer') {
+    el.innerHTML = `<div class="drawer-bg" data-action="modal-close"></div><nav class="drawer" aria-label="Main menu">
+<button class="pi" data-action="home">Home</button><button class="pi" data-action="list" data-filter="">Expense Reports</button>
+<button class="pi" data-action="list" data-filter="draft">Drafts</button><button class="pi" data-action="list" data-filter="submitted">Submitted</button>
+<button class="pi" data-action="gallery" data-ctx="view">Receipt Gallery</button></nav>`;
+  } else if (m.type === 'usermenu') {
+    el.innerHTML = `<div class="pop" style="top:78px;right:24px">${Object.values(CONFIG.users).map(u => `<button class="pi" data-action="switch-user" data-user="${u.id}">${u.id === S.userId ? '✓' : '&nbsp;&nbsp;'} <span>${esc(u.name)}<small>${u.title} · ${esc(CONFIG.company)}</small></span></button>`).join('')}<button class="pi" data-action="modal-close">Sign Out</button></div>`;
+  } else if (m.type === 'help') {
+    el.innerHTML = `<div class="pop" style="top:78px;right:190px;width:320px"><div class="pt"><b>Need help?</b><br>Reference guides and FAQs are on the Expense Microsite. Questions about a returned item go into the comment on the expense line.</div></div>`;
+  } else if (m.type === 'repinfo') {
+    const r = R();
+    el.innerHTML = r ? `<div class="pop" style="top:250px;left:calc(50% - 300px);width:280px"><div class="pt"><b>${esc(r.name)}</b><br>Report ${r.number}<br>Status: ${r.status}<br>Office: ${esc(r.office)}<br>Pay me in: ${esc(r.pay_in)}<br>${r.expenses.length} expense(s)</div></div>` : '';
+  }
+}
+
+/* ---------- hidden demo controls ---------- */
+let devQueued = false;
+function scheduleDev() { if (devQueued || $('#dev').hidden) return; devQueued = true; requestAnimationFrame(() => { devQueued = false; renderDev(); }); }
+function renderDev() {
+  const el = $('#dev');
+  if (el.hidden) return;
+  const hookFocused = document.activeElement && document.activeElement.id === 'devHook';
+  if (hookFocused) { const pre = el.querySelector('pre'); if (pre) pre.textContent = devLogText(); return; }
+  el.innerHTML = `<div class="dh"><b>Demo controls</b><span>${LOG.length} events · ${sessionId.slice(-5)}</span><button data-action="dev-close" aria-label="Close">×</button></div><div class="db">
+<div class="dr"><span>Profile</span>${Object.values(CONFIG.users).map(u => `<button class="b ${S.userId === u.id ? 'on' : ''}" data-action="switch-user" data-user="${u.id}">${esc(u.name)} (${u.role.replace('_', ' ')})</button>`).join('')}</div>
+<div class="dr"><span>Save guard</span><b class="${guardActive() ? 'ok' : 'no'}">${guardActive() ? 'connected' : 'off'}</b><button class="b" data-action="dev-guard">${V.guardRemote ? 'Disconnect' : 'Connect manually'}</button><button class="b" data-action="dev-block">Block next save (test)</button></div>
+${pending.size ? `<div class="dr"><span>Pending save</span><button class="b on" data-action="dev-decide" data-allow="1">Allow</button><button class="b warn" data-action="dev-decide" data-allow="0">Block</button></div>` : ''}
+<div class="dr"><span>Webhook</span><input type="text" id="devHook" value="${esc(hookUrl)}" placeholder="http://localhost:8787/events"><button class="b" data-action="dev-hook">Set</button></div>
+<div class="dr"><span>Session</span><button class="b" data-action="dev-session">New session clock</button><button class="b" data-action="dev-reset">Reset demo data</button></div>
+<div class="dr"><span>Log</span><button class="b" data-action="dev-copy">Copy JSON</button><button class="b" data-action="dev-clear">Clear</button><button class="b ${V.devActivity ? 'on' : ''}" data-action="dev-activity">Activity events</button></div>
+<pre>${esc(devLogText())}</pre></div>`;
+}
+function devLogText() { return LOG.slice(-80).reverse().map(e => `${e.t.toFixed(1).padStart(7)}s ${e.type} ${e.type === 'screen_changed' ? '→ ' + e.screen + (e.overlay ? ' + ' + e.overlay : '') : JSON.stringify(devBrief(e))}`).join('\n'); }
+function devBrief(e) {
+  const skip = new Set(['id', 'type', 't', 'at', 'session_id', 'user', 'role', 'screen', 'overlay']);
+  const o = {};
+  for (const k of Object.keys(e)) if (!skip.has(k)) o[k] = (k === 'expense' || k === 'state' || k === 'report') ? '{…}' : e[k];
+  if (o.doc && o.doc.facts) o.doc = {id: o.doc.id, kind: o.doc.kind};
+  return o;
+}
+
+/* ---------- render orchestration ---------- */
+function render() {
+  renderTop(); renderLeft(); renderRight(); renderLayer(); applyHighlight(); renderDev();
+  const s = screenName() + '|' + (overlayName() || '');
+  if (s !== V.lastScreen) { V.lastScreen = s; emit('screen_changed', {}); }
+}
+function rerenderRight() { renderLeft(); renderRight(); renderLayer(); applyHighlight(); }
+let toastTimer = null;
+function toast(msg) { const t = $('#toast'); t.textContent = msg; t.hidden = false; clearTimeout(toastTimer); toastTimer = setTimeout(() => { t.hidden = true; }, 2800); }
+
+/* ---------- navigation ---------- */
+function goHome() { V.screen = 'home'; V.right = 'notices'; V.reportId = null; V.draft = null; V.modal = null; V.openDD = null; render(); }
+function openReport(id) {
+  const r = UD().reports.find(x => x.id === id); if (!r) return;
+  V.screen = 'report'; V.reportId = id; V.modal = null; V.draft = null;
+  if (r.expenses.length) { V.right = 'detail'; V.expenseId = (r.expenses.find(e => e.returned) || r.expenses[0]).id; } else { V.right = 'add'; V.expenseId = null; }
+  emit('report_opened', {report: reportSummary(r)});
+  render();
+  if (V.right === 'detail') emit('expense_viewed', {expense: snapshot(findExp(V.expenseId))});
+}
+function openAdd() {
+  const r = R(); if (!r || r.status === 'submitted') return;
+  V.right = 'add'; V.addNav = 'create'; V.typeQuery = ''; V.draft = null; render();
+}
+function selfGuest() { return {id: uid('g'), name: U().name, title: U().title, org: CONFIG.company, kind: 'internal', pct: 100, amount: 0}; }
+function openForm(draft, isNew, extra = {}) {
+  recalcGuests(draft);
+  V.draft = draft; V.isNew = isNew; V.errors = {}; V.hold = null; V.saving = false; V.openDD = null; V.projAdding = false; V.right = 'form';
+  V.committed = {}; for (const k of Object.keys(LABELS)) if (k in draft) V.committed[k] = draft[k];
+  V.highlight = null; render();
+  emit('expense_form_opened', {is_new: isNew, expense: snapshot(draft), ...extra});
+}
+function newDraft(attIds = [], prefill = null) {
+  const d = mkExp({guests: [selfGuest()], attachments: [...attIds]});
+  if (prefill) Object.assign(d, prefill);
+  return d;
+}
+function prefillFrom(ids) {
+  for (const id of ids) {
+    const f = factsOf(getDoc(id));
+    if (f && (f.kind === 'invoice' || f.kind === 'order_confirmation'))
+      return {transaction_date: f.invoice_date, spent: f.total_paid, restaurant_name: f.supplier, restaurant_address: f.supplier_address};
+  }
+  return null;
+}
+
+/* ---------- form field handling ---------- */
+function setField(field, value, emitNow = true) {
+  const d = V.draft; if (!d) return;
+  const old = V.committed[field];
+  d[field] = value;
+  if (field === 'spent') { recalcGuests(d); updateGuestsUI(); }
+  if (emitNow && JSON.stringify(old) !== JSON.stringify(value)) {
+    V.committed[field] = value;
+    const extra = field === 'spent' ? {amount_per_person: d.guests.length ? round2(d.spent / d.guests.length) : null, guest_count: d.guests.length} : {};
+    if (field === 'type_of_meal') extra.tax_lines = taxLines(d);
+    emit('field_changed', {field, label: LABELS[field], old: old ?? null, new: value, ...extra});
+    if (V.highlight && V.highlight.fields.includes(field)) { V.highlight = null; applyHighlight(); }
+  }
+}
+function updateGuestsUI() {
+  const d = V.draft; if (!d) return;
+  d.guests.forEach((g, i) => {
+    const p = document.querySelector(`[data-gpct="${i}"]`), a = document.querySelector(`[data-gamt="${i}"]`);
+    if (p && document.activeElement !== p) p.value = pctTxt(g.pct);
+    if (a && document.activeElement !== a) a.value = money(g.amount);
+  });
+  const tp = $('#gtp'), ta = $('#gta');
+  if (tp) tp.textContent = pctTxt(round2(d.guests.reduce((s, g) => s + g.pct, 0)));
+  if (ta) ta.textContent = money(d.guests.reduce((s, g) => s + g.amount, 0));
+}
+function addGuest(g) {
+  const d = V.draft;
+  d.guests.push(g); d.alloc_mode = 'equal'; recalcGuests(d);
+  delete V.errors.guests;
+  emit('guest_added', {guest: {name: g.name, title: g.title, kind: g.kind, org: g.org}, guest_count: d.guests.length, amount_per_person: round2(d.spent / d.guests.length)});
+  rerenderRight();
+  const gi = document.querySelector('[data-gin]'); if (gi) gi.focus();
+}
+function guestMatches(q) {
+  const d = V.draft; q = q.trim().toLowerCase(); if (!q) return [];
+  if (V.guestKind === 'External') {
+    const [name, org] = q.split(',').map(s => s.trim());
+    const raw = document.querySelector('[data-gin]').value.split(',').map(s => s.trim());
+    return [{external: true, name: raw[0], org: raw[1] || 'External guest', label: `Add “${raw[0]}” as external guest${raw[1] ? ' (' + raw[1] + ')' : ''}`}].filter(() => name);
+  }
+  const have = new Set(d.guests.map(g => g.name));
+  return CONFIG.colleagues.filter(c => !have.has(c.name) && (c.name.toLowerCase().includes(q) || c.title.toLowerCase() === q)).slice(0, 7);
+}
+function showGuestSugg() {
+  const inp = document.querySelector('[data-gin]'), box = $('#gsugg'); if (!inp || !box) return;
+  const m = guestMatches(inp.value);
+  V.gsugg = m; V.gact = 0;
+  box.hidden = !m.length;
+  box.innerHTML = m.map((c, i) => c.external ? `<div class="sg ${i === 0 ? 'act' : ''}" data-action="guest-pick" data-i="${i}">${esc(c.label)}</div>`
+    : `<div class="sg ${i === 0 ? 'act' : ''}" data-action="guest-pick" data-i="${i}"><b>${esc(c.name)}</b> <i>${esc(c.title)} · ${esc(CONFIG.company)}</i></div>`).join('');
+}
+function pickGuest(i) {
+  const c = (V.gsugg || [])[i]; if (!c) return;
+  addGuest(c.external ? {id: uid('g'), name: c.name, title: '', org: c.org, kind: 'external', pct: 0, amount: 0} : guestFor(c.name));
+}
+function showProjSugg() {
+  const inp = document.querySelector('[data-pin]'), box = $('#psugg'); if (!inp || !box) return;
+  const q = inp.value.trim().toLowerCase(), have = new Set(V.draft.projects.map(p => p.code));
+  const m = q ? CONFIG.projects.filter(p => !have.has(p.code) && (p.code.includes(q) || p.name.toLowerCase().includes(q) || p.unit.toLowerCase().includes(q))).slice(0, 6) : [];
+  V.psugg = m;
+  box.hidden = !m.length;
+  box.innerHTML = m.map((p, i) => `<div class="sg ${i === 0 ? 'act' : ''}" data-action="proj-pick" data-i="${i}"><b>${esc(p.code)}</b> ${esc(p.name)}<br><i>${esc(p.unit)}</i></div>`).join('');
+}
+function pickProject(i) {
+  const p = (V.psugg || [])[i]; if (!p) return;
+  const d = V.draft;
+  d.projects.push({...p, pct: 0});
+  const n = d.projects.length, base = Math.floor(100 / n);
+  d.projects.forEach((x, k) => { x.pct = k === 0 ? 100 - base * (n - 1) : base; });
+  V.projAdding = false; delete V.errors.project;
+  emit('project_selected', {project: {code: p.code, name: p.name}, projects: d.projects.map(x => ({code: x.code, pct: x.pct}))});
+  rerenderRight();
+}
+function attach(id) {
+  const d = V.draft; if (!d || d.attachments.includes(id)) return;
+  d.attachments.push(id);
+  emit('attachment_added', {doc: docBrief(id), attachment_count: d.attachments.length});
+}
+
+/* ---------- save flow with optional tutor guard ---------- */
+const pending = new Map();
+let blockNext = false;
+const guardActive = () => !!(V.localGuard || V.guardRemote || blockNext);
+function requestGuard(snap) {
+  if (blockNext) { blockNext = false; return Promise.resolve({allow: false, message: 'Test block from the demo controls.', fields: ['type_of_meal']}); }
+  if (V.localGuard) {
+    return Promise.race([Promise.resolve().then(() => V.localGuard(snap)), new Promise(r => setTimeout(() => r({allow: true, timeout: true}), CONFIG.guardTimeoutMs))])
+      .then(x => x || {allow: true}).catch(() => ({allow: true}));
+  }
+  const request_id = uid('req');
+  return new Promise(resolve => {
+    const timer = setTimeout(() => { pending.delete(request_id); emit('save_guard_timeout', {request_id}); resolve({allow: true, timeout: true}); scheduleDev(); }, CONFIG.guardTimeoutMs);
+    pending.set(request_id, d => { clearTimeout(timer); pending.delete(request_id); resolve(d); scheduleDev(); });
+    emit('save_requested', {request_id, expense: snap, timeout_ms: CONFIG.guardTimeoutMs});
+  });
+}
+async function saveForm() {
+  if (V.saving || !V.draft) return;
+  const d = V.draft;
+  document.querySelectorAll('[data-f]').forEach(el => { if (el === document.activeElement) el.blur(); });
+  const snap = snapshot(d);
+  emit('save_clicked', {is_new: V.isNew, expense: snap});
+  V.errors = validate(d);
+  if (Object.keys(V.errors).length) {
+    emit('save_blocked', {by: 'validation', errors: V.errors});
+    rerenderRight();
+    const first = document.querySelector('.frow.err, [data-field].err'); if (first) first.scrollIntoView({block: 'center'});
+    return;
+  }
+  if (guardActive()) {
+    V.saving = true; V.hold = null; rerenderRight();
+    const dec = await requestGuard(snap);
+    V.saving = false;
+    if (dec && dec.allow === false) {
+      V.hold = {title: dec.title, message: dec.message || ''};
+      if (dec.fields && dec.fields.length) V.highlight = {fields: dec.fields, message: dec.note || ''};
+      emit('save_blocked', {by: 'guard', message: dec.message || '', fields: dec.fields || []});
+      rerenderRight();
+      const sc = $('#formScroll'); if (sc && !dec.fields) sc.scrollTop = 0;
+      if (dec.fields && dec.fields[0]) scrollToField(dec.fields[0]);
+      return;
+    }
+  }
+  commitDraft();
+}
+function commitDraft() {
+  const r = R(), d = V.draft, isNew = V.isNew;
+  if (isNew) r.expenses.push(d); else r.expenses[r.expenses.findIndex(e => e.id === d.id)] = d;
+  r.expenses.sort((a, b) => a.transaction_date.localeCompare(b.transaction_date));
+  persist();
+  V.draft = null; V.errors = {}; V.hold = null; V.highlight = null; V.right = 'detail'; V.expenseId = d.id;
+  emit('expense_saved', {is_new: isNew, expense: snapshot(d), report: reportSummary(r)});
+  render();
+}
+function cancelForm() {
+  const wasNew = V.isNew, id = V.draft && V.draft.id;
+  emit('expense_cancelled', {is_new: wasNew, expense_id: id});
+  V.draft = null; V.errors = {}; V.hold = null; V.highlight = null;
+  V.right = wasNew ? 'add' : 'detail';
+  render();
+}
+function submitReport() {
+  const r = R(); if (!r) return;
+  r.status = 'submitted'; r.submitted_at = new Date().toISOString();
+  r.expenses.forEach(e => { e.returned = false; });
+  persist();
+  emit('report_submitted', {report: {...reportSummary(r), expenses: r.expenses.map(snapshot)}});
+  goHome(); toast('Report submitted');
+}
+
+/* ---------- highlight hook for the tutor ---------- */
+function applyHighlight() {
+  document.querySelectorAll('.hl').forEach(x => x.classList.remove('hl'));
+  document.querySelectorAll('.hlnote').forEach(x => x.remove());
+  const h = V.highlight; if (!h || !h.fields) return;
+  h.fields.forEach((f, i) => {
+    const el = document.querySelector(`[data-field="${f}"]`); if (!el) return;
+    el.classList.add('hl');
+    if (i === 0 && h.message) {
+      const n = document.createElement('div'), host = el.querySelector('.ctl');
+      n.className = 'hlnote' + (host ? '' : ' sec-note'); n.textContent = h.message; (host || el).appendChild(n);
+    }
+  });
+}
+function scrollToField(f) {
+  const el = document.querySelector(`[data-field="${f}"]`);
+  if (el) el.scrollIntoView({block: 'center', behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth'});
+}
+
+/* ---------- documents ---------- */
+function openViewer(ids, i = 0) {
+  if (!ids.length) { toast('No images attached'); return; }
+  closeViewerEvent();
+  V.modal = {type: 'viewer', ids, i, zoom: 1, openedAt: Date.now()};
+  render();
+  emit('document_opened', {doc: docBrief(ids[i]), position: `${i + 1} of ${ids.length}`});
+}
+function closeViewerEvent() {
+  const m = V.modal;
+  if (m && m.type === 'viewer') emit('document_closed', {doc_id: m.ids[m.i], seconds_open: +((Date.now() - m.openedAt) / 1000).toFixed(1)});
+}
+async function addUpload(f) {
+  const dataUrl = await new Promise(res => { const r = new FileReader(); r.onload = () => res(r.result); r.onerror = () => res(null); r.readAsDataURL(f); });
+  const id = uid('up');
+  UD().uploads[id] = {id, kind: 'upload', file: f.name, mime: f.type, dataUrl, date: isoToday()};
+  UD().gallery.unshift(id);
+  persist();
+  return id;
+}
+
+/* ---------- user + data ---------- */
+function switchUser(id) {
+  if (!CONFIG.users[id] || id === S.userId) { V.modal = null; render(); return; }
+  const from = S.userId;
+  S.userId = id; persist();
+  V.modal = null; V.draft = null; V.highlight = null;
+  goHome();
+  emit('user_switched', {from: CONFIG.users[from].name, to: U().name});
+}
+function resetData() { S = seed(); S.userId = S.userId; persist(); V.modal = null; goHome(); emit('data_reset', {}); toast('Demo data reset'); }
+function newSession() { t0 = Date.now(); sessionId = uid('ses'); seq = 0; LOG.length = 0; emit('session_started', {mode: guardActive() ? 'tutor' : 'capture'}); }
+function getState() {
+  const r = R(), e = V.right === 'detail' ? findExp(V.expenseId) : null;
+  return {user: {...U()}, screen: screenName(), overlay: overlayName(), guard_connected: guardActive(),
+    report: r ? reportSummary(r) : null, editing: V.draft ? snapshot(V.draft) : null, selected_expense: e ? snapshot(e) : null,
+    reports: UD().reports.map(reportSummary), gallery: UD().gallery.map(docBrief)};
+}
+
+/* ---------- commands from the capture app / tutor ---------- */
+function handleCmd(m) {
+  if (!m || typeof m !== 'object') return;
+  switch (m.cmd) {
+    case 'guard': V.guardRemote = m.enabled !== false; emit('guard_status', {connected: guardActive()}); scheduleDev(); break;
+    case 'save_decision': {
+      const key = m.request_id && pending.has(m.request_id) ? m.request_id : [...pending.keys()].pop();
+      if (key) pending.get(key)({allow: m.allow !== false, message: m.message, title: m.title, fields: m.fields, note: m.note});
+      break;
+    }
+    case 'highlight': {
+      const fields = m.fields || (m.field ? [m.field] : []);
+      V.highlight = fields.length ? {fields, message: m.message || ''} : null;
+      applyHighlight(); if (fields[0]) scrollToField(fields[0]);
+      emit('highlight_shown', {fields, message: m.message || ''});
+      break;
+    }
+    case 'clear_highlight': V.highlight = null; applyHighlight(); break;
+    case 'switch_user': switchUser(m.user); break;
+    case 'open_document': if (getDoc(m.doc_id)) openViewer([m.doc_id]); break;
+    case 'reset': resetData(); break;
+    case 'new_session': newSession(); break;
+    case 'get_state': emit('state', {state: getState(), request_id: m.request_id || null}); break;
+    default: break;
+  }
+}
+window.addEventListener('message', e => { const m = e.data; if (m && m.target === CHANNEL) handleCmd(m); });
+if (bc) bc.onmessage = e => { const m = e.data; if (m && m.target === CHANNEL) handleCmd(m); };
+
+window.ExpenseDemo = {
+  on(fn) { listeners.add(fn); return () => listeners.delete(fn); },
+  getState, command: handleCmd, events: () => LOG.slice(),
+  setSaveGuard(fn) { V.localGuard = typeof fn === 'function' ? fn : null; scheduleDev(); emit('guard_status', {connected: guardActive()}); },
+  highlight(fields, message) { handleCmd({cmd: 'highlight', fields: [].concat(fields), message}); },
+  clearHighlight() { handleCmd({cmd: 'clear_highlight'}); },
+  switchUser, reset: resetData, newSession, config: CONFIG, docs: DOCS,
+};
+
+/* ---------- click handling ---------- */
+function closeFloating(e) {
+  let changed = false;
+  if (V.openDD && !e.target.closest('[data-ddwrap]')) { V.openDD = null; V.ddActive = -1; changed = true; }
+  if (V.modal && ['usermenu', 'help', 'repinfo'].includes(V.modal.type) && !e.target.closest('.pop') && !e.target.closest('[data-action="usermenu"],[data-action="help"],[data-action="repinfo"]')) { V.modal = null; changed = true; }
+  ['gsugg', 'psugg'].forEach(id => { const b = document.getElementById(id); if (b && !b.hidden && !e.target.closest('.gin-wrap,.psearch')) b.hidden = true; });
+  return changed;
+}
+document.addEventListener('click', e => {
+  if (e.target.closest('#dev')) { devClick(e); return; }
+  const changed = closeFloating(e);
+  const a = e.target.closest('[data-action]');
+  if (!a) { if (changed) rerenderRight(), renderLayer(); return; }
+  const act = a.dataset.action, ds = a.dataset, m = V.modal;
+  switch (act) {
+    case 'home': goHome(); break;
+    case 'noop': break;
+    case 'drawer': V.modal = {type: 'drawer'}; renderLayer(); break;
+    case 'help': V.modal = m && m.type === 'help' ? null : {type: 'help'}; renderLayer(); break;
+    case 'usermenu': V.modal = m && m.type === 'usermenu' ? null : {type: 'usermenu'}; renderLayer(); break;
+    case 'repinfo': V.modal = m && m.type === 'repinfo' ? null : {type: 'repinfo'}; renderLayer(); break;
+    case 'switch-user': switchUser(ds.user); break;
+    case 'list': V.screen = 'list'; V.listFilter = ds.filter || null; V.modal = null; V.right = 'notices'; render(); break;
+    case 'create': V.screen = 'newReport'; V.right = 'notices'; V.newRep = {name: '', pay_in: 'EUR', report_office: U().office}; V.errors = {}; render(); { const i = $('#f_report_name'); if (i) i.focus(); } break;
+    case 'newrep-cancel': goHome(); break;
+    case 'newrep-save': {
+      const name = (V.newRep.name || '').trim();
+      if (!name) { V.errors = {report_name: 'Enter a report name.'}; renderRight(); return; }
+      const r = {id: uid('rep'), number: '0100' + String(Math.floor(1e7 + Math.random() * 9e7)).slice(0, 8), name, pay_in: V.newRep.pay_in, office: V.newRep.report_office,
+        status: 'draft', created: isoToday(), expenses: []};
+      UD().reports.push(r); persist(); V.errors = {};
+      V.screen = 'report'; V.reportId = r.id; V.right = 'add'; V.addNav = 'create'; V.typeQuery = '';
+      emit('report_created', {report: reportSummary(r)});
+      render(); break;
+    }
+    case 'open-report': openReport(ds.id); break;
+    case 'add-open': openAdd(); break;
+    case 'add-nav': V.addNav = ds.nav; renderRight(); break;
+    case 'tile':
+      emit('expense_type_selected', {expense_type: TILES.find(t => t.id === ds.type).label});
+      if (ds.type === 'meals') openForm(newDraft(), true); else toast('This expense type is not set up for your profile.');
+      break;
+    case 'upload-create': V.fileTarget = 'create'; $('#fileIn').click(); break;
+    case 'upload-attach': V.openDD = null; V.fileTarget = 'attach'; $('#fileIn').click(); rerenderRight(); break;
+    case 'gallery': V.openDD = null; V.modal = {type: 'gallery', ctx: ds.ctx || 'view', sel: []}; render(); emit('gallery_opened', {context: V.modal.ctx}); break;
+    case 'gal-toggle': {
+      if (m.ctx === 'view') { openViewer([ds.id]); break; }
+      const i = m.sel.indexOf(ds.id); if (i >= 0) m.sel.splice(i, 1); else m.sel.push(ds.id);
+      renderLayer(); break;
+    }
+    case 'gal-view': e.stopPropagation(); V.returnTo = m; openViewer([ds.id]); break;
+    case 'gal-confirm': {
+      const sel = [...m.sel]; V.modal = null;
+      if (m.ctx === 'create') {
+        const pre = prefillFrom(sel);
+        openForm(newDraft(sel, pre), true, {created_from_gallery: sel, prefilled: pre});
+        sel.forEach(id => emit('attachment_added', {doc: docBrief(id), attachment_count: sel.length}));
+      } else { sel.forEach(attach); delete V.errors.attachments; render(); }
+      break;
+    }
+    case 'modal-bg': if (e.target === a) closeModal(); break;
+    case 'modal-close': closeModal(); break;
+    case 'viewer-nav': {
+      const n = m.i + Number(ds.dir); if (n < 0 || n >= m.ids.length) break;
+      emit('document_closed', {doc_id: m.ids[m.i], seconds_open: +((Date.now() - m.openedAt) / 1000).toFixed(1)});
+      m.i = n; m.openedAt = Date.now(); renderLayer();
+      emit('document_opened', {doc: docBrief(m.ids[n]), position: `${n + 1} of ${m.ids.length}`}); break;
+    }
+    case 'zoom': m.zoom = Math.min(2, Math.max(0.6, round2(m.zoom + 0.2 * Number(ds.z)))); renderLayer(); break;
+    case 'confirm-yes': { const cb = m.onYes; V.modal = null; renderLayer(); cb(); break; }
+    case 'form-cancel': cancelForm(); break;
+    case 'form-save': saveForm(); break;
+    case 'hold-close': V.hold = null; rerenderRight(); break;
+    case 'dd-toggle': {
+      const k = ds.dd;
+      if (V.openDD === k) { V.openDD = null; } else {
+        V.openDD = k; const opts = ddOptions(k); V.ddActive = Math.max(0, opts.findIndex(o => o.v === ddValue(k)));
+        if (V.draft && LABELS[k]) emit('dropdown_opened', {field: k, label: LABELS[k], options: opts.map(o => o.v)});
+      }
+      rerenderRight(); break;
+    }
+    case 'dd-pick': pickDD(ds.dd, ds.value); break;
+    case 'guest-pick': pickGuest(Number(ds.i)); break;
+    case 'guest-remove': {
+      const d = V.draft, g = d.guests.splice(Number(ds.i), 1)[0]; d.alloc_mode = 'equal'; recalcGuests(d);
+      emit('guest_removed', {guest: {name: g.name, title: g.title, kind: g.kind}, guest_count: d.guests.length, amount_per_person: d.guests.length ? round2(d.spent / d.guests.length) : null});
+      rerenderRight(); break;
+    }
+    case 'csv': toast('CSV upload is not available for this expense type.'); break;
+    case 'proj-pick': pickProject(Number(ds.i)); break;
+    case 'proj-remove': {
+      const d = V.draft, p = d.projects.splice(Number(ds.i), 1)[0];
+      if (d.projects.length === 1) d.projects[0].pct = 100;
+      emit('project_removed', {project: {code: p.code, name: p.name}}); rerenderRight(); break;
+    }
+    case 'add-alloc': if (V.draft.projects.length) { V.projAdding = true; rerenderRight(); const pi = document.querySelector('[data-pin]'); if (pi) pi.focus(); } break;
+    case 'att-view': V.attView = ds.mode; rerenderRight(); break;
+    case 'att-open': if (!e.target.closest('[data-action="att-remove"]')) { const ids = V.draft.attachments; openViewer(ids, Math.max(0, ids.indexOf(ds.id))); } break;
+    case 'att-remove': {
+      e.stopPropagation();
+      const d = V.draft; d.attachments = d.attachments.filter(x => x !== ds.id);
+      emit('attachment_removed', {doc: docBrief(ds.id), attachment_count: d.attachments.length}); rerenderRight(); break;
+    }
+    case 'exp-open': {
+      if (V.right === 'form') break;
+      V.right = 'detail'; V.expenseId = ds.id; V.modal = null; render();
+      emit('expense_viewed', {expense: snapshot(findExp(ds.id))}); break;
+    }
+    case 'images': { const ex = findExp(V.expenseId); if (ex) openViewer(ex.attachments, 0); break; }
+    case 'exp-edit': { const ex = findExp(V.expenseId); if (ex) openForm(clone(ex), false); break; }
+    case 'exp-delete': confirmBox('Delete expense', ['Delete this Meals / Drinks expense from the report?'], 'Delete', () => {
+      const r = R(), ex = findExp(V.expenseId); r.expenses = r.expenses.filter(x => x.id !== ex.id); persist();
+      emit('expense_deleted', {expense: snapshot(ex)});
+      V.expenseId = r.expenses[0] ? r.expenses[0].id : null; V.right = r.expenses.length ? 'detail' : 'add'; render();
+    }); break;
+    case 'pager': {
+      const r = R(), i = r.expenses.findIndex(x => x.id === V.expenseId) + Number(ds.dir);
+      if (r.expenses[i]) { V.expenseId = r.expenses[i].id; render(); emit('expense_viewed', {expense: snapshot(r.expenses[i])}); }
+      break;
+    }
+    case 'comment-post': {
+      const inp = document.querySelector('[data-comment]'), txt = inp ? inp.value.trim() : '';
+      if (!txt) break;
+      const ex = findExp(V.expenseId); ex.comments.push({by: U().name, at: new Date().toISOString(), text: txt}); persist();
+      emit('comment_posted', {expense_id: ex.id, text: txt}); render(); break;
+    }
+    case 'submit': {
+      const r = R(); if (!r || !r.expenses.length) break;
+      const total = r.expenses.reduce((s, x) => s + x.spent, 0);
+      confirmBox('Submit report', [`Submit “${r.name}” with ${r.expenses.length} expense(s) totalling ${money(total)} EUR?`, 'The report goes to your approver and then to Global Audit. You cannot edit it after submitting.'], 'Submit', submitReport);
+      break;
+    }
+    default: break;
+  }
+});
+function closeModal() {
+  const m = V.modal; if (!m) return;
+  if (m.type === 'viewer') { closeViewerEvent(); if (V.returnTo) { V.modal = V.returnTo; V.returnTo = null; render(); return; } }
+  V.modal = null; render();
+}
+function confirmBox(title, lines, yes, onYes) { V.modal = {type: 'confirm', title, lines, yes, onYes}; renderLayer(); }
+function pickDD(key, value) {
+  V.openDD = null; V.ddActive = -1;
+  if (key === 'pay_in' || key === 'report_office') { V.newRep[key] = value; renderRight(); return; }
+  if (key === 'guest_kind') { V.guestKind = value; rerenderRight(); const gi = document.querySelector('[data-gin]'); if (gi) gi.focus(); return; }
+  if (V.draft) { setField(key, value); delete V.errors[key]; }
+  rerenderRight();
+}
+
+/* ---------- typing ---------- */
+document.addEventListener('input', e => {
+  const t = e.target;
+  if (t.closest('#dev')) return;
+  if (t.dataset.f) {
+    const f = t.dataset.f;
+    setField(f, NUM_FIELDS.includes(f) ? parseNum(t.value) : t.value, false);
+    if (V.errors[f]) { delete V.errors[f]; t.closest('.frow').classList.remove('err'); const em = t.closest('.frow').querySelector('.errmsg'); if (em) em.remove(); }
+  } else if ('nr' in t.dataset) { V.newRep.name = t.value; }
+  else if ('gin' in t.dataset) showGuestSugg();
+  else if ('pin' in t.dataset) showProjSugg();
+  else if ('typeq' in t.dataset) { V.typeQuery = t.value; const pos = t.selectionStart; renderRight(); const n = document.querySelector('[data-typeq]'); if (n) { n.focus(); n.setSelectionRange(pos, pos); } }
+  else if ('comment' in t.dataset) { const b = $('#postBtn'); if (b) b.classList.toggle('on', !!t.value.trim()); }
+  else if ('gpct' in t.dataset || 'gamt' in t.dataset) {
+    const d = V.draft, i = Number(t.dataset.gpct ?? t.dataset.gamt), g = d.guests[i]; d.alloc_mode = 'manual';
+    if ('gpct' in t.dataset) { g.pct = parseNum(t.value); g.amount = round2(d.spent * g.pct / 100); }
+    else { g.amount = parseNum(t.value); g.pct = d.spent ? round2(g.amount / d.spent * 100) : 0; }
+    updateGuestsUI();
+  } else if ('ppct' in t.dataset) { V.draft.projects[Number(t.dataset.ppct)].pct = parseNum(t.value); }
+});
+document.addEventListener('change', e => {
+  const t = e.target;
+  if (t.closest('#dev')) return;
+  if (t.dataset.f) {
+    const f = t.dataset.f, v = NUM_FIELDS.includes(f) ? parseNum(t.value) : t.value;
+    if (NUM_FIELDS.includes(f)) t.value = numVal(f, v);
+    setField(f, v, true);
+  } else if ('gpct' in t.dataset || 'gamt' in t.dataset) {
+    const i = Number(t.dataset.gpct ?? t.dataset.gamt), g = V.draft.guests[i];
+    t.value = 'gpct' in t.dataset ? pctTxt(g.pct) : money(g.amount);
+    emit('allocation_changed', {guest: g.name, pct: g.pct, amount: g.amount, total_pct: round2(V.draft.guests.reduce((s, x) => s + x.pct, 0))});
+  } else if ('ppct' in t.dataset) {
+    emit('project_allocation_changed', {projects: V.draft.projects.map(p => ({code: p.code, pct: p.pct}))});
+  }
+});
+document.addEventListener('keydown', e => {
+  if (e.altKey && e.shiftKey && e.code === 'KeyD') { e.preventDefault(); toggleDev(); return; }
+  const t = e.target;
+  if (e.key === 'Escape') {
+    if (V.openDD) { V.openDD = null; rerenderRight(); return; }
+    if (V.modal) { closeModal(); return; }
+  }
+  if (V.openDD && ['ArrowDown', 'ArrowUp', 'Enter'].includes(e.key) && V.openDD !== 'att_add') {
+    e.preventDefault();
+    const opts = ddOptions(V.openDD);
+    if (e.key === 'Enter') { if (opts[V.ddActive]) pickDD(V.openDD, opts[V.ddActive].v); return; }
+    V.ddActive = (V.ddActive + (e.key === 'ArrowDown' ? 1 : -1) + opts.length) % opts.length; rerenderRight();
+    const b = document.querySelector(`[data-ddwrap="${V.openDD}"] .dd-btn`); if (b) b.focus();
+    return;
+  }
+  if (V.modal && V.modal.type === 'viewer' && (e.key === 'ArrowRight' || e.key === 'ArrowLeft')) {
+    const btn = document.querySelector(`[data-action="viewer-nav"][data-dir="${e.key === 'ArrowRight' ? 1 : -1}"]`); if (btn && !btn.disabled) btn.click(); return;
+  }
+  if (t.dataset && 'gin' in t.dataset && e.key === 'Enter') { e.preventDefault(); pickGuest(V.gact || 0); return; }
+  if (t.dataset && 'pin' in t.dataset && e.key === 'Enter') { e.preventDefault(); pickProject(0); return; }
+  if (t.dataset && 'comment' in t.dataset && e.key === 'Enter') { const b = $('#postBtn'); if (b) b.click(); return; }
+  if (t.dataset && 'nr' in t.dataset && e.key === 'Enter') { const b = document.querySelector('[data-action="newrep-save"]'); if (b) b.click(); }
+});
+
+/* ---------- file upload + drag and drop ---------- */
+$('#fileIn').addEventListener('change', async e => {
+  const files = [...e.target.files]; e.target.value = '';
+  if (!files.length) return;
+  const ids = [];
+  for (const f of files) ids.push(await addUpload(f));
+  if (V.fileTarget === 'create') openForm(newDraft(ids), true, {created_from_upload: ids});
+  else if (V.draft) { ids.forEach(attach); rerenderRight(); }
+});
+document.addEventListener('dragover', e => { const z = e.target.closest && e.target.closest('[data-drop]'); if (z && V.draft) { e.preventDefault(); z.classList.add('drag'); } });
+document.addEventListener('dragleave', e => { const z = e.target.closest && e.target.closest('[data-drop]'); if (z) z.classList.remove('drag'); });
+document.addEventListener('drop', async e => {
+  const z = e.target.closest && e.target.closest('[data-drop]');
+  if (!z || !V.draft) return;
+  e.preventDefault(); z.classList.remove('drag');
+  for (const f of [...e.dataTransfer.files]) attach(await addUpload(f));
+  rerenderRight();
+});
+
+/* ---------- activity signals for pause detection ---------- */
+const lastAct = {};
+function activity(kind) { const n = Date.now(); if (n - (lastAct[kind] || 0) < 1000) return; lastAct[kind] = n; emit('user_activity', {kind, activity: true}, true); }
+document.addEventListener('keydown', () => activity('typing'), true);
+document.addEventListener('pointerdown', () => activity('pointer'), true);
+document.addEventListener('pointermove', () => activity('pointer'), {passive: true, capture: true});
+document.addEventListener('wheel', () => activity('scroll'), {passive: true, capture: true});
+
+/* ---------- demo controls ---------- */
+function toggleDev() { const el = $('#dev'); el.hidden = !el.hidden; renderDev(); }
+function devClick(e) {
+  const a = e.target.closest('[data-action]'); if (!a) return;
+  const act = a.dataset.action;
+  if (act === 'dev-close') { $('#dev').hidden = true; return; }
+  if (act === 'switch-user') { switchUser(a.dataset.user); return; }
+  if (act === 'dev-guard') { handleCmd({cmd: 'guard', enabled: !V.guardRemote}); }
+  if (act === 'dev-block') { blockNext = true; toast('The next Save will be blocked once.'); }
+  if (act === 'dev-decide') handleCmd({cmd: 'save_decision', allow: a.dataset.allow === '1', message: a.dataset.allow === '1' ? '' : 'Blocked manually from the demo controls.'});
+  if (act === 'dev-hook') { hookUrl = ($('#devHook').value || '').trim(); toast(hookUrl ? 'Events now also POST to ' + hookUrl : 'Webhook off'); }
+  if (act === 'dev-session') newSession();
+  if (act === 'dev-reset') resetData();
+  if (act === 'dev-clear') LOG.length = 0;
+  if (act === 'dev-activity') V.devActivity = !V.devActivity;
+  if (act === 'dev-copy') {
+    const txt = JSON.stringify(LOG, null, 2);
+    (navigator.clipboard ? navigator.clipboard.writeText(txt) : Promise.reject()).then(() => toast('Events copied')).catch(() => { console.log(txt); toast('Copy blocked here – events printed to the console'); });
+  }
+  renderDev();
+}
+
+/* ---------- start ---------- */
+S = loadState();
+if (params.get('user') && CONFIG.users[params.get('user')]) S.userId = params.get('user');
+persist();
+render();
+emit('session_started', {mode: guardActive() ? 'tutor' : 'capture'});
+if (params.has('dev')) toggleDev();
+</script>
+</body>
+</html>

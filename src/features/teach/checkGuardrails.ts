@@ -1,9 +1,11 @@
-// Called by the ERP on Save in /teach. Returns ok: false to block the save.
-// Rules mirror the expert's guardrails; explanations quote the expert from the Work Map.
+// Teach-mode Save guard for Ledgerline meal expenses. Returns ok: false to block.
+// Rules mirror Sabine's guardrails; explanations quote her from the Work Map.
+// `fields` are Ledgerline data-field names the mock highlights (type_of_meal, guests, attachments).
 
-import type { GuardrailResult, Invoice, WorkMap, WorkMapStep } from "@/lib/types";
+import type { DocFacts, ExpenseSnapshot, GuardrailResult, WorkMap, WorkMapStep } from "@/lib/types";
 
-const EQUIPMENT = /equipment|machine|station|spindle|unit|device|tool/i;
+const SMALL_MEALS_LIMIT = 30; // € per person without PL approval
+const COMPANY_ADDRESS_LIMIT = 250; // € — above this the invoice must name the company
 
 function findStep(map: WorkMap, pattern: RegExp): WorkMapStep | undefined {
   return (
@@ -13,45 +15,66 @@ function findStep(map: WorkMap, pattern: RegExp): WorkMapStep | undefined {
 }
 
 function quote(step: WorkMapStep | undefined, fallback: string) {
-  return step?.expertQuote ? `Sabine said: “${step.expertQuote}”` : fallback;
+  return `Sabine said: “${step?.expertQuote || fallback}”`;
 }
 
-export function checkGuardrails(invoice: Invoice, workMap: WorkMap): GuardrailResult {
+export function checkGuardrails(exp: ExpenseSnapshot, workMap: WorkMap): GuardrailResult {
   const violations: GuardrailResult["violations"] = [];
+  const docs = exp.attachments.map((a) => a.facts).filter(Boolean) as DocFacts[];
+  const receipts = docs.filter((d) => d.kind === "invoice" || d.kind === "order_confirmation");
+  const hasApproval = docs.some((d) => d.kind === "approval_email");
 
-  if (invoice.amount > 5000 && EQUIPMENT.test(invoice.description) && invoice.costCenter === "4711") {
-    const step = findStep(workMap, /capex|0400/i);
-    violations.push({
-      stepId: step?.id ?? "s3",
-      rule: "Equipment over €5,000 must be booked as capex (0400), not opex (4711).",
-      explanation: quote(step, "Equipment over €5,000 is always capex."),
-    });
+  // 1. Type of meal comes from the receipt, not habit.
+  const receipt = receipts[0];
+  if (receipt && exp.type_of_meal) {
+    const expected =
+      receipt.kind === "order_confirmation" || receipt.platform || receipt.consumption === "außer Haus"
+        ? "Take Away"
+        : receipt.consumption === "im Haus"
+          ? "Eat In"
+          : null;
+    if (expected && exp.type_of_meal !== expected) {
+      const step = findStep(workMap, /type of meal|eat in|take away/i);
+      violations.push({
+        stepId: step?.id ?? "s4",
+        rule: `Type of Meal should be ${expected}: the receipt says ${receipt.consumption ? `"Verzehr: ${receipt.consumption}"` : "it was delivered"}.`,
+        explanation: quote(step, "Look at the receipt. Im Haus means Eat In, and that changes the VAT."),
+        fields: ["type_of_meal"],
+      });
+    }
   }
 
-  if (invoice.costCenter === "0400" && !invoice.assetNumber.trim()) {
-    const step = findStep(workMap, /asset number/i);
-    violations.push({
-      stepId: step?.id ?? "s4",
-      rule: "Capex booking without an asset number.",
-      explanation: quote(step, "No asset number, no capex booking."),
-    });
-  }
-
-  if (/brandt/i.test(invoice.supplier) && /december/i.test(invoice.description) && invoice.status === "approved") {
-    const step = findStep(workMap, /brandt|double-bill|december/i);
-    violations.push({
-      stepId: step?.id ?? "s5",
-      rule: "December Brandt invoice approved without a duplicate check.",
-      explanation: quote(step, "Brandt double-bills every December."),
-    });
-  }
-
-  if (/\bCZ\b|czech|s\.r\.o/i.test(invoice.supplier) && invoice.status === "approved") {
-    const step = findStep(workMap, /czech|second approval|2nd approval|intercompany/i);
+  // 2. An order confirmation is not a tax invoice.
+  if (receipts.length && !receipts.some((d) => d.is_tax_invoice)) {
+    const step = findStep(workMap, /order confirmation|tax invoice|delivery/i);
     violations.push({
       stepId: step?.id ?? "s6",
-      rule: "Czech intercompany invoice approved without a second approval.",
-      explanation: quote(step, "Intercompany always needs the controller's second signature."),
+      rule: "Only an order confirmation is attached. It is not a tax invoice.",
+      explanation: quote(step, "The Bitebox confirmation is not an invoice. Download the real invoice first."),
+      fields: ["attachments"],
+    });
+  }
+
+  // 3. Small-meals limit: over €30 per person needs the PL's approval email attached.
+  if ((exp.amount_per_person ?? 0) > SMALL_MEALS_LIMIT && !hasApproval) {
+    const step = findStep(workMap, /per person|€30|approval/i);
+    violations.push({
+      stepId: step?.id ?? "s5",
+      rule: `€${exp.amount_per_person?.toFixed(2)} per person is over the €${SMALL_MEALS_LIMIT} small-meals limit and no PL approval is attached.`,
+      explanation: quote(step, "Over thirty euros a head, I attach Jonas's approval. No approval, I stop and ask him."),
+      fields: ["guests", "attachments"],
+    });
+  }
+
+  // 4. Over €250 the invoice must be addressed to the company.
+  const big = receipts.find((d) => d.kind === "invoice" && (d.total_paid ?? 0) > COMPANY_ADDRESS_LIMIT && !d.addressed_to);
+  if (big) {
+    const step = findStep(workMap, /€250|addressed|corrected invoice/i);
+    violations.push({
+      stepId: step?.id ?? "s7",
+      rule: `The invoice is over €${COMPANY_ADDRESS_LIMIT} but not addressed to Nordhaven Consulting GmbH.`,
+      explanation: quote(step, "Above 250 euros the invoice needs our company address, so I ask the restaurant for a corrected one."),
+      fields: ["attachments"],
     });
   }
 

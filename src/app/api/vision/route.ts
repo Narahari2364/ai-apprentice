@@ -3,12 +3,13 @@ import { NextResponse } from "next/server";
 import { geminiJson, VISION_MODELS } from "@/lib/gemini";
 import type { ScreenEvent } from "@/lib/types";
 
-const INSTRUCTIONS = `You watch an accounts-payable clerk's screen. You get the PREVIOUS frame (if any) and the CURRENT frame.
-Report only what CHANGED between them that matters for the work: an invoice opened, a field value changed (cost center, asset number, amount, supplier, description), a status button pressed (Approve, Hold, Send for 2nd approval), a save.
-Return JSON: {"events":[{"invoiceId": string, "type": "invoice_opened"|"field_changed"|"status_changed"|"saved", "field"?: string, "from"?: string, "to"?: string, "description": string}]}
-- description: one short sentence, e.g. "Invoice 4471: cost center changed from 4711 to 0400".
+const INSTRUCTIONS = `You watch an employee's screen while they file expenses in an expense tool (reports, expense forms, receipts, guests, attachments). You get the PREVIOUS frame (if any) and the CURRENT frame.
+Report only what CHANGED between them that matters for the work: a report or expense form opened, a receipt or document opened, a field value changed (e.g. Spent, Type of Meal, Location, Business Purpose), a guest added or removed, an attachment added, a save or an error/warning banner.
+Return JSON: {"events":[{"invoiceId": string, "type": "screen_opened"|"document_opened"|"field_changed"|"guest_added"|"attachment_added"|"saved"|"error_shown", "field"?: string, "from"?: string, "to"?: string, "description": string}]}
+- invoiceId: the receipt/invoice/report number if visible, else "".
+- description: one short sentence, e.g. "Type of Meal changed from Take Away to Eat In".
 - Return {"events": []} if nothing meaningful changed (scrolling, mouse movement, typing in progress).
-- Privacy: never include personal names, emails, IBANs or bank details; refer to invoices by their number.`;
+- Privacy: never include personal names, emails, IBANs or bank details; refer to documents by their number.`;
 
 const toPart = (dataUrl: string) => ({
   inlineData: { mimeType: "image/jpeg", data: dataUrl.replace(/^data:image\/\w+;base64,/, "") },

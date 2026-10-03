@@ -16,7 +16,7 @@ export default function Home() {
         >
           <div className="text-sm font-semibold uppercase tracking-wide text-sky-600">Expert mode</div>
           <div className="mt-2 text-2xl font-bold">Teach the apprentice</div>
-          <p className="mt-2 text-slate-600">Process invoices while the agent watches and asks why. Then review the Work Map.</p>
+          <p className="mt-2 text-slate-600">File expenses in Ledgerline while the agent watches and asks why. Then review the Work Map.</p>
         </Link>
         <Link
           href="/teach"
@@ -24,7 +24,7 @@ export default function Home() {
         >
           <div className="text-sm font-semibold uppercase tracking-wide text-emerald-600">New hire mode</div>
           <div className="mt-2 text-2xl font-bold">Learn from the expert</div>
-          <p className="mt-2 text-slate-600">Work a new case while the tutor coaches you and stops you before a wrong save.</p>
+          <p className="mt-2 text-slate-600">File a new expense while the tutor coaches you and stops you before a wrong save.</p>
         </Link>
       </div>
     </div>

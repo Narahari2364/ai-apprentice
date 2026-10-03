@@ -30,6 +30,16 @@ export function subscribe(listener: Listener): () => void {
   return () => listeners.delete(listener);
 }
 
+// User activity (typing / pointer / scroll) — kept off the event log, used for pause detection.
+const activityListeners = new Set<() => void>();
+export function markActivity() {
+  activityListeners.forEach((l) => l());
+}
+export function onActivity(listener: () => void): () => void {
+  activityListeners.add(listener);
+  return () => activityListeners.delete(listener);
+}
+
 export function getHistory(): ScreenEvent[] {
   return [...history];
 }

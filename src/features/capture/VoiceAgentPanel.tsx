@@ -1,13 +1,15 @@
 "use client";
 // Interviewer agent for /capture.
-// When to ask: after a notable screen action (field or status change) we wait for
-// PAUSE_MS with no keystrokes, no expert speech and the agent silent, and at least
-// MIN_GAP_MS since the last question. Only then is the agent allowed one question.
+// When to ask: after a judgment-relevant action (Type of Meal, guests, attachments,
+// save...) we wait until there has been no typing/pointer activity, no screen event
+// and no expert speech for PAUSE_MS, the agent is silent, no document is open
+// (she is reading), and MIN_GAP_MS has passed since the last question.
+// Only then is the agent allowed one question.
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ConversationProvider } from "@elevenlabs/react";
-import { getHistory, resetSession, subscribe } from "@/lib/events";
+import { getHistory, onActivity, resetSession, subscribe } from "@/lib/events";
 import { attachScreenshots, saveSession, saveWorkMap } from "@/lib/session";
 import { setCapturePaused, snapshot, startScreenCapture, stopScreenCapture } from "./screenCapture";
 import { useVoiceAgent } from "@/lib/useVoiceAgent";
@@ -15,6 +17,12 @@ import type { ScreenEvent } from "@/lib/types";
 
 const PAUSE_MS = 3500;
 const MIN_GAP_MS = 20000;
+
+// Actions worth a "why" question. Plain amount typing is not: the screen already answers it.
+const JUDGMENT_FIELDS = new Set(["type_of_meal", "location", "business_purpose"]);
+const JUDGMENT_TYPES = new Set(["guest_added", "guest_removed", "attachment_added", "attachment_removed", "project_selected", "expense_saved", "validation_failed"]);
+const isNotable = (e: ScreenEvent) =>
+  e.source === "dom" && (JUDGMENT_TYPES.has(e.type) || (e.type === "field_changed" && JUDGMENT_FIELDS.has(e.field ?? "")));
 
 export default function VoiceAgentPanel() {
   return (
@@ -38,6 +46,7 @@ function Interviewer() {
   const timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const lastActivity = useRef(0);
   const lastQuestion = useRef(0);
+  const reading = useRef(false);
   const offRecordEvents = useRef(new Set<ScreenEvent>());
   const shots = useRef<Record<string, string>>({});
   const [sharing, setSharing] = useState(false);
@@ -55,9 +64,9 @@ function Interviewer() {
       const now = Date.now();
       if (!pending.current || offRef.current) return setDetector("idle");
       const busy =
-        a.isSpeaking || now - a.lastUserSpeech.current < 2500 || now - lastActivity.current < PAUSE_MS;
+        a.isSpeaking || reading.current || now - a.lastUserSpeech.current < 2500 || now - lastActivity.current < PAUSE_MS;
       if (busy) {
-        setDetector("expert busy, staying quiet");
+        setDetector(reading.current ? "expert reading a document, staying quiet" : "expert busy, staying quiet");
         timer.current = setTimeout(tryAsk, 1000);
         return;
       }
@@ -82,12 +91,16 @@ function Interviewer() {
         return;
       }
       agentRef.current.sendContextualUpdate(`[SCREEN] ${e.time} ${e.description}`);
+      // A screen change is activity too (vision lags 2–3 s behind, so only the app's own events count).
+      if (e.source === "dom") lastActivity.current = Date.now();
+      if (e.type === "document_opened") reading.current = true;
+      if (e.type === "document_closed") reading.current = false;
       // Screen moment: grab the frame a beat later so the change is visible on it.
       setTimeout(() => {
         const shot = snapshot();
         if (shot && !shots.current[e.time]) shots.current[e.time] = shot;
       }, 600);
-      if (e.type === "field_changed" || e.type === "status_changed") {
+      if (isNotable(e)) {
         pending.current = e;
         setDetector("waiting for a pause");
         clearTimeout(timer.current);
@@ -100,8 +113,10 @@ function Interviewer() {
       agentRef.current.sendUserActivity();
     }
     window.addEventListener("keydown", onKey);
+    const offActivity = onActivity(onKey); // typing / pointer / scroll inside Ledgerline
     return () => {
       unsubscribe();
+      offActivity();
       window.removeEventListener("keydown", onKey);
       clearTimeout(timer.current);
     };

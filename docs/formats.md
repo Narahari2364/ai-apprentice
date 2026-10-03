@@ -4,22 +4,17 @@ TypeScript source: `src/lib/types.ts`. If you change a format, change both files
 
 Times are `"mm:ss"` since the session started. Money is a plain number plus an ISO currency code.
 
-## Invoice
+## The work app: Ledgerline
 
-```ts
-{ id, supplier, amount, currency, description, costCenter, assetNumber, status }
-```
+`public/ledgerline.html` is the team's fake expense tool, embedded unchanged by `src/features/erp/LedgerlineFrame.tsx`.
+The frame turns Ledgerline events into ScreenEvents, feeds typing/pointer activity to pause detection, and in Teach installs the Save guard.
+`?user=sabine` (expert) or `?user=lena` (new hire). Hidden demo controls inside it: Alt+Shift+D.
 
-| Field | Type | Notes |
-|---|---|---|
-| id | string | e.g. `"4471"` |
-| supplier | string | |
-| amount | number | `8450` |
-| currency | string | `"EUR"` |
-| description | string | |
-| costCenter | `"4711"` \| `"0400"` | 4711 = opex, 0400 = capex |
-| assetNumber | string | `""` when none |
-| status | `"open"` \| `"approved"` \| `"on_hold"` \| `"pending_2nd_approval"` | |
+### ExpenseSnapshot
+
+What Ledgerline sends with form and save events (see `src/lib/types.ts`): amounts (`spent`, `meal_amount`, `drink_amount`, `tip_amount`),
+`type_of_meal` ("Eat In" | "Take Away"), `guests[]`, `guest_count`, `amount_per_person`, `projects[]`, and `attachments[]` whose `facts`
+say what each document is (`invoice` with `consumption` "im Haus"/"außer Haus", `order_confirmation` = not a tax invoice, `approval_email`, ...).
 
 ## ScreenEvent
 
@@ -27,7 +22,9 @@ Times are `"mm:ss"` since the session started. Money is a plain number plus an I
 { time, invoiceId, type, field?, from?, to?, description, source: "dom" | "vision" }
 ```
 
-- `type`: `"invoice_opened"` \| `"field_changed"` \| `"status_changed"` \| `"saved"` \| `"save_blocked"`
+- `type`: the Ledgerline event type, e.g. `report_created`, `expense_form_opened`, `field_changed`, `guest_added`, `attachment_added`, `document_opened`, `expense_saved`, `save_blocked` (guardrail), `validation_failed`.
+- `invoiceId`: id of the record on screen (expense id or report number).
+- `data`: raw ExpenseSnapshot when the event carries one.
 - `field`, `from`, `to`: set for `field_changed` and `status_changed`.
 - `description`: one human-readable sentence; this is what the voice agent reads.
 - `source`: `"dom"` from the mock ERP, `"vision"` from the screen-capture model.
@@ -35,9 +32,9 @@ Times are `"mm:ss"` since the session started. Money is a plain number plus an I
 Example:
 
 ```json
-{ "time": "03:12", "invoiceId": "4471", "type": "field_changed", "field": "costCenter",
-  "from": "4711", "to": "0400",
-  "description": "Invoice 4471: cost center changed from 4711 (opex) to 0400 (capex)", "source": "dom" }
+{ "time": "02:40", "invoiceId": "exp_k2j9x1", "type": "field_changed", "field": "type_of_meal",
+  "from": "Take Away", "to": "Eat In",
+  "description": "Type of Meal changed from \"Take Away\" to \"Eat In\"", "source": "dom" }
 ```
 
 All events go through the bus in `src/lib/events.ts`:
@@ -71,13 +68,12 @@ All events go through the bus in `src/lib/events.ts`:
 ## GuardrailResult (Teach)
 
 ```ts
-{ ok: boolean, violations: { stepId, rule, explanation }[] }
+{ ok: boolean, violations: { stepId, rule, explanation, fields }[] }
 ```
 
-Returned by `checkGuardrails(invoice, workMap)`; `ok: false` blocks Save in the ERP.
+Returned by `checkGuardrails(expense, workMap)`; `ok: false` blocks Save in Ledgerline and highlights `fields`.
 
 ## Fake data (`src/data/`)
 
-- `invoices.ts` — `expertInvoices` (4471 capex re-code, 4472 Brandt December hold, 4473 Czech 2nd approval) and `teachInvoice` (5120, €7,200 equipment, never shown to the expert).
-- `fakeSession.ts` — `fakeEvents` + `fakeTranscript` of a full expert session.
-- `sampleWorkMap.ts` — 7 steps, 3 judgment calls, 4 guardrails.
+- `fakeSession.ts`: `fakeEvents` + `fakeTranscript` of Sabine filing four team meals.
+- `sampleWorkMap.ts`: 7 steps, 4 judgment calls, 4 guardrails (Eat In vs Take Away, €30 per person, order confirmation is not an invoice, over €250 needs the company address).

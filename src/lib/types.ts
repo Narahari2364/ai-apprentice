@@ -1,40 +1,53 @@
 // Shared data formats. Source of truth: docs/formats.md — change both together.
+// The work app is the Ledgerline expense tool (public/ledgerline.html).
 
-export type CostCenter = "4711" | "0400"; // 4711 = opex, 0400 = capex
-
-export type InvoiceStatus =
-  | "open"
-  | "approved"
-  | "on_hold"
-  | "pending_2nd_approval";
-
-export interface Invoice {
+/** What the Ledgerline mock sends with save / form events (its `snapshot()`). */
+export interface ExpenseSnapshot {
   id: string;
-  supplier: string;
-  amount: number;
-  currency: string; // ISO code, e.g. "EUR"
-  description: string;
-  costCenter: CostCenter;
-  assetNumber: string; // "" when none
-  status: InvoiceStatus;
+  expense_type: string;
+  transaction_date: string;
+  spent: number;
+  currency: string;
+  location: string | null;
+  business_purpose: string;
+  meal_amount: number;
+  drink_amount: number;
+  tip_amount: number;
+  restaurant_name: string;
+  restaurant_address: string;
+  type_of_meal: "Take Away" | "Eat In" | null;
+  projects: { code: string; name: string; pct: number }[];
+  guests: { name: string; title: string; kind: string; org: string; pct: number; amount: number }[];
+  guest_count: number;
+  amount_per_person: number | null;
+  attachments: { id: string; file?: string; kind?: string; facts?: DocFacts | null; missing?: boolean }[];
+  comments: { by: string; at: string; text: string }[];
+  returned: boolean;
 }
 
-export type ScreenEventType =
-  | "invoice_opened"
-  | "field_changed"
-  | "status_changed"
-  | "saved"
-  | "save_blocked";
+/** Facts the mock extracts from an attached document (receipt, invoice, email). */
+export interface DocFacts {
+  kind: "invoice" | "order_confirmation" | "approval_email" | "correction_email" | "upload";
+  supplier?: string;
+  consumption?: string | null; // "im Haus" (eat in) | "außer Haus" (take away)
+  total_paid?: number;
+  tip?: number;
+  is_tax_invoice?: boolean;
+  addressed_to?: string | null;
+  platform?: string;
+  subject?: string;
+}
 
 export interface ScreenEvent {
   time: string; // "mm:ss" since session start
-  invoiceId: string;
-  type: ScreenEventType;
+  invoiceId: string; // id of the record on screen (expense id or report number)
+  type: string; // Ledgerline event type, e.g. "field_changed", "guest_added", "save_blocked"
   field?: string;
   from?: string;
   to?: string;
   description: string; // human-readable, fed to the agent
   source: "dom" | "vision";
+  data?: unknown; // raw payload from the app (e.g. ExpenseSnapshot)
 }
 
 export interface TranscriptLine {
@@ -64,5 +77,5 @@ export interface WorkMap {
 
 export interface GuardrailResult {
   ok: boolean;
-  violations: { stepId: string; rule: string; explanation: string }[];
+  violations: { stepId: string; rule: string; explanation: string; fields: string[] }[];
 }
