@@ -2,31 +2,52 @@ import Link from "next/link";
 
 export default function Home() {
   return (
-    <div className="mx-auto flex max-w-4xl flex-col gap-8 py-12">
-      <div>
-        <h1 className="text-4xl font-bold">The AI Apprentice</h1>
-        <p className="mt-2 text-lg text-slate-600">
-          A voice agent that watches an expert work, asks why, builds a Work Map, and coaches the next new hire.
-        </p>
-      </div>
-      <div className="grid gap-6 sm:grid-cols-2">
-        <Link
-          href="/capture"
-          className="rounded-2xl border border-slate-200 bg-white p-8 shadow-sm transition hover:border-sky-400 hover:shadow-md"
-        >
-          <div className="text-sm font-semibold uppercase tracking-wide text-sky-600">Expert mode</div>
-          <div className="mt-2 text-2xl font-bold">Teach the apprentice</div>
-          <p className="mt-2 text-slate-600">File expenses in Ledgerline while the agent watches and asks why. Then review the Work Map.</p>
-        </Link>
-        <Link
-          href="/teach"
-          className="rounded-2xl border border-slate-200 bg-white p-8 shadow-sm transition hover:border-emerald-400 hover:shadow-md"
-        >
-          <div className="text-sm font-semibold uppercase tracking-wide text-emerald-600">New hire mode</div>
-          <div className="mt-2 text-2xl font-bold">Learn from the expert</div>
-          <p className="mt-2 text-slate-600">File a new expense while the tutor coaches you and stops you before a wrong save.</p>
-        </Link>
+    <div className="h-full bg-panel">
+      <div className="mx-auto flex max-w-5xl flex-col gap-6 px-6 py-10">
+        <div>
+          <h1 className="text-[31px] font-normal text-brand">The AI Apprentice</h1>
+          <p className="mt-1 max-w-3xl text-[17px] text-[#444]">
+            Captures what an expert knows while they work in Ledgerline, maps it into a Work Map anyone can follow, and teaches it to the next new hire.
+          </p>
+        </div>
+        <div className="grid gap-4 md:grid-cols-2">
+          <ModeCard
+            href="/capture"
+            bar="Expert mode"
+            title="Sabine Keller · Senior consultant"
+            text="File team meal expenses as usual. The apprentice watches, stays quiet while you work, and asks why at natural pauses. Then it debriefs and builds the Work Map."
+            cta="Start capture"
+          />
+          <ModeCard
+            href="/teach"
+            bar="New hire mode"
+            title="Lena Brandt · Associate"
+            text="File a new meal expense with a voice tutor. It explains each step the way Sabine does and stops a wrong save before Global Audit returns it."
+            cta="Start learning"
+          />
+        </div>
+        <div className="card">
+          <div className="section-title rounded-t-sm border-t-0">How it works</div>
+          <ol className="grid gap-4 p-4 text-[14.5px] md:grid-cols-3">
+            <li><b className="text-brand">1. Capture</b><br />Voice agent + screen events from Ledgerline. Questions only at natural pauses.</li>
+            <li><b className="text-brand">2. Map</b><br />Debrief and teach-back become clickable steps, decisions, reasons and guardrails.</li>
+            <li><b className="text-brand">3. Teach</b><br />The tutor checks every Save against Sabine&apos;s guardrails and explains in her words.</li>
+          </ol>
+        </div>
       </div>
     </div>
+  );
+}
+
+function ModeCard({ href, bar, title, text, cta }: { href: string; bar: string; title: string; text: string; cta: string }) {
+  return (
+    <Link href={href} className="card group block transition hover:shadow-[0_0_0_1px_#2F74D0]">
+      <div className="card-bar">{bar}</div>
+      <div className="card-body">
+        <div className="text-[19px]">{title}</div>
+        <p className="mt-2 text-[14.5px] leading-relaxed text-[#444]">{text}</p>
+        <span className="btn-pri mt-4">{cta} →</span>
+      </div>
+    </Link>
   );
 }

@@ -3,6 +3,7 @@ import type { WorkMap } from "@/lib/types";
 // A complete Work Map for the Ledgerline meal-expense task: 7 steps,
 // 4 judgment calls (steps 4–7), 4 guardrails. Matches fakeSession.ts.
 // Teach uses this until a real capture session produces one.
+// docId = Ledgerline DOCS id that /map opens for the step (receipts, approvals).
 export const sampleWorkMap: WorkMap = {
   task: "File team meal expenses in Ledgerline so Global Audit accepts them first time",
   confirmed: true,
@@ -23,6 +24,7 @@ export const sampleWorkMap: WorkMap = {
     },
     {
       id: "s2",
+      docId: "r1-inv",
       order: 2,
       title: "Open the receipt from the gallery and read it before typing",
       time: "01:20",
@@ -33,6 +35,7 @@ export const sampleWorkMap: WorkMap = {
     },
     {
       id: "s3",
+      docId: "r1-inv",
       order: 3,
       title: "Split Spent into meal, drinks and tip",
       time: "02:05",
@@ -43,6 +46,7 @@ export const sampleWorkMap: WorkMap = {
     },
     {
       id: "s4",
+      docId: "r1-inv",
       order: 4,
       title: "Set Type of Meal from the receipt (Eat In vs Take Away)",
       time: "02:40",
@@ -53,6 +57,7 @@ export const sampleWorkMap: WorkMap = {
     },
     {
       id: "s5",
+      docId: "r4-ok",
       order: 5,
       title: "Add every participant and check the amount per person",
       time: "03:30",
@@ -63,6 +68,7 @@ export const sampleWorkMap: WorkMap = {
     },
     {
       id: "s6",
+      docId: "r2-conf",
       order: 6,
       title: "Delivery orders: attach the real invoice, not the order confirmation",
       time: "05:10",
@@ -73,6 +79,7 @@ export const sampleWorkMap: WorkMap = {
     },
     {
       id: "s7",
+      docId: "r4-inv",
       order: 7,
       title: "Large dinners over €250: invoice must name the company",
       time: "07:20",

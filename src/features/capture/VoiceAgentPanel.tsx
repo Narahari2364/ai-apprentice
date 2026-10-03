@@ -1,5 +1,5 @@
 "use client";
-// Interviewer agent for /capture.
+// Interviewer (ElevenLabs) side panel for /capture.
 // When to ask: after a judgment-relevant action (Type of Meal, guests, attachments,
 // save...) we wait until there has been no typing/pointer activity, no screen event
 // and no expert speech for PAUSE_MS, the agent is silent, no document is open
@@ -10,10 +10,12 @@ import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ConversationProvider } from "@elevenlabs/react";
 import { getHistory, onActivity, resetSession, subscribe } from "@/lib/events";
-import { attachScreenshots, saveSession, saveWorkMap } from "@/lib/session";
-import { setCapturePaused, snapshot, startScreenCapture, stopScreenCapture } from "./screenCapture";
+import { attachDocs, attachScreenshots, saveSession, saveWorkMap } from "@/lib/session";
 import { useVoiceAgent } from "@/lib/useVoiceAgent";
 import type { ScreenEvent } from "@/lib/types";
+import { registerAgent, sendToAgent, STATE_LABEL, type AgentUiState } from "./agent";
+import { setCapturePaused, snapshot, startScreenCapture, stopScreenCapture } from "./screenCapture";
+import EventLog from "./EventLog";
 
 const PAUSE_MS = 3500;
 const MIN_GAP_MS = 20000;
@@ -37,8 +39,10 @@ function Interviewer() {
   const agent = useVoiceAgent("interviewer");
   const [offRecord, setOffRecord] = useState(false);
   const [phase, setPhase] = useState<"task" | "debrief" | "building">("task");
-  const [detector, setDetector] = useState("idle");
+  const [waiting, setWaiting] = useState<string | null>(null); // why the agent is holding a question
   const [questions, setQuestions] = useState(0);
+  const [sharing, setSharing] = useState(false);
+  const [starting, setStarting] = useState(false);
 
   const agentRef = useRef(agent);
   const offRef = useRef(false);
@@ -49,7 +53,6 @@ function Interviewer() {
   const reading = useRef(false);
   const offRecordEvents = useRef(new Set<ScreenEvent>());
   const shots = useRef<Record<string, string>>({});
-  const [sharing, setSharing] = useState(false);
 
   useEffect(() => {
     agentRef.current = agent;
@@ -57,32 +60,39 @@ function Interviewer() {
   });
 
   useEffect(() => {
+    if (!agent.connected) return;
+    return registerAgent({
+      context: (t) => agentRef.current.sendContextualUpdate(t),
+      message: (t) => agentRef.current.sendUserMessage(t),
+    });
+  }, [agent.connected]);
+
+  useEffect(() => {
     if (!agent.connected || phase !== "task") return;
 
     function tryAsk() {
       const a = agentRef.current;
       const now = Date.now();
-      if (!pending.current || offRef.current) return setDetector("idle");
-      const busy =
-        a.isSpeaking || reading.current || now - a.lastUserSpeech.current < 2500 || now - lastActivity.current < PAUSE_MS;
-      if (busy) {
-        setDetector(reading.current ? "expert reading a document, staying quiet" : "expert busy, staying quiet");
+      if (!pending.current || offRef.current) return setWaiting(null);
+      if (a.isSpeaking || reading.current || now - a.lastUserSpeech.current < 2500 || now - lastActivity.current < PAUSE_MS) {
+        setWaiting(reading.current ? "she is reading a document" : a.isSpeaking ? "agent is speaking" : "she is working or talking");
         timer.current = setTimeout(tryAsk, 1000);
         return;
       }
       const wait = MIN_GAP_MS - (now - lastQuestion.current);
       if (wait > 0) {
-        setDetector(`saving question (rate limit ${Math.ceil(wait / 1000)}s)`);
+        setWaiting(`question budget: next in ${Math.ceil(wait / 1000)}s`);
         timer.current = setTimeout(tryAsk, Math.min(wait, 1000));
         return;
       }
-      a.sendUserMessage(
+      sendToAgent(
         `[PAUSE] Sabine paused right after: ${pending.current.description}. Ask one short question about why, or about a limit or when she would stop and ask.`,
+        { respond: true },
       );
       lastQuestion.current = now;
       pending.current = null;
       setQuestions((q) => q + 1);
-      setDetector("asked at pause");
+      setWaiting(null);
     }
 
     const unsubscribe = subscribe((e) => {
@@ -90,7 +100,7 @@ function Interviewer() {
         offRecordEvents.current.add(e);
         return;
       }
-      agentRef.current.sendContextualUpdate(`[SCREEN] ${e.time} ${e.description}`);
+      sendToAgent(`[SCREEN] ${e.time} ${e.description}`);
       // A screen change is activity too (vision lags 2–3 s behind, so only the app's own events count).
       if (e.source === "dom") lastActivity.current = Date.now();
       if (e.type === "document_opened") reading.current = true;
@@ -102,7 +112,7 @@ function Interviewer() {
       }, 600);
       if (isNotable(e)) {
         pending.current = e;
-        setDetector("waiting for a pause");
+        setWaiting("waiting for a pause");
         clearTimeout(timer.current);
         timer.current = setTimeout(tryAsk, PAUSE_MS);
       }
@@ -131,15 +141,23 @@ function Interviewer() {
   }
 
   async function start() {
+    setStarting(true);
     resetSession();
     shots.current = {};
     try {
       await startScreenCapture(() => setSharing(false));
       setSharing(true);
     } catch {
-      // Sharing declined: the agent still gets DOM events, just no vision/screenshots.
+      // Sharing declined: the agent still gets Ledgerline events, just no vision/screenshots.
     }
-    agent.start();
+    await agent.start();
+    setStarting(false);
+  }
+
+  function stop() {
+    agent.endSession();
+    stopScreenCapture();
+    setSharing(false);
   }
 
   function toggleOffRecord() {
@@ -147,27 +165,27 @@ function Interviewer() {
     setOffRecord(next);
     agent.setMuted(next);
     setCapturePaused(next);
-    agent.sendContextualUpdate(next ? "[SCREEN] Sabine went off the record." : "[SCREEN] Sabine is back on the record.");
+    sendToAgent(next ? "[SCREEN] Sabine went off the record." : "[SCREEN] Sabine is back on the record.");
   }
 
   function finishTask() {
     setPhase("debrief");
-    agent.sendUserMessage(
+    sendToAgent(
       `[DEBRIEF] Sabine is done with the task. Everything that happened on screen:\n${recordedEvents()
         .map((e) => `${e.time} ${e.description}`)
         .join("\n")}\nStart the debrief now.`,
+      { respond: true },
     );
   }
 
   async function buildMap() {
     setPhase("building");
-    agent.endSession();
-    stopScreenCapture();
-    setSharing(false);
+    stop();
+    const events = recordedEvents();
     const res = await fetch("/api/workmap", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ events: recordedEvents(), transcript: agent.transcript }),
+      body: JSON.stringify({ events, transcript: agent.transcript }),
     });
     const data = await res.json();
     if (!res.ok) {
@@ -175,66 +193,131 @@ function Interviewer() {
       alert(data.error);
       return;
     }
-    saveWorkMap(attachScreenshots(data, shots.current));
+    saveWorkMap(attachDocs(attachScreenshots(data, shots.current), events));
     router.push("/map");
   }
 
+  const ui: AgentUiState =
+    phase === "building" ? "building"
+    : starting || agent.status === "connecting" ? "connecting"
+    : !agent.connected ? "not_started"
+    : offRecord ? "off_record"
+    : agent.isSpeaking ? "asking"
+    : phase === "debrief" ? "debrief"
+    : waiting && waiting !== "waiting for a pause" ? "quiet"
+    : "listening";
+
+  const pillClass: Record<AgentUiState, string> = {
+    not_started: "bg-[#EEF1F4] text-[#444]",
+    connecting: "bg-[#EEF1F4] text-[#444]",
+    listening: "bg-ok-soft text-ok",
+    quiet: "bg-warn-soft text-[#7a5a00]",
+    asking: "bg-brand-soft text-brand",
+    off_record: "bg-err-soft text-err",
+    debrief: "bg-brand-soft text-brand",
+    building: "bg-brand-soft text-brand",
+  };
+
   return (
-    <div className="flex flex-col gap-3 rounded-xl border border-sky-200 bg-sky-50 p-4">
-      <div className="flex items-center justify-between">
-        <h3 className="text-lg font-semibold text-sky-900">Apprentice (Interviewer)</h3>
-        <span className="text-sm text-sky-700">
-          {agent.connected ? (agent.isSpeaking ? "🔊 speaking" : "👂 listening") : agent.status}
-        </span>
-      </div>
-
-      {!agent.connected && phase === "task" && (
-        <button onClick={start} className="rounded-lg bg-sky-600 px-4 py-2 font-semibold text-white">
-          Start session
-        </button>
-      )}
-
-      {agent.connected && (
-        <>
-          <div className="text-sm text-sky-800">
-            Pause detector: <b>{detector}</b> · questions asked: <b>{questions}</b>
-          </div>
-          <div className="text-sm text-sky-800">
-            Screen: <b>{sharing ? (offRecord ? "⏸ paused (off the record)" : "🟢 shared, vision on") : "not shared (app events only)"}</b>
-          </div>
-          <div className="flex flex-wrap gap-2">
+    <div className="flex min-h-0 flex-1 flex-col gap-3">
+      <section className="card flex-none">
+        <div className="card-bar">
+          <span>Apprentice</span>
+          <span className={`pill ml-auto ${pillClass[ui]}`}>
+            <Dot ui={ui} /> {STATE_LABEL[ui]}
+          </span>
+        </div>
+        <div className="card-body flex flex-col gap-3">
+          <div className="flex items-center gap-3">
             <button
-              onClick={toggleOffRecord}
-              className={`rounded-lg px-3 py-1.5 text-sm font-semibold ${offRecord ? "bg-red-600 text-white" : "bg-white text-slate-700 border border-slate-300"}`}
+              onClick={() => agent.setMuted(!agent.isMuted)}
+              disabled={!agent.connected || offRecord}
+              aria-label={agent.isMuted ? "Unmute microphone" : "Mute microphone"}
+              className={`grid h-11 w-11 place-items-center rounded-full border ${agent.connected && !agent.isMuted ? "border-brand bg-brand text-white" : "border-line bg-panel text-muted"} disabled:opacity-50`}
             >
-              {offRecord ? "● Off the record (tap to resume)" : "Go off the record"}
+              <MicIcon muted={!agent.connected || agent.isMuted} />
             </button>
-            {phase === "task" && (
-              <button onClick={finishTask} className="rounded-lg bg-slate-900 px-3 py-1.5 text-sm font-semibold text-white">
-                I&apos;m done → debrief
-              </button>
-            )}
-            {phase === "debrief" && (
-              <button onClick={buildMap} className="rounded-lg bg-emerald-600 px-3 py-1.5 text-sm font-semibold text-white">
-                Build Work Map
-              </button>
+            <div className="min-w-0 flex-1 text-[13px] leading-snug text-[#444]">
+              {ui === "not_started" && "Start, then share this tab. The apprentice stays quiet while Sabine works and asks at natural pauses."}
+              {ui === "connecting" && "Connecting the voice agent…"}
+              {ui === "listening" && (waiting ? "A question is ready. Waiting for a natural pause." : "Watching the screen and listening.")}
+              {ui === "quiet" && `Holding the question: ${waiting}.`}
+              {ui === "asking" && "Asking about what just happened on screen."}
+              {ui === "off_record" && "Nothing is recorded or sent until you resume."}
+              {ui === "debrief" && "Debrief: closing gaps, then the teach-back."}
+              {ui === "building" && "Merging events, transcript and answers…"}
+            </div>
+            {!agent.connected ? (
+              <button className="btn-pri" onClick={start} disabled={starting || phase === "building"}>Start</button>
+            ) : (
+              <button className="btn" onClick={stop}>Stop</button>
             )}
           </div>
-        </>
-      )}
-      {phase === "building" && <p className="text-sky-800">Building the Work Map…</p>}
-      {agent.error && <p className="rounded bg-red-50 p-2 text-sm text-red-700">{agent.error}</p>}
 
-      {agent.transcript.length > 0 && (
-        <ol className="max-h-56 space-y-1 overflow-y-auto text-sm">
+          <div className="grid grid-cols-2 gap-2 text-[13px]">
+            <Stat label="Questions asked" value={String(questions)} />
+            <Stat label="Screen" value={sharing ? (offRecord ? "Paused" : "Shared · vision on") : "App events only"} />
+          </div>
+
+          <div className="flex items-center gap-2">
+            <label className="flex flex-1 cursor-pointer items-center gap-2 text-[14px]">
+              <span
+                role="switch"
+                aria-checked={offRecord}
+                tabIndex={0}
+                onClick={() => agent.connected && toggleOffRecord()}
+                onKeyDown={(e) => e.key === " " && agent.connected && toggleOffRecord()}
+                className={`relative h-5 w-9 rounded-full transition ${offRecord ? "bg-err" : "bg-[#c7ccd1]"} ${agent.connected ? "" : "opacity-50"}`}
+              >
+                <span className={`absolute top-0.5 h-4 w-4 rounded-full bg-white shadow transition-all ${offRecord ? "left-[18px]" : "left-0.5"}`} />
+              </span>
+              Off the record
+            </label>
+            {agent.connected && phase === "task" && <button className="btn h-9 text-[14px]" onClick={finishTask}>I&apos;m done → debrief</button>}
+            {phase === "debrief" && <button className="btn-pri h-9 text-[14px]" onClick={buildMap}>Build Work Map</button>}
+          </div>
+          {agent.error && <p className="rounded-sm border-l-4 border-err bg-err-soft px-3 py-2 text-[13px] text-[#8E1B1B]">{agent.error}</p>}
+        </div>
+      </section>
+
+      <section className="card flex min-h-0 flex-1 flex-col">
+        <div className="section-title rounded-t-sm border-t-0">Transcript</div>
+        <ol className="min-h-0 flex-1 space-y-2 overflow-y-auto p-3 text-[14px]">
+          {agent.transcript.length === 0 && <li className="text-muted">The conversation will appear here.</li>}
           {agent.transcript.map((t, i) => (
-            <li key={i} className={t.speaker === "agent" ? "text-sky-900" : "text-slate-700"}>
-              <span className="font-mono text-xs text-slate-400">{t.time}</span>{" "}
-              <b>{t.speaker === "agent" ? "Apprentice" : "Expert"}:</b> {t.text}
+            <li key={i} className="leading-snug">
+              <span className="mr-1.5 font-mono text-[11.5px] text-muted">{t.time}</span>
+              <b className={t.speaker === "agent" ? "text-brand" : "text-ink"}>{t.speaker === "agent" ? "Apprentice" : "Sabine"}:</b> {t.text}
             </li>
           ))}
         </ol>
-      )}
+      </section>
+
+      <EventLog />
     </div>
+  );
+}
+
+function Stat({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-sm border border-line bg-panel px-3 py-2">
+      <div className="text-[11.5px] uppercase tracking-wide text-muted">{label}</div>
+      <div className="text-[15px] font-medium">{value}</div>
+    </div>
+  );
+}
+
+function Dot({ ui }: { ui: AgentUiState }) {
+  const live = ui === "listening" || ui === "asking";
+  return <span className={`inline-block h-2 w-2 rounded-full bg-current ${live ? "animate-pulse" : ""}`} />;
+}
+
+function MicIcon({ muted }: { muted: boolean }) {
+  return (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+      <rect x="9" y="3" width="6" height="11" rx="3" />
+      <path d="M5 11a7 7 0 0 0 14 0M12 18v3" strokeLinecap="round" />
+      {muted && <path d="M4 4l16 16" strokeLinecap="round" />}
+    </svg>
   );
 }

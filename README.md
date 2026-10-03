@@ -12,7 +12,7 @@ npm run dev                  # http://localhost:3000
 
 Stack: Next.js (App Router, TypeScript), Tailwind, `@elevenlabs/react` (coming next), Gemini through server routes. No database: client state plus localStorage. Deploys to Vercel.
 
-Pages: `/` mode picker · `/capture` ERP, voice agent and live event log · `/map` Work Map · `/teach` ERP with teach invoice and tutor.
+Pages: `/` mode picker · `/capture` Ledgerline + apprentice panel (voice, transcript, live events) · `/map` Work Map (opens each step's document in Ledgerline) · `/teach` Ledgerline as Lena with the Save guard + tutor panel (progress, mastery report).
 
 Data formats: [docs/formats.md](docs/formats.md). Fake data in `src/data/` means nobody waits on anyone.
 
@@ -23,7 +23,7 @@ Two people build the app. The split is **AI & voice** (logic, APIs, agents) vs *
 | Track | Owns | What |
 |---|---|---|
 | AI & voice (branch `ai-voice`) | `src/app/api/`, `src/features/erp/LedgerlineFrame.tsx` (bridge), `src/features/capture/` logic, `src/features/teach/checkGuardrails.ts`, `src/features/workmap/buildWorkMap.ts`, `docs/agents.md` | ElevenLabs Interviewer + Tutor, pause detection, events → agent, debrief → Work Map (Gemini), guardrail rules |
-| UI & experience (branch `ui`) | `src/app/**/page.tsx` layouts, `public/ledgerline.html` (the work app), `src/features/workmap/WorkMapView.tsx`, all `*Panel.tsx` visuals, `globals.css` | Design system, realistic ERP, Work Map timeline, agent/tutor panels, blocked-save alert, end-of-session scorecard |
+| UI & experience (branch `ui`) | `src/app/**/page.tsx` layouts, `public/ledgerline/index.html` (the work app, keep unchanged), `src/features/workmap/WorkMapView.tsx`, all `*Panel.tsx` visuals, `globals.css` | Design system, realistic ERP, Work Map timeline, agent/tutor panels, blocked-save alert, end-of-session scorecard |
 | Pitch | `docs/pitch.md` | Pitch and demo script |
 | shared | `src/lib/`, `src/data/` | Change only with a heads-up |
 

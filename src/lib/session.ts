@@ -43,6 +43,21 @@ export function attachScreenshots(map: WorkMap, shots: Record<string, string>): 
   };
 }
 
+/** Link each step to the Ledgerline document touched closest to its screen moment (within 90 s). */
+export function attachDocs(map: WorkMap, events: ScreenEvent[]): WorkMap {
+  const withDocs = events.filter((e) => e.docId);
+  if (!withDocs.length) return map;
+  return {
+    ...map,
+    steps: map.steps.map((step) => {
+      if (step.docId) return step;
+      const t = seconds(step.time);
+      const best = withDocs.reduce((a, b) => (Math.abs(seconds(b.time) - t) < Math.abs(seconds(a.time) - t) ? b : a));
+      return Math.abs(seconds(best.time) - t) <= 90 ? { ...step, docId: best.docId } : step;
+    }),
+  };
+}
+
 export const loadSession = () => read<CapturedSession>(SESSION_KEY);
 export const saveSession = (s: CapturedSession) => write(SESSION_KEY, s);
 export const loadWorkMap = () => read<WorkMap>(WORKMAP_KEY);

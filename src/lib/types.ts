@@ -47,6 +47,7 @@ export interface ScreenEvent {
   to?: string;
   description: string; // human-readable, fed to the agent
   source: "dom" | "vision";
+  docId?: string; // Ledgerline document involved (receipt, invoice, approval email)
   data?: unknown; // raw payload from the app (e.g. ExpenseSnapshot)
 }
 
@@ -62,6 +63,7 @@ export interface WorkMapStep {
   title: string;
   time: string; // screen moment, "mm:ss"
   screenshot?: string; // data URL or /public path
+  docId?: string; // Ledgerline document for this step; /map opens it via open_document
   decision: string; // "" for routine steps
   reason: string;
   expertQuote: string;
@@ -75,7 +77,24 @@ export interface WorkMap {
   confirmed: boolean; // expert confirmed the teach-back
 }
 
+export type RuleKey = "type_of_meal" | "small_meals" | "tax_invoice" | "company_address";
+
 export interface GuardrailResult {
   ok: boolean;
-  violations: { stepId: string; rule: string; explanation: string; fields: string[] }[];
+  applicable: RuleKey[]; // rules that applied to this expense (for Teach progress)
+  violations: { key: RuleKey; stepId: string; rule: string; explanation: string; fields: string[] }[];
+}
+
+// ---------- Legacy: old invoice mock ERP (src/features/erp/MockErp.tsx), no longer used ----------
+export type CostCenter = "4711" | "0400";
+export type InvoiceStatus = "open" | "approved" | "on_hold" | "pending_2nd_approval";
+export interface Invoice {
+  id: string;
+  supplier: string;
+  amount: number;
+  currency: string;
+  description: string;
+  costCenter: CostCenter;
+  assetNumber: string;
+  status: InvoiceStatus;
 }

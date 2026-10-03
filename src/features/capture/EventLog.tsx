@@ -1,28 +1,28 @@
 "use client";
-// Owner: CS 1. Live log of ScreenEvents from the shared bus.
+// Live log of ScreenEvents from the shared bus (Ledgerline events + vision).
 
 import { useScreenEvents } from "@/lib/events";
 
 export default function EventLog() {
   const events = useScreenEvents();
   return (
-    <div className="flex min-h-0 flex-1 flex-col rounded-xl border border-slate-200 bg-white p-4">
-      <h3 className="mb-2 text-sm font-semibold uppercase tracking-wide text-slate-500">
-        Live screen events ({events.length})
-      </h3>
+    <section className="card flex min-h-0 flex-1 flex-col">
+      <div className="section-title flex items-center rounded-t-sm border-t-0">
+        Live screen events <span className="ml-auto font-normal normal-case text-muted">{events.length}</span>
+      </div>
       {events.length === 0 ? (
-        <p className="text-slate-400">Open an invoice in the ERP to see events here.</p>
+        <p className="p-3 text-[14px] text-muted">Work in Ledgerline to see events here.</p>
       ) : (
-        <ol className="flex-1 space-y-1 overflow-y-auto font-mono text-sm">
+        <ol className="min-h-0 flex-1 overflow-y-auto text-[13px]">
           {[...events].reverse().map((e, i) => (
-            <li key={events.length - i} className="border-b border-slate-100 py-1">
-              <span className="text-slate-400">{e.time}</span>{" "}
-              <span className="rounded bg-slate-100 px-1 text-xs">{e.source}</span>{" "}
-              {e.description}
+            <li key={events.length - i} className="flex gap-2 border-b border-[#eee] px-3 py-1.5 leading-snug">
+              <span className="font-mono text-[11.5px] text-muted">{e.time}</span>
+              <span className={`pill h-fit px-1.5 py-0 text-[11px] ${e.source === "vision" ? "bg-warn-soft text-[#7a5a00]" : "bg-brand-soft text-brand"}`}>{e.source}</span>
+              <span className={e.type === "save_blocked" ? "text-err" : ""}>{e.description}</span>
             </li>
           ))}
         </ol>
       )}
-    </div>
+    </section>
   );
 }

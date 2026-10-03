@@ -1,23 +1,57 @@
 @import "tailwindcss";
 
+/* Enterprise look matching Ledgerline: white, Roboto, blue #2F74D0, grey panels, thin borders, 3px radius. */
 @theme inline {
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-sans: var(--font-roboto), "Segoe UI", Helvetica, Arial, sans-serif;
+  --color-brand: #2f74d0;
+  --color-brand-dark: #1f4e8c;
+  --color-brand-soft: #e3f0fc;
+  --color-ink: #212121;
+  --color-muted: #6b7280;
+  --color-panel: #f8f8f8;
+  --color-panel-2: #f6f7f9;
+  --color-line: #e3e3e3;
+  --color-ok: #2e7d4f;
+  --color-ok-soft: #e3f2e8;
+  --color-warn: #e2a100;
+  --color-warn-soft: #fff6db;
+  --color-err: #c62828;
+  --color-err-soft: #fdecec;
+  --radius-sm: 3px;
+}
+
+html,
+body {
+  height: 100%;
 }
 
 body {
-  background: #f1f5f9;
-  color: #0f172a;
+  background: #fff;
+  color: var(--color-ink);
+  font-size: 15px;
 }
 
 @layer components {
-  .erp-label {
-    @apply mb-1 block text-sm font-medium text-slate-600;
+  /* Card with the Ledgerline blue header bar */
+  .card {
+    @apply rounded-sm border border-line bg-white;
   }
-  .erp-input {
-    @apply w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-lg focus:border-sky-500 focus:outline-none focus:ring-2 focus:ring-sky-200;
+  .card-bar {
+    @apply flex h-12 items-center gap-3 rounded-t-sm bg-brand px-4 text-[16px] font-bold text-white;
   }
-  .erp-btn {
-    @apply rounded-lg px-4 py-2 text-base font-semibold shadow-sm hover:opacity-90;
+  .card-body {
+    @apply p-4;
+  }
+  .section-title {
+    @apply border-y border-line bg-panel-2 px-4 py-2.5 text-[13px] font-bold uppercase tracking-wide text-[#444];
+  }
+  .btn {
+    @apply inline-flex h-10 items-center justify-center gap-2 rounded-sm border border-brand bg-white px-4 text-[15px] text-brand hover:bg-brand-soft disabled:cursor-default disabled:opacity-50;
+  }
+  .btn-pri {
+    @apply inline-flex h-10 items-center justify-center gap-2 rounded-sm border border-brand bg-brand px-4 text-[15px] text-white hover:bg-brand-dark disabled:cursor-default disabled:opacity-50;
+  }
+  .pill {
+    @apply inline-flex items-center gap-1.5 rounded-sm px-2 py-0.5 text-[12.5px] font-medium;
   }
 }
