@@ -1,24 +1,82 @@
 "use client";
-// Owner: CS 2. Placeholder for the ElevenLabs Tutor agent.
-// TODO(CS 2): connect @elevenlabs/react with ELEVENLABS_TUTOR_AGENT_ID, load the
-//   Work Map as context, ask the new hire to predict the next decision.
-// TODO(CS 2): when checkGuardrails blocks a save, have the tutor explain it in
-//   the expert's words and replay the step's screenshot.
-// TODO(CS 2): end-of-session summary: mastered vs. practice next.
+// Tutor agent for /teach. Gets the Work Map on connect, sees every screen event,
+// and is told to intervene whenever a save is blocked by a guardrail.
 
-import { useScreenEvents } from "@/lib/events";
+import { useEffect, useRef, useState } from "react";
+import { ConversationProvider } from "@elevenlabs/react";
+import { resetSession, subscribe } from "@/lib/events";
+import { loadWorkMap } from "@/lib/session";
+import { useVoiceAgent } from "@/lib/useVoiceAgent";
+import { sampleWorkMap } from "@/data/sampleWorkMap";
 
 export default function TutorPanel() {
-  const events = useScreenEvents();
-  const last = events[events.length - 1];
   return (
-    <div className="rounded-xl border-2 border-dashed border-emerald-300 bg-emerald-50 p-6">
-      <h3 className="text-lg font-semibold text-emerald-900">Tutor</h3>
-      <p className="mt-1 text-emerald-800">Placeholder — ElevenLabs tutor will coach here.</p>
-      {last && (
-        <p className="mt-4 rounded-lg bg-white p-3 text-sm text-slate-700">
-          Last action: <span className="font-mono">{last.description}</span>
-        </p>
+    <ConversationProvider>
+      <Tutor />
+    </ConversationProvider>
+  );
+}
+
+function Tutor() {
+  const agent = useVoiceAgent("tutor");
+  const [blocked, setBlocked] = useState<string | null>(null);
+  const agentRef = useRef(agent);
+
+  useEffect(() => {
+    agentRef.current = agent;
+  });
+
+  useEffect(() => {
+    if (!agent.connected) return;
+    agentRef.current.sendContextualUpdate(`[WORKMAP] ${JSON.stringify(loadWorkMap() ?? sampleWorkMap)}`);
+    return subscribe((e) => {
+      if (e.type === "save_blocked") {
+        setBlocked(e.description);
+        agentRef.current.sendUserMessage(`[BLOCKED] Lena tried to save but: ${e.description}. Step in now.`);
+      } else {
+        if (e.type === "saved") setBlocked(null);
+        agentRef.current.sendContextualUpdate(`[SCREEN] ${e.time} ${e.description}`);
+      }
+    });
+  }, [agent.connected]);
+
+  function start() {
+    resetSession();
+    agent.start();
+  }
+
+  return (
+    <div className="flex flex-col gap-3 rounded-xl border border-emerald-200 bg-emerald-50 p-4">
+      <div className="flex items-center justify-between">
+        <h3 className="text-lg font-semibold text-emerald-900">Tutor</h3>
+        <span className="text-sm text-emerald-700">
+          {agent.connected ? (agent.isSpeaking ? "🔊 speaking" : "👂 listening") : agent.status}
+        </span>
+      </div>
+      {!agent.connected ? (
+        <button onClick={start} className="rounded-lg bg-emerald-600 px-4 py-2 font-semibold text-white">
+          Start tutor
+        </button>
+      ) : (
+        <button onClick={() => agent.endSession()} className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm">
+          End session
+        </button>
+      )}
+      {blocked && (
+        <div className="rounded-lg border-2 border-red-400 bg-red-50 p-3 text-red-800">
+          <div className="font-bold">✋ Sabine would stop here.</div>
+          <div className="text-sm">{blocked}</div>
+        </div>
+      )}
+      {agent.error && <p className="rounded bg-red-50 p-2 text-sm text-red-700">{agent.error}</p>}
+      {agent.transcript.length > 0 && (
+        <ol className="max-h-72 space-y-1 overflow-y-auto text-sm">
+          {agent.transcript.map((t, i) => (
+            <li key={i} className={t.speaker === "agent" ? "text-emerald-900" : "text-slate-700"}>
+              <b>{t.speaker === "agent" ? "Tutor" : "You"}:</b> {t.text}
+            </li>
+          ))}
+        </ol>
       )}
     </div>
   );

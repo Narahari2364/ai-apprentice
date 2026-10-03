@@ -86,7 +86,7 @@ export default function MockErp({ invoices: initial, beforeSave }: Props) {
       emit({
         invoiceId: draft.id,
         type: "save_blocked",
-        description: `Save of invoice ${draft.id} blocked: ${check.violations.map((v) => v.rule).join("; ")}`,
+        description: `Save of invoice ${draft.id} blocked: ${check.violations.map((v) => `${v.rule} (${v.explanation})`).join("; ")}`,
         source: "dom",
       });
       return;
