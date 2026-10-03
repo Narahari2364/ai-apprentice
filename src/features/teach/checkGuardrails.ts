@@ -6,7 +6,10 @@ import type { GuardrailResult, Invoice, WorkMap, WorkMapStep } from "@/lib/types
 const EQUIPMENT = /equipment|machine|station|spindle|unit|device|tool/i;
 
 function findStep(map: WorkMap, pattern: RegExp): WorkMapStep | undefined {
-  return map.steps.find((s) => pattern.test(`${s.title} ${s.decision} ${s.reason} ${s.guardrails.join(" ")}`));
+  return (
+    map.steps.find((s) => pattern.test(s.title)) ??
+    map.steps.find((s) => pattern.test(`${s.decision} ${s.reason} ${s.guardrails.join(" ")}`))
+  );
 }
 
 function quote(step: WorkMapStep | undefined, fallback: string) {
