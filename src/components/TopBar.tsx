@@ -1,5 +1,5 @@
 "use client";
-// Top bar in Ledgerline's style. Ledgerline's own header is hidden inside the embed,
+// Top bar in Ledgerline's style: logo, Ledgerline's menu, Work Map link and mode switch. Ledgerline's own header is hidden inside the embed,
 // so its main menu (Home, Expense Reports, Drafts, Submitted, Receipt Gallery) lives
 // here, beside the logo, on pages that show Ledgerline.
 
@@ -7,12 +7,9 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { LEDGERLINE_MENU, ledgerlineAction } from "@/lib/ledgerline";
 
-const COMPANY = "Nordhaven Consulting Group";
-
 export default function TopBar() {
   const path = usePathname();
   const mode = path.startsWith("/teach") ? "newhire" : path === "/" ? null : "expert";
-  const user = mode === "newhire" ? "Lena Brandt" : mode === "expert" ? "Sabine Keller" : null;
   const showMenu = path.startsWith("/capture") || path.startsWith("/teach");
 
   return (
@@ -53,12 +50,6 @@ export default function TopBar() {
             New hire
           </Link>
         </div>
-        {user && (
-          <div className="text-right leading-tight">
-            <div className="text-[15px]">{user}</div>
-            <div className="text-[12px] text-[#444]">{COMPANY}</div>
-          </div>
-        )}
       </div>
     </header>
   );
