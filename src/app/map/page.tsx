@@ -5,6 +5,7 @@
 import { useRef, useState, useSyncExternalStore } from "react";
 import WorkMapView from "@/features/workmap/WorkMapView";
 import LedgerlineFrame from "@/features/erp/LedgerlineFrame";
+import { downloadText, toAgentMarkdown } from "@/features/workmap/exportAgent";
 import { sampleWorkMap } from "@/data/sampleWorkMap";
 import { sendCommand } from "@/lib/ledgerline";
 import type { WorkMap, WorkMapStep } from "@/lib/types";
@@ -38,9 +39,23 @@ export default function MapPage() {
         <div className="mx-auto flex max-w-5xl flex-col gap-3 p-6">
           <div className="flex items-center text-[13px] text-[#444]">
             <span>{raw ? "Work Map from the last capture session" : "Sample Work Map (no session captured yet)"}</span>
+            <span className="ml-3 text-muted">· personal data redacted</span>
+            <button
+              className="btn ml-auto h-8 text-[13px]"
+              onClick={() => downloadText("work-map-agent.md", toAgentMarkdown(map))}
+              title="Instructions an AI agent can load: same steps, stops where Sabine would"
+            >
+              Export for agents
+            </button>
+            <button
+              className="btn ml-2 h-8 text-[13px]"
+              onClick={() => downloadText("work-map.json", JSON.stringify({ ...map, steps: map.steps.map((s) => ({ ...s, screenshot: undefined })) }, null, 2), "application/json")}
+            >
+              JSON
+            </button>
             {raw && (
               <button
-                className="ml-auto text-brand hover:underline"
+                className="ml-4 text-brand hover:underline"
                 onClick={() => {
                   localStorage.removeItem(KEY);
                   location.reload();

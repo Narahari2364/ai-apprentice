@@ -8,6 +8,7 @@ import { ConversationProvider } from "@elevenlabs/react";
 import { resetSession, subscribe } from "@/lib/events";
 import { loadWorkMap } from "@/lib/session";
 import { useVoiceAgent } from "@/lib/useVoiceAgent";
+import { sendCommand } from "@/lib/ledgerline";
 import { sampleWorkMap } from "@/data/sampleWorkMap";
 import type { GuardrailResult, RuleKey } from "@/lib/types";
 import { masteryReport, RULE_LABEL, type RuleStatus, type TeachProgress } from "./progress";
@@ -117,19 +118,33 @@ function Tutor({ violations, progress, onReset }: Props) {
             </p>
           ))}
           {step && (
-            <button onClick={() => setShowReplay((s) => !s)} className="btn mt-1 h-8 bg-white text-[13px]">
+            <button
+              onClick={() => {
+                const next = !showReplay;
+                setShowReplay(next);
+                // Show the document Sabine looked at in this step, inside Lena's Ledgerline.
+                if (next && step.docId) sendCommand({ cmd: "open_document", doc_id: step.docId });
+                if (next && agent.connected) {
+                  agent.sendContextualUpdate(`[SCREEN] Replaying Sabine's screen moment ${step.time}: ${step.decision || step.title}.`);
+                }
+              }}
+              className="btn mt-1 h-8 bg-white text-[13px]"
+            >
               {showReplay ? "Hide" : "▶ Replay"} Sabine&apos;s screen moment ({step.time})
             </button>
           )}
           {showReplay && step && (
-            step.screenshot ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={step.screenshot} alt={`Sabine's screen at ${step.time}`} className="mt-2 rounded-sm border border-line" />
-            ) : (
-              <p className="mt-2 italic text-[#444]">
-                {step.time} · {step.decision || step.title}: “{step.expertQuote}” (capture a session with screen sharing to get the screenshot)
-              </p>
-            )
+            <div className="mt-2 rounded-sm border border-line bg-white p-2">
+              <div className="mb-1 text-[12.5px] text-muted">
+                Sabine at {step.time}: {step.decision || step.title}
+                {step.docId && " · her document is open in Ledgerline"}
+              </div>
+              {step.screenshot && (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={step.screenshot} alt={`Sabine's screen at ${step.time}`} className="mb-1 rounded-sm border border-line" />
+              )}
+              <p className="italic text-[#444]">“{step.expertQuote}”</p>
+            </div>
           )}
         </section>
       )}

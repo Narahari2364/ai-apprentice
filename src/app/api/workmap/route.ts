@@ -1,6 +1,7 @@
 // POST /api/workmap { events, transcript } → WorkMap JSON, built by Gemini.
 import { NextResponse } from "next/server";
 import { geminiJson } from "@/lib/gemini";
+import { redact, redactDeep } from "@/lib/redact";
 import type { ScreenEvent, TranscriptLine, WorkMap } from "@/lib/types";
 
 const INSTRUCTIONS = `You turn a recorded expert work session into a Work Map that a new hire can learn from.
@@ -32,10 +33,11 @@ export async function POST(req: Request) {
     "\n\nTRANSCRIPT:\n" +
     transcript.map((t) => `${t.time} ${t.speaker.toUpperCase()}: ${t.text}`).join("\n");
 
-  const result = await geminiJson<WorkMap>(INSTRUCTIONS, [{ text: input }]);
+  // Personal data never reaches the model or the stored Work Map.
+  const result = await geminiJson<WorkMap>(INSTRUCTIONS, [{ text: redact(input) }]);
   if (!result.ok) return NextResponse.json({ error: result.error }, { status: 502 });
 
-  const map = result.data;
+  const map = redactDeep(result.data);
   map.steps = (map.steps ?? []).map((s, i) => ({ ...s, id: s.id || `s${i + 1}`, order: i + 1, guardrails: s.guardrails ?? [] }));
   map.gaps = map.gaps ?? [];
   return NextResponse.json(map);

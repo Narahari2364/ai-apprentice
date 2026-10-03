@@ -4,6 +4,8 @@
 //   sendToAgent(text)      silent context for the agent; { respond: true } makes it speak
 //   AgentUiState           what the panel shows
 
+import { redact } from "@/lib/redact";
+
 export { onLedgerlineEvent } from "@/lib/ledgerline";
 
 export type AgentUiState =
@@ -45,7 +47,8 @@ export function registerAgent(s: Sink): () => void {
 /** Send text to the live agent. Returns false when no session is running. */
 export function sendToAgent(text: string, opts: { respond?: boolean } = {}): boolean {
   if (!sink) return false;
-  if (opts.respond) sink.message(text);
-  else sink.context(text);
+  const safe = redact(text); // personal data never goes to the agent
+  if (opts.respond) sink.message(safe);
+  else sink.context(safe);
   return true;
 }

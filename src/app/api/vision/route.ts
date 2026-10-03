@@ -1,6 +1,7 @@
 // POST /api/vision { frame, previous? } (base64 JPEG data URLs) → { events } describing what changed.
 import { NextResponse } from "next/server";
 import { geminiJson, VISION_MODELS } from "@/lib/gemini";
+import { redactDeep } from "@/lib/redact";
 import type { ScreenEvent } from "@/lib/types";
 
 const INSTRUCTIONS = `You watch an employee's screen while they file expenses in an expense tool (reports, expense forms, receipts, guests, attachments). You get the PREVIOUS frame (if any) and the CURRENT frame.
@@ -23,5 +24,5 @@ export async function POST(req: Request) {
 
   const result = await geminiJson<{ events?: Omit<ScreenEvent, "time" | "source">[] }>(INSTRUCTIONS, parts, VISION_MODELS);
   if (!result.ok) return NextResponse.json({ error: result.error, events: [] }, { status: 502 });
-  return NextResponse.json({ events: result.data.events ?? [] });
+  return NextResponse.json({ events: redactDeep(result.data.events ?? []) });
 }
