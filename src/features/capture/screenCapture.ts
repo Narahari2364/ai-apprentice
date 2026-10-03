@@ -1,11 +1,12 @@
 "use client";
 // Screen capture → vision events + per-event screenshots ("screen moments").
-// A frame is grabbed every FRAME_MS; it is only sent to /api/vision when the screen
+// A frame is grabbed every FRAME_MS (4 s); it is only sent to /api/vision when the screen
 // actually changed (cheap 32x18 thumbnail diff) and no request is in flight.
 
 import { emit } from "@/lib/events";
 
-const FRAME_MS = 2000;
+// 4 s keeps us under Gemini free-tier rate limits; vision is the backup source to Ledgerline events.
+const FRAME_MS = 4000;
 
 let stream: MediaStream | null = null;
 let video: HTMLVideoElement | null = null;

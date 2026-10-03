@@ -9,7 +9,8 @@
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ConversationProvider } from "@elevenlabs/react";
-import { getHistory, onActivity, resetSession, subscribe } from "@/lib/events";
+import { getHistory, onActivity, resetSession, subscribe, useScreenEvents } from "@/lib/events";
+import { sampleWorkMap } from "@/data/sampleWorkMap";
 import { attachDocs, attachScreenshots, saveSession, saveWorkMap } from "@/lib/session";
 import { useVoiceAgent } from "@/lib/useVoiceAgent";
 import type { ScreenEvent } from "@/lib/types";
@@ -43,6 +44,8 @@ function Interviewer() {
   const [questions, setQuestions] = useState(0);
   const [sharing, setSharing] = useState(false);
   const [starting, setStarting] = useState(false);
+  const [buildError, setBuildError] = useState<string | null>(null);
+  const seenEvents = useScreenEvents();
 
   const agentRef = useRef(agent);
   const offRef = useRef(false);
@@ -180,20 +183,30 @@ function Interviewer() {
 
   async function buildMap() {
     setPhase("building");
+    setBuildError(null);
     stop();
     const events = recordedEvents();
-    const res = await fetch("/api/workmap", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ events, transcript: agent.transcript }),
-    });
-    const data = await res.json();
-    if (!res.ok) {
+    try {
+      const res = await fetch("/api/workmap", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ events, transcript: agent.transcript }),
+        signal: AbortSignal.timeout(60000),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.steps?.length) throw new Error(data.error || "The Work Map came back empty.");
+      saveWorkMap(attachDocs(attachScreenshots(data, shots.current), events));
+      router.push("/map");
+    } catch (e) {
+      // Safety net for the live demo: retry, or fall back to the prepared map.
+      setBuildError(e instanceof Error && e.name === "TimeoutError" ? "Building the Work Map took too long." : String(e instanceof Error ? e.message : e).slice(0, 200));
       setPhase("debrief");
-      alert(data.error);
-      return;
     }
-    saveWorkMap(attachDocs(attachScreenshots(data, shots.current), events));
+  }
+
+  function loadPreparedMap() {
+    // Prepared map from the rehearsal (sample), with this session's screen moments where they fit.
+    saveWorkMap(attachScreenshots(sampleWorkMap, shots.current));
     router.push("/map");
   }
 
@@ -274,8 +287,20 @@ function Interviewer() {
               Off the record
             </label>
             {agent.connected && phase === "task" && <button className="btn h-9 text-[14px]" onClick={finishTask}>I&apos;m done → debrief</button>}
-            {phase === "debrief" && <button className="btn-pri h-9 text-[14px]" onClick={buildMap}>Build Work Map</button>}
+            {(phase === "debrief" || (!agent.connected && phase === "task" && seenEvents.length > 0)) && (
+              // Also offered without a live agent (e.g. voice credits ran out): events alone still build a map.
+              <button className="btn-pri h-9 text-[14px]" onClick={buildMap}>Build Work Map</button>
+            )}
           </div>
+          {buildError && (
+            <div className="border-l-4 border-warn bg-warn-soft px-3 py-2 text-[13px]">
+              <b>Couldn&apos;t build the Work Map.</b> {buildError}
+              <div className="mt-2 flex gap-2">
+                <button className="btn h-8 bg-white text-[13px]" onClick={buildMap}>Try again</button>
+                <button className="btn-pri h-8 text-[13px]" onClick={loadPreparedMap}>Use prepared Work Map</button>
+              </div>
+            </div>
+          )}
           {agent.error && <p className="rounded-sm border-l-4 border-err bg-err-soft px-3 py-2 text-[13px] text-[#8E1B1B]">{agent.error}</p>}
         </div>
       </section>
