@@ -1,5 +1,5 @@
 "use client";
-// Screen watcher for the floating Apprentice: the user shares any screen, window or tab;
+// Screen watcher for the floating Torchbearer: the user shares any screen, window or tab;
 // every FRAME_MS we grab a frame and report whether it changed (cheap 32x18 thumbnail diff),
 // so only changed screens go to the LLM and "no change for a while" can mean "paused".
 

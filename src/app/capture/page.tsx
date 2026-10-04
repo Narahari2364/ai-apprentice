@@ -1,5 +1,5 @@
 "use client";
-// Module 1 · Capture: one click launches the Apprentice bot into an always-on-top floating
+// Module 1 · Capture: one click launches Torchbearer bot into an always-on-top floating
 // window (Chrome/Edge Picture-in-Picture). In the bot: Start recording → choose Entire screen →
 // it reads the screen every 2 s in any browser tab, writes the workflow live and asks by voice
 // when the screenshots can't explain something. Stop recording → everything goes to Mapping.
@@ -26,19 +26,19 @@ function Capture() {
   const router = useRouter();
   const pip = usePip();
   const [micError, setMicError] = useState<string | null>(null);
-  const o = useObserver(() => {
+  const o = useObserver((id) => {
     pip.close();
     window.focus();
-    router.push("/map");
+    router.push(`/map?id=${id}`);
   });
   const canPip = useSyncExternalStore(() => () => {}, pipSupported, () => true);
-  const bot = <ObserverPanel o={o} onStart={o.start} />;
+  const bot = <ObserverPanel o={o} onStart={(name) => o.start(name)} />;
 
   return (
     <>
       <Launcher
         eyebrow="Module 1 · Capture"
-        title={<>The Apprentice <span className="font-medium text-indigo">watches the expert work</span></>}
+        title={<>Torchbearer <span className="font-medium text-indigo">watches the expert work</span></>}
         text="Launch it and it floats on your screen. Start recording, work in any browser as usual, and answer when it asks why. Stop recording and it shows you everything it observed."
         launched={pip.isOpen}
         canPip={canPip}

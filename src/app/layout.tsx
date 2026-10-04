@@ -10,7 +10,7 @@ const roboto = Roboto({
 });
 
 export const metadata: Metadata = {
-  title: "AI Apprentice",
+  title: "Torchbearer",
   description: "Capture, map and teach expert judgment with a voice agent.",
 };
 

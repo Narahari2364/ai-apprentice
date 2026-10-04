@@ -1,5 +1,5 @@
 "use client";
-// The screenshot-only Apprentice loop:
+// The screenshot-only Torchbearer loop:
 //   watch    every 2 s a frame; changed frames go to /api/observe with the workflow so far
 //   write    the LLM returns what happened + the updated workflow (+ maybe a question)
 //   ask      a question is spoken only at a pause: screen still ≥ 3 s, nobody talking,
@@ -10,7 +10,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { elapsed, resetSession } from "@/lib/events";
-import { saveWorkMap } from "@/lib/session";
+import { saveWorkflow } from "@/lib/session";
 import { useVoiceAgent } from "@/lib/useVoiceAgent";
 import type { ObservedStep, ObserveQA, TranscriptLine } from "@/lib/types";
 import { ScreenWatcher, type Frame } from "./screenWatcher";
@@ -40,7 +40,7 @@ function pairAnswers(transcript: TranscriptLine[]): ObserveQA[] {
   return pairs;
 }
 
-export function useObserver(onWorkMapReady: () => void) {
+export function useObserver(onWorkMapReady: (workflowId: string) => void) {
   const agent = useVoiceAgent("interviewer");
   const watcher = useRef(new ScreenWatcher());
   const [sharing, setSharing] = useState(false);
@@ -67,6 +67,7 @@ export function useObserver(onWorkMapReady: () => void) {
   const offRanges = useRef<{ from: string; to: string }[]>([]);
   const actionsRef = useRef<{ time: string; text: string }[]>([]);
   const stepShots = useRef<Record<string, string>>({}); // screenshot kept for each observed step
+  const workflowName = useRef("Untitled workflow");
 
   // Write each new spoken answer into the workflow right away (fast, text-only call).
   useEffect(() => {
@@ -144,7 +145,8 @@ export function useObserver(onWorkMapReady: () => void) {
     return () => clearInterval(t);
   }, [agent.connected, phase]);
 
-  async function start() {
+  async function start(name?: string) {
+    workflowName.current = name?.trim() || `Workflow ${new Date().toLocaleString()}`;
     setError(null);
     resetSession();
     shots.current = {};
@@ -160,7 +162,7 @@ export function useObserver(onWorkMapReady: () => void) {
       await watcher.current.start((f) => onFrame(f), () => setSharing(false));
       setSharing(true);
     } catch {
-      setError("Screen sharing was cancelled. The Apprentice needs to see your screen.");
+      setError("Screen sharing was cancelled. Torchbearer needs to see your screen.");
       return;
     }
     agent.start();
@@ -205,15 +207,14 @@ export function useObserver(onWorkMapReady: () => void) {
       guardrails: o.rule ? [o.rule] : [],
     }));
     const offRecordRanges = offRanges.current.map((r) => ({ from: r.from, to: r.to || elapsed() }));
-    saveWorkMap({
-      task: "Task recorded from the expert's screen",
-      steps,
-      gaps: [],
-      confirmed: qa.length > 0,
-      offRecord: offRecordRanges,
-      published: false,
+    const id = `wf_${Date.now().toString(36)}`;
+    saveWorkflow({
+      id,
+      name: workflowName.current,
+      createdAt: new Date().toISOString(),
+      map: { task: workflowName.current, steps, gaps: [], confirmed: qa.length > 0, offRecord: offRecordRanges, published: false },
     });
-    onWorkMapReady();
+    onWorkMapReady(id);
   }
 
   const status: ObserverStatus =

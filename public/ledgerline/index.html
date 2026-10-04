@@ -849,7 +849,6 @@ function validate(d) {
   if (d.spent > 0 && Math.abs(comp - d.spent) > 0.005)
     e.meal_amount = `Meal, Drink and Tip add up to ${money(comp)}, but Spent is ${money(d.spent)}.`;
   if (!d.restaurant_name.trim()) e.restaurant_name = 'Enter the restaurant name.';
-  if (!d.restaurant_address.trim()) e.restaurant_address = 'Enter the restaurant address.';
   if (!d.type_of_meal) e.type_of_meal = 'Select a type of meal.';
   if (!d.projects.length) e.project = 'Select a project.';
   else if (Math.abs(d.projects.reduce((s, p) => s + p.pct, 0) - 100) > 0.01) e.project = 'Project allocations must add up to 100 %.';
@@ -884,7 +883,7 @@ function frow(field, label, control, cls = '') {
   const err = V.errors[field];
   return `<div class="frow ${cls} ${err ? 'err' : ''}" data-field="${field}"><label for="f_${field}">${label}</label><div class="ctl">${control}${err ? `<div class="errmsg">${esc(err)}</div>` : ''}</div></div>`;
 }
-const numVal = (f, v) => f === 'spent' ? money(v) : (v ? money(v) : '0');
+const numVal = (f, v) => (v ? money(v) : ''); // empty instead of 0, so typing starts clean
 function thumbHTML(id, w = 132, h = 165) {
   const d = getDoc(id);
   if (!d) return `<div class="pv" style="height:${h}px"></div>`;
@@ -1002,7 +1001,7 @@ function addHTML() {
 }
 function formHTML() {
   const d = V.draft, errs = Object.keys(V.errors).length;
-  const num = f => `<input class="inp num" id="f_${f}" data-f="${f}" inputmode="decimal" value="${numVal(f, d[f])}" autocomplete="off">`;
+  const num = f => `<input class="inp num" id="f_${f}" data-f="${f}" inputmode="decimal" value="${numVal(f, d[f])}" placeholder="0.00" autocomplete="off">`;
   return `<div class="actbar"><button class="btn" data-action="form-cancel">Cancel</button><button class="btn pri" data-action="form-save" ${V.saving ? 'disabled' : ''}>${V.saving ? 'Saving…' : 'Save'}</button></div>
 <div class="scroll" id="formScroll">
 ${errs ? `<div class="banner err">Correct the highlighted fields before saving.</div>` : ''}
@@ -1016,7 +1015,7 @@ ${frow('meal_amount', 'Meal Amount', num('meal_amount'))}
 ${frow('drink_amount', 'Drink Amount', num('drink_amount'))}
 ${frow('tip_amount', 'Tip Amount', num('tip_amount'))}
 ${frow('restaurant_name', 'Restaurant Name', `<input class="inp" id="f_restaurant_name" data-f="restaurant_name" value="${esc(d.restaurant_name)}" autocomplete="off">`)}
-${frow('restaurant_address', 'Restaurant Address', `<input class="inp" id="f_restaurant_address" data-f="restaurant_address" value="${esc(d.restaurant_address)}" autocomplete="off">`)}
+
 ${frow('type_of_meal', 'Type of Meal', dd('type_of_meal'))}
 <div class="sec">Project</div>${projectHTML(d)}
 <div class="sec">Guests / Recipients (${d.guests.length}) ${ICON.infoSm}</div>${guestsHTML(d)}
@@ -1064,7 +1063,7 @@ function detailHTML() {
 <div class="scroll"><div class="fhead"><div class="tico">${mealsIcon(44)}</div><h1>Meals / Drinks</h1></div>
 ${vr('Transaction Date', usDate(e.transaction_date))}${vr('Spent', money(e.spent) + ' ' + esc(e.currency))}${vr('Location', esc(e.location))}
 ${vr('Business Purpose', esc(e.business_purpose))}${vr('Meal Amount', money(e.meal_amount))}${vr('Drink Amount', money(e.drink_amount))}${vr('Tip Amount', money(e.tip_amount))}
-${vr('Restaurant Name', esc(e.restaurant_name))}${vr('Restaurant Address', esc(e.restaurant_address))}${vr('Type of Meal', esc(e.type_of_meal))}
+${vr('Restaurant Name', esc(e.restaurant_name))}${vr('Type of Meal', esc(e.type_of_meal))}
 <div class="sec">Project</div>${e.projects.map(p => `<div class="prow" style="grid-template-columns:150px minmax(0,1fr) auto"><span>${esc(p.code)}</span><span><b>${esc(p.name)}</b><br>${esc(p.unit || '')}</span><span>${e.projects.length > 1 ? p.pct + ' %' : ''}</span></div>`).join('')}
 <div class="sec">Guests / Recipients (${e.guests.length}) ${ICON.infoSm}</div>
 ${e.guests.map(g => `<div class="gv"><span>${g.kind === 'internal' ? 'Internal' : 'External'}</span><span><b>${esc(g.name)}</b><i>${esc(g.title || '')}</i><i>${esc(g.org || '')}</i></span><span class="a">${money(g.amount)}</span></div>`).join('')}
@@ -1581,6 +1580,10 @@ function pickDD(key, value) {
 }
 
 /* ---------- typing ---------- */
+document.addEventListener('focusin', e => {
+  const t = e.target;
+  if (t && t.classList && t.classList.contains('num') && /^0+([.,]0+)?$/.test(t.value)) t.value = '';
+});
 document.addEventListener('input', e => {
   const t = e.target;
   if (t.closest('#dev')) return;

@@ -5,11 +5,11 @@
 // Anything that might differ goes to the supervisor's review list, never "you're wrong".
 // Must be used inside <ConversationProvider>.
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { elapsed, resetSession } from "@/lib/events";
-import { loadReviews, saveReviews } from "@/lib/session";
+import { loadMastery, loadReviews, saveMastery, saveReviews } from "@/lib/session";
 import { useVoiceAgent } from "@/lib/useVoiceAgent";
-import type { ReviewItem, WorkMap } from "@/lib/types";
+import type { ReviewItem, StepMastery, WorkMap } from "@/lib/types";
 import { ScreenWatcher, type Frame } from "./screenWatcher";
 
 const PAUSE_MS = 2000;
@@ -17,7 +17,7 @@ const LEARNER = "Maya Chen";
 
 export type CoachStatus = "idle" | "connecting" | "watching" | "reading" | "speaking" | "done";
 
-export function useCoach(map: WorkMap) {
+export function useCoach(map: WorkMap, workflowId: string) {
   const agent = useVoiceAgent("tutor");
   const watcher = useRef(new ScreenWatcher());
   const [sharing, setSharing] = useState(false);
@@ -27,6 +27,11 @@ export function useCoach(map: WorkMap) {
   const [reviews, setReviews] = useState<ReviewItem[]>([]);
   const [message, setMessage] = useState<{ text: string; verdict: "match" | "different"; time: string } | null>(null);
   const [finished, setFinished] = useState(false);
+  // Learned / relearn per step: this session, and what was saved from earlier sessions.
+  const [mastery, setMastery] = useState<Record<string, StepMastery>>({});
+  const [sessions, setSessions] = useState(0); // bumps on start/stop so saved progress is re-read
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const previous = useMemo(() => loadMastery(workflowId, LEARNER), [workflowId, sessions]);
   const [error, setError] = useState<string | null>(null);
 
   const live = useRef({ agent, done, flagged, reviews });
@@ -37,10 +42,20 @@ export function useCoach(map: WorkMap) {
   const inFlight = useRef(false);
   const actions = useRef<{ time: string; text: string }[]>([]);
   const toSay = useRef<string | null>(null);
+  const recent = useRef<string[]>([]);
+  const masteryRef = useRef<Record<string, StepMastery>>({});
+
+  function mark(stepId: string, value: StepMastery) {
+    // A step that needed a second look this session stays "relearn" until the supervisor says it's fine.
+    if (value === "learned" && masteryRef.current[stepId] === "relearn") return;
+    masteryRef.current = { ...masteryRef.current, [stepId]: value };
+    setMastery(masteryRef.current);
+    saveMastery(workflowId, LEARNER, { [stepId]: value });
+  }
 
   const steps = map.steps.map((s) => ({
     id: s.id,
-    title: s.correction ? s.correction : s.title,
+    title: (s.correction ? s.correction : s.title) + (previous[s.id] === "relearn" ? " (needed relearning last time: guide this one a bit more)" : ""),
     detail: s.decision,
     why: s.expertQuote || s.reason,
     rule: s.guardrails.join("; "),
@@ -56,14 +71,17 @@ export function useCoach(map: WorkMap) {
       const res = await fetch("/api/coach", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ frame: f.dataUrl, previous: lastSent.current, steps, done: l.done, flagged: l.flagged, actions: actions.current, now }),
+        body: JSON.stringify({ frame: f.dataUrl, previous: lastSent.current, steps, done: l.done, flagged: l.flagged, actions: actions.current, recent: recent.current, now }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
       lastSent.current = f.dataUrl;
       setError(null);
       if (data.action) actions.current = [...actions.current, { time: now, text: data.action }];
-      if (data.verdict === "match" && data.stepId && !l.done.includes(data.stepId)) setDone((d) => [...d, data.stepId]);
+      if (data.verdict === "match" && data.stepId) {
+        if (!l.done.includes(data.stepId)) setDone((d) => [...d, data.stepId]);
+        mark(data.stepId, "learned");
+      }
       if (data.verdict === "different") {
         const step = map.steps.find((s) => s.id === data.stepId);
         const item: ReviewItem = {
@@ -73,7 +91,10 @@ export function useCoach(map: WorkMap) {
           observed: data.action ?? "Something on this screen",
           expected: step ? `${step.correction || step.title}${step.guardrails[0] ? `: ${step.guardrails[0]}` : ""}` : "Paul's usual way",
           note: data.message ?? "",
+          workflowId,
+          stepId: data.stepId ?? undefined,
         };
+        if (data.stepId) mark(data.stepId, "relearn");
         const next = [...l.reviews, item];
         setReviews(next);
         saveReviews({ learner: LEARNER, items: next, submitted: false });
@@ -82,6 +103,7 @@ export function useCoach(map: WorkMap) {
       if (data.message && (data.verdict === "match" || data.verdict === "different")) {
         setMessage({ text: data.message, verdict: data.verdict, time: now });
         toSay.current = data.message;
+        recent.current = [...recent.current, data.message].slice(-4);
       }
     } catch (e) {
       setError(e instanceof Error ? e.message.slice(0, 160) : "Couldn't read the screen.");
@@ -116,6 +138,10 @@ export function useCoach(map: WorkMap) {
     setReviews([]);
     setMessage(null);
     setFinished(false);
+    masteryRef.current = {};
+    setMastery({});
+    setSessions((n) => n + 1);
+    recent.current = [];
     const prev = loadReviews();
     if (prev && !prev.submitted) saveReviews({ learner: LEARNER, items: [], submitted: false });
     try {
@@ -132,9 +158,10 @@ export function useCoach(map: WorkMap) {
     watcher.current.stop();
     setSharing(false);
     setFinished(true);
+    setSessions((n) => n + 1);
     if (agent.connected) {
       agent.sendUserMessage(
-        `[DONE] Maya finished. Matched Paul's way on ${live.current.done.length} step(s); ${live.current.reviews.length} item(s) went to the supervisor for review. Close warmly in two sentences, without saying anything was wrong.`,
+        `[DONE] Maya finished. Learned: ${Object.values(masteryRef.current).filter((m) => m === "learned").length} step(s); to relearn: ${Object.values(masteryRef.current).filter((m) => m === "relearn").length}; ${live.current.reviews.length} item(s) went to the supervisor for review. Close warmly in two sentences, without saying anything was wrong.`,
       );
       setTimeout(() => live.current.agent.endSession(), 12000);
     }
@@ -142,13 +169,16 @@ export function useCoach(map: WorkMap) {
 
   // Give the agent the Work Map once connected.
   useEffect(() => {
-    if (agent.connected) agent.sendContextualUpdate(`[WORKMAP] ${JSON.stringify(map)}`);
+    if (!agent.connected) return;
+    agent.sendContextualUpdate(`[WORKMAP] ${JSON.stringify(map)}`);
+    const again = map.steps.filter((s) => previous[s.id] === "relearn").map((s) => s.correction || s.title);
+    if (again.length) agent.sendContextualUpdate(`[PROGRESS] Last time Maya needed to relearn: ${again.join("; ")}. Give those steps a little extra guidance.`);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [agent.connected]);
 
   const status: CoachStatus = finished ? "done" : !sharing ? "idle" : agent.status === "connecting" ? "connecting" : agent.isSpeaking ? "speaking" : reading ? "reading" : "watching";
 
-  return { status, sharing, done, flagged, reviews, message, finished, error: error ?? agent.error, start, stop, transcript: agent.transcript, connected: agent.connected, micLevel: agent.getInputVolume };
+  return { status, sharing, done, flagged, reviews, message, finished, mastery, previous, error: error ?? agent.error, start, stop, transcript: agent.transcript, connected: agent.connected, micLevel: agent.getInputVolume };
 }
 
 export type Coach = ReturnType<typeof useCoach>;

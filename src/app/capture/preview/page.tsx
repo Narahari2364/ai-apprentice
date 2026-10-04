@@ -1,5 +1,5 @@
 "use client";
-// Design preview (mock data only): every state of the Apprentice popup over Ledgerline,
+// Design preview (mock data only): every state of Torchbearer popup over Ledgerline,
 // without a voice agent, mic or API keys. Matches docs/design/. Not part of the demo flow.
 
 import { useState } from "react";
@@ -54,7 +54,7 @@ export default function DesignPreview() {
 
       {state === "start" && (
         <StartCard
-          title="Apprentice"
+          title="Torchbearer"
           subtitle="Show it a task. It learns why."
           modeLabel="LEARNING MODE"
           taskLabel="Task you'll show"

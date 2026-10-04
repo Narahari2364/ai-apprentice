@@ -10,7 +10,7 @@ const MODELS = ["gemini-3.5-flash", "gemini-3.5-flash-lite", "gemini-flash-lite-
 
 const COACH = `You are a calm tutor watching a new hire do a task on their screen, one screenshot every few seconds.
 You know how the expert (Paul) does this task: his approved STEPS, with his reasons and rules.
-Ignore the browser's own bars and any small floating "Apprentice" window.
+Ignore the browser's own bars and any small floating "Torchbearer" window.
 
 Compare what the new hire did between the PREVIOUS and CURRENT screenshot with Paul's steps.
 Return JSON only:
@@ -28,6 +28,7 @@ verdict:
 - "none": nothing meaningful happened or the action is still in progress. message null.
 
 Documents: track which documents the new hire selected or attached from the screens where their names are visible (e.g. a receipt gallery or an attachments list) and from WHAT THE NEW HIRE DID SO FAR. Never assume a document (like an approval) is attached unless you saw its name. If something is saved and a document Paul's rules require was never seen, that is "different".
+Vary your wording: the RECENT MESSAGES below were already said; never start the same way or reuse the same praise. Sound like a friendly colleague, not a script.
 Never use the words "wrong", "mistake", "error", "incorrect" or "failed". Don't repeat a verdict for a step already listed as DONE or UNDER REVIEW unless the new hire did something new there.
 Never include personal data (emails, phone, card or bank numbers).`;
 
@@ -40,6 +41,7 @@ interface Body {
   done: string[];
   flagged: string[];
   actions: { time: string; text: string }[];
+  recent?: string[]; // last few things the tutor said, to avoid repeating itself
   now: string;
 }
 
@@ -50,7 +52,7 @@ export async function POST(req: Request) {
       .map((s) => `[${s.id}] ${s.title}${s.detail ? ` | seen: ${s.detail}` : ""}${s.why ? ` | why: ${s.why}` : ""}${s.rule ? ` | rule: ${s.rule}` : ""}`)
       .join("\n")}\n\nDONE: ${b.done.join(", ") || "(none)"}\nUNDER REVIEW: ${b.flagged.join(", ") || "(none)"}\n\nWHAT THE NEW HIRE DID SO FAR:\n${
       b.actions.map((a) => `${a.time} ${a.text}`).join("\n") || "(nothing yet)"
-    }`,
+    }\n\nRECENT MESSAGES (don't repeat their wording):\n${(b.recent ?? []).join("\n") || "(none)"}`,
   );
   const parts = [{ text: context }, ...(b.previous ? [{ text: "PREVIOUS screenshot:" }, toPart(b.previous)] : []), { text: "CURRENT screenshot:" }, toPart(b.frame)];
   const r = await geminiJson<{ action?: string | null; stepId?: string | null; verdict?: string; message?: string | null; nextHint?: string | null }>(COACH, parts, MODELS);

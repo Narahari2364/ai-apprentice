@@ -94,7 +94,20 @@ export interface ReviewItem {
   note: string; // the Apprentice's gentle note
   decision?: "fine" | "needs_correction";
   comment?: string;
+  workflowId?: string;
+  stepId?: string;
 }
+
+/** A recorded workflow, saved under the name the expert gave it. */
+export interface WorkflowRecord {
+  id: string;
+  name: string;
+  createdAt: string;
+  map: WorkMap;
+}
+
+/** Teaching: per step, has the new hire learned it or do they need to relearn it. */
+export type StepMastery = "learned" | "relearn";
 
 /** A question the Apprentice asked about something the screenshots couldn't explain, and the answer. */
 export interface ObserveQA {

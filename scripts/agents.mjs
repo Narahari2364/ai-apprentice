@@ -21,15 +21,15 @@ const skipTurn = { type: "system", name: "skip_turn", description: "Stay silent 
 const agents = [
   {
     envKey: "ELEVENLABS_INTERVIEWER_AGENT_ID",
-    name: "AI Apprentice - Interviewer",
+    name: "Torchbearer - Interviewer",
     prompt: interviewerPrompt,
-    firstMessage: "Hi Paul, I'm your apprentice. Go ahead and show me how you submit your expenses. I'll stay quiet and only ask when you pause.",
+    firstMessage: "Hi Paul, I'm Torchbearer. Go ahead and show me how you submit your expenses. I'll stay quiet and only ask when you pause.",
   },
   {
     envKey: "ELEVENLABS_TUTOR_AGENT_ID",
-    name: "AI Apprentice - Tutor",
+    name: "Torchbearer - Tutor",
     prompt: tutorPrompt,
-    firstMessage: "Hi Maya! Here's a new one: a dinner you ordered through Bitebox. Let's walk through it together. First step: what do you upload?",
+    firstMessage: "Hi Maya, I'm Torchbearer. I'll guide you through this the way Paul does it, and only speak up when you pause. Start whenever you're ready.",
   },
 ];
 

@@ -1,6 +1,6 @@
 "use client";
 // Always-on-top floating window (Chrome/Edge Document Picture-in-Picture). React renders
-// into it through a portal, so the Apprentice floats over any tab or app the user works in.
+// into it through a portal, so Torchbearer floats over any tab or app the user works in.
 
 import { useCallback, useState } from "react";
 
@@ -38,7 +38,7 @@ export function usePip() {
     document.head.querySelectorAll('style, link[rel="stylesheet"]').forEach((n) => pip.document.head.appendChild(n.cloneNode(true)));
     pip.document.documentElement.className = document.documentElement.className;
     pip.document.body.className = "font-sans bg-white m-0";
-    pip.document.title = "Apprentice";
+    pip.document.title = "Torchbearer";
     const root = pip.document.createElement("div");
     root.style.height = "100vh";
     pip.document.body.appendChild(root);

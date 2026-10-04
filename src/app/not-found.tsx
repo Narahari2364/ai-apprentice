@@ -13,7 +13,7 @@ export default function NotFound() {
               <path d="M1.5 1.5h15v10H6L1.5 15z" fill="#fff" />
               <path d="M5 5h8M5 8h5" stroke="#5146d9" strokeWidth="1.4" />
             </svg>
-            Apprentice
+            Torchbearer
           </div>
           <p className="px-4 py-3 text-[15px]">Hmm, I haven&apos;t seen this page before. Where were you trying to go?</p>
         </div>
@@ -22,7 +22,7 @@ export default function NotFound() {
         <p className="mt-2 text-[16px] text-[#475467]">The link may be old, or the page was never captured.</p>
         <div className="mt-8 flex flex-wrap justify-center gap-3">
           <Link href="/capture" className="inline-flex h-11 items-center rounded-sm bg-indigo px-5 text-[15px] text-white shadow-sm transition hover:bg-indigo-dark">
-            Back to the Apprentice
+            Back to Torchbearer
           </Link>
           <Link href="/map" className="inline-flex h-11 items-center rounded-sm border border-brand bg-white px-5 text-[15px] text-brand transition hover:bg-brand-soft">
             Open the Work Map

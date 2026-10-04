@@ -1,11 +1,11 @@
 "use client";
-// Supervisor review: everything the Apprentice flagged during Teaching as "might be different
+// Supervisor review: everything Torchbearer flagged during Teaching as "might be different
 // from Paul's way". The supervisor looks at each one (screenshot, what the new hire did, Paul's
-// step, the Apprentice's note), marks it fine or needs correction, and submits.
+// step, Torchbearer's note), marks it fine or needs correction, and submits.
 
 import { useState, useSyncExternalStore } from "react";
 import Link from "next/link";
-import type { ReviewBatch } from "@/lib/session";
+import { saveMastery, type ReviewBatch } from "@/lib/session";
 import type { ReviewItem } from "@/lib/types";
 
 const KEY = "apprentice.reviews";
@@ -49,7 +49,7 @@ export default function ReviewPage() {
             {current?.learner ?? "Maya Chen"}&apos;s practice: <span className="font-medium text-indigo">what might differ from Paul</span>
           </h1>
           <p className="mt-2 max-w-2xl text-[16.5px] text-[#475467]">
-            The Apprentice never tells a new hire they were wrong. It sends anything that might differ from Paul&apos;s approved way here,
+            Torchbearer never tells a new hire they were wrong. It sends anything that might differ from Paul&apos;s approved way here,
             for you to decide.
           </p>
         </div>
@@ -77,7 +77,7 @@ export default function ReviewPage() {
                 <div className="space-y-2.5 p-5 text-[15px]">
                   <div><span className="text-[12px] font-bold uppercase tracking-wide text-[#667085]">Maya did</span><div>{i.observed}</div></div>
                   <div><span className="text-[12px] font-bold uppercase tracking-wide text-[#667085]">Paul&apos;s way</span><div>{i.expected}</div></div>
-                  {i.note && <div className="rounded-md bg-warn-soft px-3 py-2 text-[14px] text-[#7a5a00]">Apprentice: “{i.note}”</div>}
+                  {i.note && <div className="rounded-md bg-warn-soft px-3 py-2 text-[14px] text-[#7a5a00]">Torchbearer: “{i.note}”</div>}
                   {!current?.submitted ? (
                     <div className="flex flex-wrap items-center gap-2 border-t border-line pt-3">
                       <button onClick={() => set(i.id, { decision: "fine" })} className={`h-9 rounded-sm border px-3 text-[14px] ${i.decision === "fine" ? "border-ok bg-ok text-white" : "border-ok bg-white text-ok hover:bg-ok-soft"}`}>
@@ -109,7 +109,15 @@ export default function ReviewPage() {
           <div className="mt-6 flex items-center justify-end gap-3">
             <span className="text-[14px] text-[#667085]">{decided}/{items.length} decided</span>
             <button
-              onClick={() => save({ ...current, submitted: true })}
+              onClick={() => {
+                // The supervisor's decision settles the step: fine → learned, needs correction → relearn.
+                for (const it of current.items) {
+                  if (it.workflowId && it.stepId && it.decision) {
+                    saveMastery(it.workflowId, current.learner, { [it.stepId]: it.decision === "fine" ? "learned" : "relearn" });
+                  }
+                }
+                save({ ...current, submitted: true });
+              }}
               disabled={decided < items.length}
               className="h-11 rounded-sm bg-indigo px-5 text-[15px] text-white hover:bg-indigo-dark disabled:opacity-40"
             >
@@ -118,7 +126,7 @@ export default function ReviewPage() {
           </div>
         )}
         {current?.submitted && (
-          <p className="mt-6 rounded-md border border-[#bfe3cc] bg-ok-soft px-4 py-3 text-[15px] text-ok">Review submitted. Maya sees your feedback on her next practice.</p>
+          <p className="mt-6 rounded-md border border-[#bfe3cc] bg-ok-soft px-4 py-3 text-[15px] text-ok">Review submitted. Steps marked fine count as learned; the rest stay on Maya&apos;s relearn list for her next practice.</p>
         )}
       </div>
     </div>

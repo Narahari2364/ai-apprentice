@@ -1,5 +1,5 @@
 "use client";
-// One-click launcher: the page only exists to pop the Apprentice bot out into its own
+// One-click launcher: the page only exists to pop Torchbearer bot out into its own
 // always-on-top window. Everything else (start/stop recording, questions, steps) happens
 // in the floating bot, over whatever browser tab or app the user works in.
 
@@ -47,12 +47,12 @@ export default function Launcher({ eyebrow, title, text, launched, canPip, faile
                 onClick={onLaunch}
                 className="mt-8 inline-flex h-14 items-center gap-2 rounded-sm bg-indigo px-8 text-[18px] text-white shadow-md transition hover:bg-indigo-dark"
               >
-                Launch Apprentice
+                Launch Torchbearer
               </button>
             )}
             {launched && (
               <div className="mt-8 rounded-md border border-[#bfe3cc] bg-ok-soft px-5 py-3 text-[16px] text-ok">
-                ✓ The Apprentice is floating on your screen. If Chrome asks for the microphone, click Allow. Then you can minimize this window.
+                ✓ Torchbearer is floating on your screen. If Chrome asks for the microphone, click Allow. Then you can minimize this window.
               </div>
             )}
             {micError && (
@@ -83,7 +83,7 @@ export default function Launcher({ eyebrow, title, text, launched, canPip, faile
 
             {(!canPip || failed) && (
               <p className="mt-6 max-w-md text-[13.5px] text-[#7a5a00]">
-                This browser can&apos;t open a floating window (desktop Chrome or Edge can), so the Apprentice floats in the corner of this page.
+                This browser can&apos;t open a floating window (desktop Chrome or Edge can), so Torchbearer floats in the corner of this page.
               </p>
             )}
           </>

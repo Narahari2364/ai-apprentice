@@ -1,4 +1,4 @@
-// POST /api/observe — the screenshot-only Apprentice's brain. Two modes:
+// POST /api/observe — the screenshot-only Torchbearer's brain. Two modes:
 //  "observe"   (screenshots) what the user just did, the updated workflow, and an optional
 //              question about something the screenshots alone cannot explain.
 //  "integrate" (text only, fast) write the expert's spoken answers into the workflow.
@@ -14,7 +14,7 @@ const STEP_SHAPE = `{ "id": "w1", "title": string, "detail": string, "why": stri
 
 const OBSERVE = `You are an apprentice watching an expert do a task on their screen, one screenshot every few seconds.
 Your job: write down the expert's workflow as it happens, and notice what the screenshots alone cannot explain.
-Ignore the browser's own bars and any small floating "Apprentice" window; look only at the app the expert works in.
+Ignore the browser's own bars and any small floating "Torchbearer" window; look only at the app the expert works in.
 
 You get the PREVIOUS screenshot (if any), the CURRENT screenshot, the ACTION LOG (what the expert did so far), the WORKFLOW so far, and the QUESTIONS already asked.
 

@@ -54,7 +54,7 @@ export async function requestMic(): Promise<string | null> {
 function micErrorText(e: unknown): string {
   const name = e instanceof DOMException ? e.name : "";
   if (name === "NotAllowedError" || name === "SecurityError")
-    return "Microphone is blocked. In Chrome, click the icon left of the address bar on the Apprentice page, set Microphone to Allow, then press Start recording again.";
+    return "Microphone is blocked. In Chrome, click the icon left of the address bar on the Torchbearer page, set Microphone to Allow, then press Start recording again.";
   if (name === "NotFoundError") return "No microphone found. Plug one in (or check System Settings → Sound → Input) and press Start recording again.";
   if (name === "NotReadableError") return "The microphone is in use by another app (Zoom, Meet…). Close it and press Start recording again.";
   return e instanceof Error ? e.message : String(e);

@@ -1,6 +1,6 @@
 // localStorage persistence for the captured session and the generated Work Map.
 import { sampleWorkMap, capturedSessionEnabled } from "@/data/sampleWorkMap";
-import type { ReviewItem, ScreenEvent, TranscriptLine, WorkMap } from "./types";
+import type { ReviewItem, ScreenEvent, StepMastery, TranscriptLine, WorkMap, WorkflowRecord } from "./types";
 
 const SESSION_KEY = "apprentice.session";
 const WORKMAP_KEY = "apprentice.workmap";
@@ -14,10 +14,13 @@ function read<T>(key: string): T | null {
   }
 }
 
-function write(key: string, value: unknown) {
+function write(key: string, value: unknown): boolean {
   try {
     localStorage.setItem(key, JSON.stringify(value));
-  } catch {}
+    return true;
+  } catch {
+    return false; // e.g. storage full
+  }
 }
 
 export interface CapturedSession {
@@ -79,3 +82,39 @@ export interface ReviewBatch {
 }
 export const loadReviews = () => read<ReviewBatch>(REVIEW_KEY);
 export const saveReviews = (b: ReviewBatch) => write(REVIEW_KEY, b);
+
+// ---------- Workflow library: every recording, saved under its name ----------
+const LIB_KEY = "torchbearer.workflows";
+
+/** The prepared example: always available, already approved. */
+export const EXAMPLE_ID = "example";
+export const exampleWorkflow = (): WorkflowRecord => ({
+  id: EXAMPLE_ID,
+  name: "Meal expense report (prepared example)",
+  createdAt: "2026-10-03T09:00:00Z",
+  map: { ...sampleWorkMap, published: true },
+});
+
+export const listWorkflows = (): WorkflowRecord[] => read<WorkflowRecord[]>(LIB_KEY) ?? [];
+export const getWorkflow = (id: string | null | undefined): WorkflowRecord | null =>
+  id === EXAMPLE_ID ? exampleWorkflow() : listWorkflows().find((w) => w.id === id) ?? null;
+
+export function saveWorkflow(record: WorkflowRecord) {
+  if (record.id === EXAMPLE_ID) return;
+  const others = listWorkflows().filter((w) => w.id !== record.id);
+  if (write(LIB_KEY, [record, ...others])) return;
+  // Storage full: keep this workflow's screenshots, drop the older ones', and retry.
+  const slim = others.map((w) => ({ ...w, map: { ...w.map, steps: w.map.steps.map((s) => ({ ...s, screenshot: undefined })) } }));
+  write(LIB_KEY, [record, ...slim]);
+}
+
+export function deleteWorkflow(id: string) {
+  write(LIB_KEY, listWorkflows().filter((w) => w.id !== id));
+}
+
+// ---------- Teaching: learned / relearn per step, per workflow and learner ----------
+const progressKey = (workflowId: string, learner: string) => `torchbearer.progress.${workflowId}.${learner}`;
+export const loadMastery = (workflowId: string, learner: string) => read<Record<string, StepMastery>>(progressKey(workflowId, learner)) ?? {};
+export function saveMastery(workflowId: string, learner: string, mastery: Record<string, StepMastery>) {
+  write(progressKey(workflowId, learner), { ...loadMastery(workflowId, learner), ...mastery });
+}

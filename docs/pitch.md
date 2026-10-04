@@ -1,8 +1,8 @@
-# Pitch: The AI Apprentice
+# Pitch: Torchbearer
 
 ## One line
 
-Experts like Paul know rules that live only in their heads. Our AI Apprentice watches him work, asks *why* at the right moments, turns his answers into a Work Map, and coaches the next new hire in his own words.
+Experts like Paul know rules that live only in their heads. Our Torchbearer watches him work, asks *why* at the right moments, turns his answers into a Work Map, and coaches the next new hire in his own words.
 
 ## Problem (30 s)
 
@@ -28,17 +28,17 @@ Full wording: `AI apprentice demo script.pdf`. In the app:
 | Time | Who | What happens |
 |---|---|---|
 | 0:00 | Narrator | Problem in 3 sentences. |
-| 0:30 | Judge as **Paul**, `/capture` | Clicks **Apprentice** in Ledgerline's top bar → "What to expect" → **Start learning**, shares this tab. Files the 25 lunch (receipt only) and the 40 dinner (receipt + approval screenshot). Pause → *"You added a screenshot on this one that wasn't on the first one. What's that for?"* (attachments outlined in indigo). |
+| 0:30 | Judge as **Paul**, `/capture` | Clicks **Torchbearer** in Ledgerline's top bar → "What to expect" → **Start learning**, shares this tab. Files the 25 lunch (receipt only) and the 40 dinner (receipt + approval screenshot). Pause → *"You added a screenshot on this one that wasn't on the first one. What's that for?"* (attachments outlined in indigo). |
 | 1:40 | Paul | Delivery order: attaches Bitebox receipt **and** invoice → *"Why isn't one enough?"* → follow-up *"Why didn't you need to do this for the other two meals?"* |
 | 2:20 | Paul | **Off the record** once. **End task** → debrief: *"Does the 30 threshold ever change?"* → teach-back → *"Yep, that's it."* → **Build Work Map**. |
 | 2:50 | `/map` | Steps, judgment calls, guardrails, each with Paul's words; click a step → Ledgerline opens the exact document. **Export for agents.** |
-| 3:10 | Judge as **Maya**, `/teach` | **Apprentice → Start coaching**: *"First step: what do you upload?"* Attaches the receipt, saves → **blocked** (invoice missing). Adds the invoice, reaches for Save → **blocked**: *"Not yet. This one's 35. What does that number remind you of?"* → **▶ Replay** Paul's moment → attaches the approval → saved. |
+| 3:10 | Judge as **Maya**, `/teach` | **Torchbearer → Start coaching**: *"First step: what do you upload?"* Attaches the receipt, saves → **blocked** (invoice missing). Adds the invoice, reaches for Save → **blocked**: *"Not yet. This one's 35. What does that number remind you of?"* → **▶ Replay** Paul's moment → attaches the approval → saved. |
 | 3:45 | Maya | **Finish** → mastery report: delivery-invoice rule down cold; practise spotting the 30 threshold herself. |
 | 3:55 | Narrator | Moonshot slide. |
 
 Backup: a recorded full run, and the prepared Work Map (works without a live capture).
 
-## The Apprentice Test: our answers
+## Torchbearer Test: our answers
 
 1. **When to ask.** We do not trust default turn-taking. The app sends the agent a `[PAUSE]` signal only when **all** hold: a judgment-relevant action just happened (an attachment, a guest, a key field, a save); no typing, mouse or screen event for 3.5 s; Paul is not talking; he has no document open (he is reading); and a question budget of one per 20 s. The panel shows the detector live: *Listening / Quiet / Asking*, and the field the question is about gets an indigo outline. While he narrates, the agent uses ElevenLabs' `skip_turn` and stays silent.
 2. **What to ask.** Only judgment events trigger a question; typed amounts never do, because the screen already answers them. The agent gets the exact screen event plus the earlier expenses he saved, and is told to ask when **similar expenses were handled with different steps** ("You added a screenshot on this one that wasn't on the first one"), or about the reason, the limit, or when to stop and ask; never about what is visible. Over a session at least one question is about a guardrail.

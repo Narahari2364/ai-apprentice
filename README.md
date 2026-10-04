@@ -1,4 +1,4 @@
-# The AI Apprentice
+# Torchbearer
 
 Built for Hack-Nation × ElevenLabs, 7th Global AI Hackathon (brief: [docs/challenge-brief.pdf](docs/challenge-brief.pdf)). An ElevenLabs voice agent watches an expert (Paul) submit meal expenses in Ledgerline, a fake expense tool, stays quiet while they type, and asks "why" at natural pauses. It then runs a debrief and builds a clickable **Work Map** of steps, decisions, reasons in the expert's own words, and guardrails. A voice tutor uses that map to coach a new hire on a case the expert never showed, and blocks wrong decisions at Save. There are three modules: **Capture**, **Map** and **Teach**.
 
@@ -12,7 +12,7 @@ npm run dev                  # http://localhost:3000
 
 Stack: Next.js (App Router, TypeScript), Tailwind, `@elevenlabs/react` (coming next), Gemini through server routes. No database: client state plus localStorage. Deploys to Vercel.
 
-Pages: `/` mode picker · `/capture` Ledgerline as Paul, Apprentice button in its top bar (learning mode) · `/map` Work Map (opens each step's document in Ledgerline) · `/teach` Ledgerline as Maya with the Save guard, Apprentice in teaching mode (progress, mastery report).
+Pages: `/` mode picker · `/capture` Ledgerline as Paul, Torchbearer button in its top bar (learning mode) · `/map` Work Map (opens each step's document in Ledgerline) · `/teach` Ledgerline as Maya with the Save guard, Torchbearer in teaching mode (progress, mastery report).
 
 Data formats: [docs/formats.md](docs/formats.md). Fake data in `src/data/` means nobody waits on anyone.
 

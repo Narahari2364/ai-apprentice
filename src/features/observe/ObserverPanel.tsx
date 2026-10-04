@@ -1,7 +1,8 @@
 "use client";
-// The floating Apprentice's face: status, the current question, the workflow it is
+// The floating Torchbearer's face: status, the current question, the workflow it is
 // writing live from the screenshots (with the expert's answers merged in), and controls.
 
+import { useState } from "react";
 import { ListeningBars } from "@/features/apprentice/Popup";
 import { BotFace } from "./Launcher";
 import MicMeter from "./MicMeter";
@@ -22,7 +23,8 @@ const STATUS: Record<ObserverStatus, string> = {
 const btnOutline = "h-9 rounded-sm border border-indigo bg-white px-3 text-[14px] text-indigo hover:bg-indigo-soft disabled:opacity-50";
 const btnPrimary = "h-9 rounded-sm bg-indigo px-3 text-[14px] text-white hover:bg-indigo-dark disabled:opacity-50";
 
-export default function ObserverPanel({ o, onStart }: { o: Observer; onStart?: () => void }) {
+export default function ObserverPanel({ o, onStart }: { o: Observer; onStart?: (workflowName: string) => void }) {
+  const [name, setName] = useState("");
   const lastAgent = [...o.transcript].reverse().find((t) => t.speaker === "agent");
   const lastYou = [...o.transcript].reverse().find((t) => t.speaker === "expert");
   const tail = o.transcript.slice(-4);
@@ -32,7 +34,7 @@ export default function ObserverPanel({ o, onStart }: { o: Observer; onStart?: (
       <div className="flex items-center gap-3 bg-indigo px-4 py-3 text-white">
         <BotFace size={34} />
         <div className="min-w-0 flex-1 leading-tight">
-          <div className="text-[17px] font-medium">Apprentice</div>
+          <div className="text-[17px] font-medium">Torchbearer</div>
           <div className="truncate text-[12.5px] opacity-90">{o.offRecord ? "Paused by the expert" : "Learning from your screen"}</div>
         </div>
         <span className="rounded-sm border border-white/70 px-2 py-0.5 text-[11px] font-bold tracking-wide">
@@ -58,7 +60,7 @@ export default function ObserverPanel({ o, onStart }: { o: Observer; onStart?: (
         lastAgent && (
           <div className="border-b border-line bg-indigo-soft/60 px-4 py-3">
             <div className="text-[12px] text-[#555]">
-              <b className="text-indigo">Apprentice</b> <span className="text-muted">{lastAgent.time}</span>
+              <b className="text-indigo">Torchbearer</b> <span className="text-muted">{lastAgent.time}</span>
             </div>
             <p className="mt-0.5 text-[16px] leading-snug">{lastAgent.text}</p>
             {lastYou && <p className="mt-1.5 text-[13px] leading-snug text-[#0f766e]"><b>You said:</b> {lastYou.text}</p>}
@@ -106,7 +108,7 @@ export default function ObserverPanel({ o, onStart }: { o: Observer; onStart?: (
             <ol className="space-y-1.5 text-[14px] leading-snug">
               {tail.map((t, i) => (
                 <li key={i}>
-                  <b className={t.speaker === "agent" ? "text-indigo" : "text-[#0f766e]"}>{t.speaker === "agent" ? "Apprentice" : "You"}:</b> {t.text}
+                  <b className={t.speaker === "agent" ? "text-indigo" : "text-[#0f766e]"}>{t.speaker === "agent" ? "Torchbearer" : "You"}:</b> {t.text}
                 </li>
               ))}
             </ol>
@@ -118,7 +120,19 @@ export default function ObserverPanel({ o, onStart }: { o: Observer; onStart?: (
 
       <div className="flex items-center gap-2 border-t border-line px-4 py-3">
         {!o.sharing && o.phase === "task" ? (
-          onStart && <button className={`${btnPrimary} flex-1`} onClick={onStart}>● Start recording</button>
+          onStart && (
+            <div className="flex w-full flex-col gap-2">
+              <label className="text-[12px] font-bold uppercase tracking-[.12em] text-[#667085]" htmlFor="wf-name">Name this workflow</label>
+              <input
+                id="wf-name"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="e.g. Meal expense report"
+                className="h-10 w-full rounded-sm border border-[#9aa0a6] px-3 text-[15px] focus:border-indigo focus:outline-none"
+              />
+              <button className={`${btnPrimary} w-full`} onClick={() => onStart(name)} disabled={!name.trim()}>● Start recording</button>
+            </div>
+          )
         ) : o.phase === "task" ? (
           <>
             <button className={`${btnOutline} flex-1`} onClick={o.toggleOffRecord}>{o.offRecord ? "Back on the record" : "Off the record"}</button>
