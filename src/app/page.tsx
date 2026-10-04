@@ -41,10 +41,10 @@ function Hero() {
           </p>
           <div className="mt-8 flex flex-wrap gap-3">
             <Link href="/capture" className="inline-flex h-12 items-center gap-2 rounded-sm bg-indigo px-6 text-[16px] text-white shadow-sm transition hover:bg-indigo-dark">
-              Start as Paul <span className="opacity-80">· expert</span> →
+              I&apos;m the expert <span className="opacity-80">· teach the Apprentice</span> →
             </Link>
             <Link href="/teach" className="inline-flex h-12 items-center gap-2 rounded-sm border border-brand bg-white px-6 text-[16px] text-brand transition hover:bg-brand-soft">
-              Start as Maya <span className="opacity-80">· new hire</span>
+              I&apos;m new here <span className="opacity-80">· learn a task</span>
             </Link>
           </div>
           <Link href="/map" className="mt-4 inline-block text-[15px] text-brand hover:underline">
