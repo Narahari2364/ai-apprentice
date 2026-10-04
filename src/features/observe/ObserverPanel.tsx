@@ -4,6 +4,7 @@
 
 import { ListeningBars } from "@/features/apprentice/Popup";
 import { BotFace } from "./Launcher";
+import MicMeter from "./MicMeter";
 import { TypeChip, guardrailType } from "@/features/workmap/WorkMapView";
 import type { Observer, ObserverStatus } from "./useObserver";
 
@@ -23,6 +24,7 @@ const btnPrimary = "h-9 rounded-sm bg-indigo px-3 text-[14px] text-white hover:b
 
 export default function ObserverPanel({ o, onStart }: { o: Observer; onStart?: () => void }) {
   const lastAgent = [...o.transcript].reverse().find((t) => t.speaker === "agent");
+  const lastYou = [...o.transcript].reverse().find((t) => t.speaker === "expert");
   const tail = o.transcript.slice(-4);
 
   return (
@@ -42,6 +44,7 @@ export default function ObserverPanel({ o, onStart }: { o: Observer; onStart?: (
         {(o.status === "watching" || o.status === "debrief") && <ListeningBars active />}
         {o.status === "reading" && <span className="h-2 w-2 animate-pulse rounded-full bg-indigo" />}
         <span className="flex-1 truncate">{STATUS[o.status]}</span>
+        <MicMeter getLevel={o.micLevel} active={o.connected && !o.offRecord} />
         {o.sharing && <span className="text-[12px] text-err">● REC</span>}
       </div>
 
@@ -58,6 +61,7 @@ export default function ObserverPanel({ o, onStart }: { o: Observer; onStart?: (
               <b className="text-indigo">Apprentice</b> <span className="text-muted">{lastAgent.time}</span>
             </div>
             <p className="mt-0.5 text-[16px] leading-snug">{lastAgent.text}</p>
+            {lastYou && <p className="mt-1.5 text-[13px] leading-snug text-[#0f766e]"><b>You said:</b> {lastYou.text}</p>}
           </div>
         )
       )}

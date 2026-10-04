@@ -13,6 +13,8 @@ interface Props {
   canPip: boolean;
   /** The floating window was refused: the bot floats in this page's corner instead. */
   failed?: boolean;
+  /** Mic permission problem from the Launch click. */
+  micError?: string | null;
   onLaunch: () => void;
   /** The bot itself, shown inline only when floating windows aren't available. */
   panel: ReactNode;
@@ -20,7 +22,7 @@ interface Props {
   notice?: ReactNode;
 }
 
-export default function Launcher({ eyebrow, title, text, launched, canPip, failed = false, onLaunch, panel, demo, notice }: Props) {
+export default function Launcher({ eyebrow, title, text, launched, canPip, failed = false, micError, onLaunch, panel, demo, notice }: Props) {
   return (
     <section className="relative min-h-full overflow-hidden bg-[linear-gradient(180deg,#f3f2ff_0%,#ffffff_70%)]">
       <div className="pointer-events-none absolute -right-32 -top-40 h-[480px] w-[480px] rounded-full bg-indigo/10 blur-3xl" aria-hidden="true" />
@@ -48,8 +50,11 @@ export default function Launcher({ eyebrow, title, text, launched, canPip, faile
             )}
             {launched && (
               <div className="mt-8 rounded-md border border-[#bfe3cc] bg-ok-soft px-5 py-3 text-[16px] text-ok">
-                ✓ The Apprentice is floating on your screen. You can minimize this window.
+                ✓ The Apprentice is floating on your screen. If Chrome asks for the microphone, click Allow. Then you can minimize this window.
               </div>
+            )}
+            {micError && (
+              <div className="mt-4 max-w-xl rounded-md border border-[#f3c2c2] bg-err-soft px-5 py-3 text-left text-[15px] text-[#8E1B1B]">🎤 {micError}</div>
             )}
 
             <ol className="mt-8 grid w-full max-w-2xl gap-3 text-left sm:grid-cols-3">

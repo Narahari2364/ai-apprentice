@@ -5,6 +5,7 @@
 import Link from "next/link";
 import { ListeningBars } from "@/features/apprentice/Popup";
 import { BotFace } from "./Launcher";
+import MicMeter from "./MicMeter";
 import type { WorkMap } from "@/lib/types";
 import type { Coach, CoachStatus } from "./useCoach";
 
@@ -35,9 +36,17 @@ export default function CoachPanel({ c, map, blocked }: { c: Coach; map: WorkMap
         {c.status === "watching" && <ListeningBars active />}
         {c.status === "reading" && <span className="h-2 w-2 animate-pulse rounded-full bg-indigo" />}
         <span className="flex-1 truncate">{STATUS[c.status]}</span>
+        <MicMeter getLevel={c.micLevel} active={c.connected && !false} />
         {c.sharing && <span className="text-[12px] text-err">● REC</span>}
       </div>
 
+      {c.transcript.length > 0 && (
+        <div className="border-b border-line px-4 py-2 text-[13px] leading-snug">
+          {c.transcript.slice(-2).map((t, i) => (
+            <p key={i}><b className={t.speaker === "agent" ? "text-indigo" : "text-[#0f766e]"}>{t.speaker === "agent" ? "Apprentice" : "You"}:</b> {t.text}</p>
+          ))}
+        </div>
+      )}
       {c.message && (
         <div className={`border-b px-4 py-3 ${c.message.verdict === "match" ? "border-[#bfe3cc] bg-ok-soft" : "border-[#F0D58A] bg-warn-soft"}`}>
           <div className="text-[12px] font-medium text-[#555]">{c.message.verdict === "match" ? "✓ Looks right" : "⚑ Might be different · under review"} · {c.message.time}</div>

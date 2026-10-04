@@ -24,15 +24,38 @@ export function useVoiceAgent(role: "interviewer" | "tutor") {
   async function start() {
     setError(null);
     try {
-      await navigator.mediaDevices.getUserMedia({ audio: true });
+      // Only checks the permission; the voice session opens its own mic stream.
+      const probe = await navigator.mediaDevices.getUserMedia({ audio: true });
+      probe.getTracks().forEach((t) => t.stop());
       const res = await fetch(`/api/elevenlabs/token?role=${role}`);
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
       conv.startSession({ conversationToken: data.token, connectionType: "webrtc" });
     } catch (e) {
-      setError(e instanceof Error ? e.message : String(e));
+      setError(micErrorText(e));
     }
   }
 
   return { ...conv, start, transcript, error, connected: conv.status === "connected", lastUserSpeech };
+}
+
+/** Ask for the microphone early (e.g. on the Launch click, while the page is in front), so the
+ *  user actually sees Chrome's prompt. Resolves to an error text, or null when allowed. */
+export async function requestMic(): Promise<string | null> {
+  try {
+    const s = await navigator.mediaDevices.getUserMedia({ audio: true });
+    s.getTracks().forEach((t) => t.stop());
+    return null;
+  } catch (e) {
+    return micErrorText(e);
+  }
+}
+
+function micErrorText(e: unknown): string {
+  const name = e instanceof DOMException ? e.name : "";
+  if (name === "NotAllowedError" || name === "SecurityError")
+    return "Microphone is blocked. In Chrome, click the icon left of the address bar on the Apprentice page, set Microphone to Allow, then press Start recording again.";
+  if (name === "NotFoundError") return "No microphone found. Plug one in (or check System Settings → Sound → Input) and press Start recording again.";
+  if (name === "NotReadableError") return "The microphone is in use by another app (Zoom, Meet…). Close it and press Start recording again.";
+  return e instanceof Error ? e.message : String(e);
 }

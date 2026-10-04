@@ -5,13 +5,14 @@
 // differ is never called wrong: it goes under review for the supervisor (/review).
 
 import { createPortal } from "react-dom";
-import { useSyncExternalStore } from "react";
+import { useState, useSyncExternalStore } from "react";
 import Link from "next/link";
 import { ConversationProvider } from "@elevenlabs/react";
 import CoachPanel from "@/features/observe/CoachPanel";
 import Launcher from "@/features/observe/Launcher";
 import { useCoach } from "@/features/observe/useCoach";
 import { pipSupported, usePip } from "@/features/observe/usePip";
+import { requestMic } from "@/lib/useVoiceAgent";
 import { sampleWorkMap } from "@/data/sampleWorkMap";
 import type { WorkMap } from "@/lib/types";
 
@@ -40,6 +41,7 @@ function Teach() {
   const map: WorkMap = captured?.published ? captured : sampleWorkMap;
   const c = useCoach(map);
   const pip = usePip();
+  const [micError, setMicError] = useState<string | null>(null);
   const canPip = useSyncExternalStore(() => () => {}, pipSupported, () => true);
   const bot = <CoachPanel c={c} map={map} blocked={onHold} />;
 
@@ -52,7 +54,12 @@ function Teach() {
         launched={pip.isOpen}
         canPip={canPip}
         failed={pip.failed}
-        onLaunch={() => pip.open()}
+        onLaunch={() => {
+          // Same click: open the bot (needs the click) and ask for the mic while this page is in front.
+          pip.open();
+          requestMic().then(setMicError);
+        }}
+        micError={micError}
         panel={bot}
         demo={{ href: "/ledgerline/index.html?user=maya", label: "Demo app: open Ledgerline as Maya" }}
         notice={

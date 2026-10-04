@@ -6,12 +6,13 @@
 
 import { useRouter } from "next/navigation";
 import { createPortal } from "react-dom";
-import { useSyncExternalStore } from "react";
+import { useState, useSyncExternalStore } from "react";
 import { ConversationProvider } from "@elevenlabs/react";
 import ObserverPanel from "@/features/observe/ObserverPanel";
 import Launcher from "@/features/observe/Launcher";
 import { useObserver } from "@/features/observe/useObserver";
 import { pipSupported, usePip } from "@/features/observe/usePip";
+import { requestMic } from "@/lib/useVoiceAgent";
 
 export default function CapturePage() {
   return (
@@ -24,6 +25,7 @@ export default function CapturePage() {
 function Capture() {
   const router = useRouter();
   const pip = usePip();
+  const [micError, setMicError] = useState<string | null>(null);
   const o = useObserver(() => {
     pip.close();
     window.focus();
@@ -41,7 +43,12 @@ function Capture() {
         launched={pip.isOpen}
         canPip={canPip}
         failed={pip.failed}
-        onLaunch={() => pip.open()}
+        onLaunch={() => {
+          // Same click: open the bot (needs the click) and ask for the mic while this page is in front.
+          pip.open();
+          requestMic().then(setMicError);
+        }}
+        micError={micError}
         panel={bot}
         demo={{ href: "/ledgerline/index.html?user=paul", label: "Demo app: open Ledgerline as Paul" }}
       />

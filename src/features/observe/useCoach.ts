@@ -148,7 +148,7 @@ export function useCoach(map: WorkMap) {
 
   const status: CoachStatus = finished ? "done" : !sharing ? "idle" : agent.status === "connecting" ? "connecting" : agent.isSpeaking ? "speaking" : reading ? "reading" : "watching";
 
-  return { status, sharing, done, flagged, reviews, message, finished, error: error ?? agent.error, start, stop, transcript: agent.transcript, connected: agent.connected };
+  return { status, sharing, done, flagged, reviews, message, finished, error: error ?? agent.error, start, stop, transcript: agent.transcript, connected: agent.connected, micLevel: agent.getInputVolume };
 }
 
 export type Coach = ReturnType<typeof useCoach>;

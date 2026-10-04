@@ -231,6 +231,7 @@ export function useObserver(onWorkMapReady: () => void) {
     phase,
     sharing,
     connected: agent.connected,
+    micLevel: agent.getInputVolume,
     workflow,
     qa,
     transcript: agent.transcript,
