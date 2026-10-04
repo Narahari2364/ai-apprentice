@@ -1,6 +1,6 @@
 // localStorage persistence for the captured session and the generated Work Map.
 import { sampleWorkMap, capturedSessionEnabled } from "@/data/sampleWorkMap";
-import type { ScreenEvent, TranscriptLine, WorkMap } from "./types";
+import type { ReviewItem, ScreenEvent, TranscriptLine, WorkMap } from "./types";
 
 const SESSION_KEY = "apprentice.session";
 const WORKMAP_KEY = "apprentice.workmap";
@@ -69,3 +69,13 @@ export function loadTeachingMap(): WorkMap {
   const map = loadWorkMap();
   return capturedSessionEnabled && map?.published ? map : sampleWorkMap;
 }
+
+// ---------- Teaching → supervisor review ----------
+const REVIEW_KEY = "apprentice.reviews";
+export interface ReviewBatch {
+  learner: string;
+  items: ReviewItem[];
+  submitted: boolean;
+}
+export const loadReviews = () => read<ReviewBatch>(REVIEW_KEY);
+export const saveReviews = (b: ReviewBatch) => write(REVIEW_KEY, b);

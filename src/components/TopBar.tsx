@@ -1,14 +1,11 @@
 "use client";
-// Top bar in Ledgerline's style: Ledgerline's logo, Work Map link and mode switch.
-// Hidden on /capture and /teach: there Ledgerline fills the screen with its own header,
-// and the Apprentice lives in it.
+// Top bar in Ledgerline's style: Ledgerline's logo and the modules (Capture · Mapping · Teaching · Review).
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 export default function TopBar() {
   const path = usePathname();
-  if (path.startsWith("/capture") || path.startsWith("/teach")) return null; // full-screen Ledgerline
 
   return (
     <header className="relative z-20 flex h-16 flex-none items-center border-b border-line bg-white px-4 sm:px-6">
@@ -19,22 +16,25 @@ export default function TopBar() {
         </span>
       </Link>
 
-      <div className="ml-auto flex flex-none items-center gap-3 sm:gap-5">
-        <Link
-          href="/map"
-          className={`hidden whitespace-nowrap text-[15px] sm:inline ${path.startsWith("/map") ? "font-medium text-brand" : "text-[#444] hover:text-brand"}`}
-        >
-          Work Map
-        </Link>
-        <div className="flex overflow-hidden rounded-sm border border-brand text-[14px]" role="group" aria-label="Mode">
-          <Link href="/learn" className="bg-white px-2.5 py-1.5 sm:px-3.5 text-brand hover:bg-brand-soft">
-            Expert
-          </Link>
-          <Link href="/teach" className="border-l border-brand bg-white px-2.5 py-1.5 sm:px-3.5 text-brand hover:bg-brand-soft">
-            New hire
-          </Link>
-        </div>
-      </div>
+      <nav className="ml-auto flex h-full items-stretch gap-1 text-[15px]" aria-label="Modules">
+        {[
+          ["/capture", "1 · Capture"],
+          ["/map", "2 · Mapping"],
+          ["/teach", "3 · Teaching"],
+          ["/review", "Review"],
+        ].map(([href, label]) => {
+          const on = path.startsWith(href);
+          return (
+            <Link
+              key={href}
+              href={href}
+              className={`flex items-center whitespace-nowrap border-b-[3px] px-2 sm:px-3 ${on ? "border-indigo font-medium text-indigo" : "border-transparent text-[#444] hover:text-indigo"}`}
+            >
+              {label}
+            </Link>
+          );
+        })}
+      </nav>
     </header>
   );
 }

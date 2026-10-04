@@ -143,31 +143,31 @@ function HowItWorks() {
   const modules: { n: string; mode: string; title: string; who: string; text: string; points: string[]; icon: ReactNode; href: string }[] = [
     {
       n: "1",
-      mode: "Learning mode",
+      mode: "Start recording",
       title: "Capture",
-      who: "Paul works, the Apprentice listens",
-      text: "It watches Ledgerline, stays quiet while Paul types, reads or talks, and asks one short question at a natural pause.",
-      points: ["Questions about what's on screen", "At least one about a guardrail", "Off the record any time"],
+      who: "Paul works, the AI watches",
+      text: "The Apprentice pops up over the screen, takes a screenshot every 2 seconds, writes down each step and asks Paul why at a natural pause.",
+      points: ["Screenshots every 2 seconds", "Asks only what the screen can't show", "Off the record any time"],
       icon: <IconCapture />,
       href: "/capture",
     },
     {
       n: "2",
-      mode: "Review mode",
-      title: "Map",
-      who: "Paul confirms what it learned",
-      text: "A short debrief closes the gaps, the Apprentice explains it all back, and Paul says “yes, that's how it works”.",
-      points: ["Steps, decisions, reasons in his words", "Guardrails typed: limit, rule, exception, stop", "Export for AI agents"],
+      mode: "Expert approves",
+      title: "Mapping",
+      who: "Paul checks what the AI observed",
+      text: "Step by step, everything the AI saw, with screenshots. Paul marks each step correct or wrong. It stays on hold until he approves; then the AI is trained.",
+      points: ["Every observation with its screenshot", "Correct or wrong, with Paul's fix", "On hold until approved"],
       icon: <IconMap />,
       href: "/map",
     },
     {
       n: "3",
-      mode: "Teaching mode",
-      title: "Teach",
-      who: "Maya practises a new case",
-      text: "The tutor asks Maya to predict each decision and holds a wrong save before it happens, replaying Paul's moment.",
-      points: ["A case Paul never showed", "Mistake caught before it's saved", "What she mastered, what to practise"],
+      mode: "New hire works",
+      title: "Teaching",
+      who: "Maya works, the AI guides her",
+      text: "It watches Maya's screen and confirms steps that match Paul's way. If something might be different, it never says wrong: it goes under review for her supervisor.",
+      points: ["A case Paul never showed", "“That's right, next…” at each pause", "Differences go to supervisor review"],
       icon: <IconTeach />,
       href: "/teach",
     },
@@ -175,7 +175,7 @@ function HowItWorks() {
   return (
     <section className="bg-panel">
       <div className="mx-auto max-w-6xl px-6 py-16">
-        <SectionHead eyebrow="How it works" title="An apprentice, not a recorder" sub="Three modules, one product, inside the tool people already use." />
+        <SectionHead eyebrow="How it works" title="Capture → Mapping → Teaching" sub="An apprentice, not a recorder: it learns why, the expert approves, then it guides the next hire." />
         <div className="mt-10 grid gap-5 lg:grid-cols-3">
           {modules.map((m, i) => (
             <Link
@@ -239,7 +239,7 @@ function People() {
             name="Maya Chen"
             role="Associate, week 1 · the new hire"
             quote="…oh, it's over $30, so I need the supervisor approval screenshot too."
-            rules={["New case: a $35 delivery dinner", "Predicts each step before acting", "Wrong save held, explained in Paul's words"]}
+            rules={["New case: a $35 delivery dinner", "Guided step by step in Paul's words", "Differences go to her supervisor, never “wrong”"]}
             cta="Practise with the tutor"
             href="/teach"
             accent="brand"

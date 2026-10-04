@@ -7,14 +7,14 @@ import { TypeChip, guardrailType } from "@/features/workmap/WorkMapView";
 import type { Observer, ObserverStatus } from "./useObserver";
 
 const STATUS: Record<ObserverStatus, string> = {
-  idle: "Not watching yet",
+  idle: "Not recording",
   connecting: "Connecting…",
-  watching: "Watching · asks when you pause",
+  watching: "Recording · asks when you pause",
   reading: "Reading the screen…",
   asking: "Asking…",
   off_record: "Off the record",
   debrief: "Debrief · listening",
-  building: "Writing the Work Map…",
+  building: "Opening Mapping…",
 };
 
 const btnOutline = "h-9 rounded-sm border border-indigo bg-white px-3 text-[14px] text-indigo hover:bg-indigo-soft disabled:opacity-50";
@@ -44,7 +44,7 @@ export default function ObserverPanel({ o, onStart }: { o: Observer; onStart?: (
         {(o.status === "watching" || o.status === "debrief") && <ListeningBars active />}
         {o.status === "reading" && <span className="h-2 w-2 animate-pulse rounded-full bg-indigo" />}
         <span className="flex-1 truncate">{STATUS[o.status]}</span>
-        {o.sharing && <span className="text-[12px] text-ok">● screen shared</span>}
+        {o.sharing && <span className="text-[12px] text-err">● REC</span>}
       </div>
 
       {o.offRecord ? (
@@ -116,15 +116,15 @@ export default function ObserverPanel({ o, onStart }: { o: Observer; onStart?: (
 
       <div className="flex items-center gap-2 border-t border-line px-4 py-3">
         {!o.sharing && o.phase === "task" ? (
-          onStart && <button className={`${btnPrimary} flex-1`} onClick={onStart}>Share screen &amp; start</button>
+          onStart && <button className={`${btnPrimary} flex-1`} onClick={onStart}>● Start recording</button>
         ) : o.phase === "task" ? (
           <>
             <button className={`${btnOutline} flex-1`} onClick={o.toggleOffRecord}>{o.offRecord ? "Back on the record" : "Off the record"}</button>
-            <button className={`${btnPrimary} flex-1`} onClick={o.endTask}>End task</button>
+            <button className={`${btnPrimary} flex-1`} onClick={o.endTask}>Stop recording</button>
           </>
         ) : (
-          <button className={`${btnPrimary} flex-1`} onClick={o.buildWorkMap} disabled={o.phase === "building"}>
-            {o.phase === "building" ? "Writing the Work Map…" : "Looks right → Build Work Map"}
+          <button className={`${btnPrimary} flex-1`} onClick={o.sendToMapping} disabled={o.phase === "building"}>
+            {o.phase === "building" ? "Opening Mapping…" : "Send to Mapping →"}
           </button>
         )}
       </div>

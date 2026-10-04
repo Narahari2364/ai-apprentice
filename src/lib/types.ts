@@ -66,6 +66,8 @@ export interface WorkMapStep {
   time: string; // screen moment, "mm:ss"
   screenshot?: string; // data URL or /public path
   docId?: string; // Ledgerline document for this step; /map opens it via open_document
+  review?: "ok" | "wrong"; // the expert's check of this observation in Mapping
+  correction?: string; // what really happened, when the expert marked it wrong
   decision: string; // "" for routine steps
   reason: string;
   expertQuote: string;
@@ -80,6 +82,18 @@ export interface ObservedStep {
   why: string | null; // the user's reason, only from a spoken answer
   rule: string | null; // a limit/exception/stop condition, only from a spoken answer
   time: string; // "mm:ss" when it happened
+}
+
+/** Teaching: something the new hire did that might differ from the expert; waits for the supervisor. */
+export interface ReviewItem {
+  id: string;
+  time: string;
+  screenshot?: string;
+  observed: string; // what the new hire did
+  expected: string; // the expert's step it was compared with
+  note: string; // the Apprentice's gentle note
+  decision?: "fine" | "needs_correction";
+  comment?: string;
 }
 
 /** A question the Apprentice asked about something the screenshots couldn't explain, and the answer. */

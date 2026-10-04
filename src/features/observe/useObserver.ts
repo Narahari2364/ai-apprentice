@@ -10,9 +10,9 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { elapsed, resetSession } from "@/lib/events";
-import { attachScreenshots, saveWorkMap } from "@/lib/session";
+import { saveWorkMap } from "@/lib/session";
 import { useVoiceAgent } from "@/lib/useVoiceAgent";
-import type { ObservedStep, ObserveQA, ScreenEvent, TranscriptLine } from "@/lib/types";
+import type { ObservedStep, ObserveQA, TranscriptLine } from "@/lib/types";
 import { ScreenWatcher, type Frame } from "./screenWatcher";
 
 const PAUSE_MS = 3000;
@@ -45,7 +45,6 @@ export function useObserver(onWorkMapReady: () => void) {
   const watcher = useRef(new ScreenWatcher());
   const [sharing, setSharing] = useState(false);
   const [workflow, setWorkflow] = useState<ObservedStep[]>([]);
-  const [actions, setActions] = useState<{ time: string; text: string }[]>([]);
   const [reading, setReading] = useState(false);
   const [offRecord, setOffRecord] = useState(false);
   const [phase, setPhase] = useState<"task" | "debrief" | "building">("task");
@@ -67,6 +66,7 @@ export function useObserver(onWorkMapReady: () => void) {
   const shots = useRef<Record<string, string>>({});
   const offRanges = useRef<{ from: string; to: string }[]>([]);
   const actionsRef = useRef<{ time: string; text: string }[]>([]);
+  const stepShots = useRef<Record<string, string>>({}); // screenshot kept for each observed step
 
   // Write each new spoken answer into the workflow right away (fast, text-only call).
   useEffect(() => {
@@ -105,11 +105,13 @@ export function useObserver(onWorkMapReady: () => void) {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
       lastSent.current = f.dataUrl;
+      for (const step of data.workflow as ObservedStep[]) {
+        if (!stepShots.current[step.id]) stepShots.current[step.id] = watcher.current.grab(640) ?? "";
+      }
       setWorkflow(data.workflow);
       setError(null);
       if (data.action) {
         actionsRef.current = [...actionsRef.current, { time: now, text: data.action }];
-        setActions(actionsRef.current);
         if (l.agent.connected) l.agent.sendContextualUpdate(`[SCREEN] ${now} ${data.action}`);
         const shot = watcher.current.grab(720);
         if (shot) shots.current[now] = shot;
@@ -146,13 +148,13 @@ export function useObserver(onWorkMapReady: () => void) {
     setError(null);
     resetSession();
     shots.current = {};
+    stepShots.current = {};
     offRanges.current = [];
     asked.current = [];
     integrated.current = 0;
     lastSent.current = null;
     actionsRef.current = [];
     setWorkflow([]);
-    setActions([]);
     setPhase("task");
     try {
       await watcher.current.start((f) => onFrame(f), () => setSharing(false));
@@ -185,37 +187,33 @@ export function useObserver(onWorkMapReady: () => void) {
     );
   }
 
-  async function buildWorkMap() {
+  /** Stop recording and hand everything the AI observed to Mapping, on hold until the expert approves. */
+  function sendToMapping() {
     setPhase("building");
     agent.endSession();
     watcher.current.stop();
     setSharing(false);
-    const events: ScreenEvent[] = [
-      ...actions.map((a) => ({ time: a.time, invoiceId: "", type: "vision_action", description: a.text, source: "vision" as const })),
-      ...workflow.map((s) => ({
-        time: s.time,
-        invoiceId: "",
-        type: "workflow_step",
-        description: `Workflow step: ${s.title}. ${s.detail}${s.why ? ` Why: ${s.why}` : ""}${s.rule ? ` Rule: ${s.rule}` : ""}`,
-        source: "vision" as const,
-      })),
-    ].sort((a, b) => a.time.localeCompare(b.time));
-    try {
-      const res = await fetch("/api/workmap", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ events, transcript: agent.transcript }),
-        signal: AbortSignal.timeout(60000),
-      });
-      const data = await res.json();
-      if (!res.ok || !data.steps?.length) throw new Error(data.error || "The Work Map came back empty.");
-      const offRecordRanges = offRanges.current.map((r) => ({ from: r.from, to: r.to || elapsed() }));
-      saveWorkMap({ ...attachScreenshots(data, shots.current), offRecord: offRecordRanges, published: false });
-      onWorkMapReady();
-    } catch (e) {
-      setError(e instanceof Error ? e.message.slice(0, 160) : "Couldn't build the Work Map.");
-      setPhase("debrief");
-    }
+    const steps = workflow.map((o, i) => ({
+      id: o.id || `s${i + 1}`,
+      order: i + 1,
+      title: o.title,
+      time: o.time,
+      screenshot: stepShots.current[o.id] || undefined,
+      decision: o.detail,
+      reason: o.why ?? "",
+      expertQuote: o.why ?? "",
+      guardrails: o.rule ? [o.rule] : [],
+    }));
+    const offRecordRanges = offRanges.current.map((r) => ({ from: r.from, to: r.to || elapsed() }));
+    saveWorkMap({
+      task: "Task recorded from the expert's screen",
+      steps,
+      gaps: [],
+      confirmed: qa.length > 0,
+      offRecord: offRecordRanges,
+      published: false,
+    });
+    onWorkMapReady();
   }
 
   const status: ObserverStatus =
@@ -241,7 +239,7 @@ export function useObserver(onWorkMapReady: () => void) {
     toggleOffRecord,
     offRecord,
     endTask,
-    buildWorkMap,
+    sendToMapping,
   };
 }
 
