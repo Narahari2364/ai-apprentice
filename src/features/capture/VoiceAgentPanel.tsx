@@ -15,7 +15,7 @@ import { attachDocs, attachScreenshots, saveSession, saveWorkMap } from "@/lib/s
 import { useVoiceAgent } from "@/lib/useVoiceAgent";
 import { sampleWorkMap } from "@/data/sampleWorkMap";
 import type { ScreenEvent } from "@/lib/types";
-import Popup, { ListeningBars } from "@/features/apprentice/Popup";
+import LearningPopup from "@/features/apprentice/LearningPopup";
 import StartCard from "@/features/apprentice/StartCard";
 import { registerAgent, sendToAgent, STATE_LABEL, type AgentUiState } from "./agent";
 import { setCapturePaused, snapshot, startScreenCapture, stopScreenCapture } from "./screenCapture";
@@ -56,6 +56,9 @@ function Interviewer({ stage, setStage }: Props) {
   const [starting, setStarting] = useState(false);
   const [buildError, setBuildError] = useState<string | null>(null);
   const [details, setDetails] = useState(false);
+  // Transcript / pause-detector panel only with ?details in the URL (for the team, hidden from the expert).
+  // Safe for hydration: the popup isn't rendered until the Apprentice button is clicked.
+  const [detailsAllowed] = useState(() => typeof window !== "undefined" && new URLSearchParams(window.location.search).has("details"));
   const [task, setTask] = useState("Meal expense report");
   const seenEvents = useScreenEvents();
 
@@ -261,7 +264,7 @@ function Interviewer({ stage, setStage }: Props) {
     return (
       <StartCard
         title="Apprentice"
-        subtitle="Show it how you do a task. It learns why."
+        subtitle="Show it a task. It learns why."
         modeLabel="LEARNING MODE"
         taskLabel="Task you'll show"
         tasks={["Meal expense report", "Client-travel expense report"]}
@@ -299,97 +302,50 @@ function Interviewer({ stage, setStage }: Props) {
   const statusLabel = ui === "listening" || ui === "debrief" ? "Listening…" : STATE_LABEL[ui];
 
   return (
-    <Popup
-      title="Apprentice"
-      subtitle={review ? `Review mode · checking what it learned from ${EXPERT}` : `Learning from ${EXPERT}`}
-      modeLabel={review ? "REVIEW" : "LEARNING MODE"}
-      initial={{ left: 24, bottom: 120 }}
-      width={420}
-      foldable
+    <LearningPopup
+      expert={EXPERT}
+      review={review}
+      taskPhase={phase === "task"}
+      connected={agent.connected}
+      offRecord={offRecord}
+      status={statusLabel}
+      listening={ui === "listening" || ui === "debrief"}
+      question={lastAgent ? { time: lastAgent.time, text: lastAgent.text } : undefined}
+      idleText={ui === "connecting" ? "Connecting…" : "Work as usual. I'll stay quiet and only ask when you pause."}
       autoFold={autoFold}
-      foldedBar={
-        <span className="flex items-center gap-2 text-[14px] text-indigo">
-          {ui === "listening" && <ListeningBars active />}
-          {statusLabel} <span className="text-muted">· I&apos;ll ask when you pause</span>
-        </span>
-      }
-    >
-      <div className="px-4 pb-3 pt-3">
-        {lastAgent ? (
-          <div>
-            <div className="text-[13px] text-[#444]">
-              <b className="text-ink">Apprentice</b> <span className="ml-1 font-mono text-muted">{lastAgent.time}</span>
-            </div>
-            <p className="mt-0.5 text-[16px] leading-snug">{lastAgent.text}</p>
-          </div>
-        ) : (
-          <p className="text-[14.5px] text-[#444]">
-            {ui === "connecting" ? "Connecting…" : "Work as usual. I'll stay quiet and only ask when you pause."}
-          </p>
-        )}
-        {offRecord && (
-          <p className="mt-2 border-l-4 border-err bg-err-soft px-3 py-1.5 text-[13px] text-[#8E1B1B]">
-            Off the record. Nothing is saved and no questions are asked until you resume.
-          </p>
-        )}
-        {buildError && (
-          <div className="mt-2 border-l-4 border-warn bg-warn-soft px-3 py-2 text-[13px]">
-            <b>Couldn&apos;t build the Work Map.</b> {buildError}
-            <div className="mt-2 flex gap-2">
-              <button className="btn h-8 bg-white text-[13px]" onClick={buildMap}>Try again</button>
-              <button className="btn-pri h-8 text-[13px]" onClick={loadPreparedMap}>Use prepared Work Map</button>
-            </div>
-          </div>
-        )}
-        {agent.error && <p className="mt-2 border-l-4 border-err bg-err-soft px-3 py-1.5 text-[13px] text-[#8E1B1B]">{agent.error}</p>}
-      </div>
-
-      <div className="flex items-center gap-2 border-t border-line px-4 py-2.5">
-        <span className="flex min-w-0 flex-1 items-center gap-2 text-[14px] text-indigo">
-          {(ui === "listening" || ui === "debrief") && <ListeningBars active />}
-          <span className="truncate">{statusLabel}</span>
-        </span>
-        {phase === "task" && (
+      // Also offered without a live agent (e.g. voice credits ran out): events alone still build a map.
+      showBuild={phase === "debrief" || (!agent.connected && phase === "task" && seenEvents.length > 0 && !starting)}
+      buildError={buildError}
+      agentError={agent.error}
+      onToggleOffRecord={toggleOffRecord}
+      onEndTask={endTask}
+      onBuildMap={buildMap}
+      onLoadPreparedMap={loadPreparedMap}
+      details={
+        detailsAllowed && (
           <>
-            <button
-              onClick={toggleOffRecord}
-              disabled={!agent.connected}
-              className={`h-9 rounded-sm border px-3 text-[14px] disabled:opacity-50 ${offRecord ? "border-err bg-err text-white" : "border-indigo bg-white text-indigo hover:bg-indigo-soft"}`}
-            >
-              {offRecord ? "Back on record" : "Off the record"}
+            <button onClick={() => setDetails((d) => !d)} className="w-full border-t border-line bg-panel-2 px-4 py-1.5 text-left text-[12.5px] text-muted hover:text-indigo">
+              {details ? "▾ Hide details" : "▸ Details: transcript, screen events, pause detector"}
             </button>
-            <button onClick={endTask} disabled={!agent.connected} className="h-9 rounded-sm bg-indigo px-3 text-[14px] text-white hover:bg-indigo-dark disabled:opacity-50">
-              End task
-            </button>
+            {details && (
+              <div className="flex h-72 flex-col gap-2 border-t border-line bg-panel p-2">
+                <div className="text-[12px] text-[#444]">
+                  Pause detector: <b>{waiting ?? "idle"}</b> · Screen: <b>{sharing ? (offRecord ? "paused" : "shared, vision on") : "app events only"}</b>
+                </div>
+                <ol className="max-h-28 min-h-0 space-y-1 overflow-y-auto rounded-sm border border-line bg-white p-2 text-[12.5px]">
+                  {agent.transcript.length === 0 && <li className="text-muted">No conversation yet.</li>}
+                  {agent.transcript.map((t, i) => (
+                    <li key={i}>
+                      <b className={t.speaker === "agent" ? "text-indigo" : ""}>{t.speaker === "agent" ? "Apprentice" : "Paul"}:</b> {t.text}
+                    </li>
+                  ))}
+                </ol>
+                <EventLog />
+              </div>
+            )}
           </>
-        )}
-        {(phase === "debrief" || (!agent.connected && phase === "task" && seenEvents.length > 0 && !starting)) && (
-          // Also offered without a live agent (e.g. voice credits ran out): events alone still build a map.
-          <button onClick={buildMap} className="h-9 rounded-sm bg-indigo px-3 text-[14px] text-white hover:bg-indigo-dark">
-            Build Work Map
-          </button>
-        )}
-      </div>
-
-      <button onClick={() => setDetails((d) => !d)} className="w-full border-t border-line bg-panel-2 px-4 py-1.5 text-left text-[12.5px] text-muted hover:text-indigo">
-        {details ? "▾ Hide details" : "▸ Details: transcript, screen events, pause detector"}
-      </button>
-      {details && (
-        <div className="flex h-72 flex-col gap-2 border-t border-line bg-panel p-2">
-          <div className="text-[12px] text-[#444]">
-            Pause detector: <b>{waiting ?? "idle"}</b> · Screen: <b>{sharing ? (offRecord ? "paused" : "shared, vision on") : "app events only"}</b>
-          </div>
-          <ol className="max-h-28 min-h-0 space-y-1 overflow-y-auto rounded-sm border border-line bg-white p-2 text-[12.5px]">
-            {agent.transcript.length === 0 && <li className="text-muted">No conversation yet.</li>}
-            {agent.transcript.map((t, i) => (
-              <li key={i}>
-                <b className={t.speaker === "agent" ? "text-indigo" : ""}>{t.speaker === "agent" ? "Apprentice" : "Paul"}:</b> {t.text}
-              </li>
-            ))}
-          </ol>
-          <EventLog />
-        </div>
-      )}
-    </Popup>
+        )
+      }
+    />
   );
 }
