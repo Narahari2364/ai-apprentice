@@ -21,8 +21,8 @@ export default function NotFound() {
         <h1 className="mt-3 text-[28px] font-light text-[#1f2d3d]">This page isn&apos;t in the Work Map</h1>
         <p className="mt-2 text-[16px] text-[#475467]">The link may be old, or the page was never captured.</p>
         <div className="mt-8 flex flex-wrap justify-center gap-3">
-          <Link href="/" className="inline-flex h-11 items-center rounded-sm bg-indigo px-5 text-[15px] text-white shadow-sm transition hover:bg-indigo-dark">
-            Back to home
+          <Link href="/capture" className="inline-flex h-11 items-center rounded-sm bg-indigo px-5 text-[15px] text-white shadow-sm transition hover:bg-indigo-dark">
+            Back to the Apprentice
           </Link>
           <Link href="/map" className="inline-flex h-11 items-center rounded-sm border border-brand bg-white px-5 text-[15px] text-brand transition hover:bg-brand-soft">
             Open the Work Map

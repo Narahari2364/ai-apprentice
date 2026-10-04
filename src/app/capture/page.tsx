@@ -50,6 +50,7 @@ function Capture() {
         }}
         micError={micError}
         panel={bot}
+        links={[{ href: "/map", label: "Mapping →" }, { href: "/teach", label: "Teaching →" }]}
         demo={{ href: "/ledgerline/index.html?user=paul", label: "Demo app: open Ledgerline as Paul" }}
       />
       {pip.container && createPortal(bot, pip.container)}

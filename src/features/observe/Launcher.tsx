@@ -19,10 +19,12 @@ interface Props {
   /** The bot itself, shown inline only when floating windows aren't available. */
   panel: ReactNode;
   demo: { href: string; label: string };
+  /** Small links to the other modules (there is no header bar). */
+  links?: { href: string; label: string }[];
   notice?: ReactNode;
 }
 
-export default function Launcher({ eyebrow, title, text, launched, canPip, failed = false, micError, onLaunch, panel, demo, notice }: Props) {
+export default function Launcher({ eyebrow, title, text, launched, canPip, failed = false, micError, onLaunch, panel, demo, links, notice }: Props) {
   return (
     <section className="relative min-h-full overflow-hidden bg-[linear-gradient(180deg,#f3f2ff_0%,#ffffff_70%)]">
       <div className="pointer-events-none absolute -right-32 -top-40 h-[480px] w-[480px] rounded-full bg-indigo/10 blur-3xl" aria-hidden="true" />
@@ -72,9 +74,12 @@ export default function Launcher({ eyebrow, title, text, launched, canPip, faile
                 </li>
               ))}
             </ol>
-            <a href={demo.href} target="_blank" rel="noreferrer" className="mt-5 text-[14px] text-brand hover:underline">
-              {demo.label} ↗
-            </a>
+            <div className="mt-5 flex flex-wrap justify-center gap-x-5 gap-y-1 text-[14px]">
+              <a href={demo.href} target="_blank" rel="noreferrer" className="text-brand hover:underline">{demo.label} ↗</a>
+              {links?.map((l) => (
+                <a key={l.href} href={l.href} className="text-[#667085] hover:text-indigo">{l.label}</a>
+              ))}
+            </div>
 
             {(!canPip || failed) && (
               <p className="mt-6 max-w-md text-[13.5px] text-[#7a5a00]">

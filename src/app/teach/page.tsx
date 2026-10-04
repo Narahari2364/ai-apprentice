@@ -61,6 +61,7 @@ function Teach() {
         }}
         micError={micError}
         panel={bot}
+        links={[{ href: "/capture", label: "← Capture" }, { href: "/map", label: "← Mapping" }, { href: "/review", label: "Supervisor review →" }]}
         demo={{ href: "/ledgerline/index.html?user=maya", label: "Demo app: open Ledgerline as Maya" }}
         notice={
           onHold ? (

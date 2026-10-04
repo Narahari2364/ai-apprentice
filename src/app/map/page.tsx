@@ -58,7 +58,8 @@ export default function MappingPage() {
     <div className="min-h-full bg-[#f6f8fc]">
       <section className="relative overflow-hidden border-b border-line bg-[linear-gradient(180deg,#f3f2ff_0%,#ffffff_100%)]">
         <div className="pointer-events-none absolute -right-32 -top-40 h-[440px] w-[440px] rounded-full bg-indigo/10 blur-3xl" aria-hidden="true" />
-        <div className="relative mx-auto max-w-6xl px-6 pb-8 pt-8">
+        <div className="relative mx-auto max-w-6xl px-6 pb-8 pt-6">
+          <Link href="/capture" className="mb-4 inline-block text-[13.5px] text-[#667085] hover:text-indigo">← Back to Capture</Link>
           <div className="rise flex flex-wrap items-start gap-6">
             <div className="min-w-0 flex-1">
               <div className="flex flex-wrap items-center gap-2">
