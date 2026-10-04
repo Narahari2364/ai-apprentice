@@ -55,9 +55,14 @@ export default function LearningPopup(p: LearningPopupProps) {
             <span className="truncate">Waits for a pause</span>
           </span>
           {p.taskPhase && (
-            <button onClick={p.onToggleOffRecord} disabled={!p.connected} className={`${btnOutline} h-8 text-[13px]`}>
-              Off the record
-            </button>
+            <>
+              <button onClick={p.onToggleOffRecord} disabled={!p.connected} className={`${btnOutline} h-8 text-[13px]`}>
+                Off the record
+              </button>
+              <button onClick={p.onEndTask} disabled={!p.connected} className={`${btnPrimary} h-8 text-[13px]`}>
+                End task
+              </button>
+            </>
           )}
         </span>
       }

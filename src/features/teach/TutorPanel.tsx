@@ -9,7 +9,7 @@ import { ConversationProvider } from "@elevenlabs/react";
 import { resetSession, subscribe } from "@/lib/events";
 import { sendCommand } from "@/lib/ledgerline";
 import { loadTeachingMap } from "@/lib/session";
-import { useVoiceAgent } from "@/lib/useVoiceAgent";
+import { useApprenticeAgent } from "@/features/mock/useApprenticeAgent";
 import { redact } from "@/lib/redact";
 import type { GuardrailResult } from "@/lib/types";
 import Popup, { ListeningBars } from "@/features/apprentice/Popup";
@@ -38,7 +38,7 @@ export default function TutorPanel(props: Props) {
 }
 
 function Tutor({ stage, setStage, violations, progress, onReset }: Props) {
-  const agent = useVoiceAgent("tutor");
+  const agent = useApprenticeAgent("tutor");
   const [held, setHeld] = useState(false); // a save is held and the hint/replay card is showing
   const [finished, setFinished] = useState(false);
   const [shared, setShared] = useState(false);
