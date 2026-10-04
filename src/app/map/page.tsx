@@ -35,58 +35,82 @@ export default function MapPage() {
     setJustPublished(true);
   }
 
+  const judgmentCalls = map.steps.filter((s) => s.decision).length;
+  const guardrailCount = map.steps.reduce((n, s) => n + s.guardrails.length, 0);
+  const tiles: [number, string, string][] = [
+    [map.steps.length, "Steps", "text-[#1f2d3d]"],
+    [judgmentCalls, "Judgment calls", "text-indigo"],
+    [guardrailCount, "Guardrails", "text-err"],
+    [map.gaps.length, "Open questions", "text-[#7a5a00]"],
+  ];
+
   return (
-    <div className="min-h-full bg-panel">
-      <div className="mx-auto flex max-w-7xl flex-col gap-3 p-5">
-        <div className="flex items-center text-[13px] text-[#444]">
-          <span>{raw ? "Learned in the last capture session" : "Prepared Work Map (no session captured yet)"} · personal data redacted</span>
+    <div className="min-h-full bg-[#f6f8fc]">
+      {/* hero band, same language as the home page */}
+      <section className="relative overflow-hidden border-b border-line bg-[linear-gradient(180deg,#f3f2ff_0%,#ffffff_100%)]">
+        <div className="pointer-events-none absolute -right-32 -top-40 h-[440px] w-[440px] rounded-full bg-indigo/10 blur-3xl" aria-hidden="true" />
+        <div className="pointer-events-none absolute -left-24 top-10 h-[300px] w-[300px] rounded-full bg-brand/10 blur-3xl" aria-hidden="true" />
+        <div className="relative mx-auto max-w-7xl px-6 pb-8 pt-8">
+          <div className="rise flex flex-wrap items-start gap-6">
+            <div className="min-w-0 flex-1">
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="rounded-sm border border-indigo/30 bg-indigo-soft px-2.5 py-1 text-[12px] font-bold uppercase tracking-wide text-indigo">
+                  Module 2 · Review mode
+                </span>
+                <span className={`rounded-full px-2.5 py-1 text-[12.5px] font-medium ${published ? "bg-ok-soft text-ok" : "bg-warn-soft text-[#7a5a00]"}`}>
+                  {published ? "● Published to the tutor" : "● Waiting for Paul's approval"}
+                </span>
+              </div>
+              <h1 className="mt-4 text-[38px] font-light leading-[1.1] tracking-tight text-[#1f2d3d] md:text-[44px]">
+                What Paul taught <span className="font-medium text-indigo">the Apprentice</span>
+              </h1>
+              <p className="mt-2 max-w-2xl text-[16.5px] text-[#475467]">
+                {map.task}. {map.confirmed ? "Confirmed by Paul in the teach-back." : "Teach-back not confirmed yet."}{" "}
+                <span className="text-[#98a2b3]">{raw ? "Learned in the last capture session" : "Prepared Work Map"} · personal data redacted</span>
+              </p>
+            </div>
+            <div className="flex flex-wrap gap-2 pt-1">
+              <button
+                className="inline-flex h-11 items-center gap-2 rounded-sm border border-indigo bg-white px-4 text-[15px] text-indigo transition hover:bg-indigo-soft"
+                onClick={() => setExporting(true)}
+              >
+                Export for AI agents ↓
+              </button>
+              {published ? (
+                <Link href="/teach" className="inline-flex h-11 items-center rounded-sm bg-indigo px-5 text-[15px] text-white shadow-sm transition hover:bg-indigo-dark">
+                  Open Teaching mode →
+                </Link>
+              ) : (
+                <button className="inline-flex h-11 items-center rounded-sm bg-indigo px-5 text-[15px] text-white shadow-sm transition hover:bg-indigo-dark" onClick={publish}>
+                  Publish to tutor
+                </button>
+              )}
+            </div>
+          </div>
+
+          <div className="mt-7 grid grid-cols-2 gap-3 md:grid-cols-4">
+            {tiles.map(([n, label, tone], i) => (
+              <div key={label} className="rise rounded-md border border-line bg-white/80 px-5 py-4 backdrop-blur" style={{ animationDelay: `${80 + i * 60}ms` }}>
+                <div className={`text-[34px] font-light leading-none ${tone}`}>{n}</div>
+                <div className="mt-1.5 text-[13.5px] text-[#475467]">{label}</div>
+              </div>
+            ))}
+          </div>
           {raw && (
             <button
-              className="ml-auto text-brand hover:underline"
+              className="mt-4 text-[13px] text-brand hover:underline"
               onClick={() => {
                 localStorage.removeItem(KEY);
                 location.reload();
               }}
             >
-              Reset to sample
+              Reset to the prepared sample
             </button>
           )}
         </div>
+      </section>
 
-        {/* header bar */}
-        <div className="flex flex-wrap items-center gap-4 bg-indigo px-5 py-3 text-white">
-          <svg width="26" height="24" viewBox="0 0 18 16" aria-hidden="true">
-            <path d="M1.5 1.5h15v10H6L1.5 15z" fill="#fff" />
-            <path d="M5 5h8M5 8h5" stroke="#5146d9" strokeWidth="1.4" />
-          </svg>
-          <div className="min-w-0 leading-tight">
-            <div className="text-[21px] font-medium">Work Map · Meal expense report</div>
-            <div className="text-[13.5px] opacity-90">
-              Learned from Paul Adler · {map.confirmed ? "confirmed in the teach-back" : "teach-back not confirmed yet"}
-            </div>
-          </div>
-          <span className="rounded-sm border border-white/70 px-2 py-0.5 text-[12px] font-bold tracking-wide">
-            {published ? "PUBLISHED" : "REVIEW MODE"}
-          </span>
-          <div className="ml-auto flex gap-2">
-            <button className="h-10 rounded-sm bg-white px-4 text-[15px] text-indigo hover:bg-indigo-soft" onClick={() => setExporting(true)}>
-              Export for AI agents ↓
-            </button>
-            {published ? (
-              <Link href="/teach" className="flex h-10 items-center rounded-sm bg-white px-4 text-[15px] text-indigo hover:bg-indigo-soft">
-                Open Teaching mode →
-              </Link>
-            ) : (
-              <button className="h-10 rounded-sm bg-white px-4 text-[15px] font-medium text-indigo hover:bg-indigo-soft" onClick={publish}>
-                Publish to tutor
-              </button>
-            )}
-          </div>
-        </div>
-        {raw && !published && (
-          <p className="text-[13.5px] text-[#444]">Review mode: nobody else sees this until Paul publishes it to the tutor.</p>
-        )}
-
+      <div className="mx-auto max-w-7xl px-6 py-6">
         {selected && <WorkMapView map={map} selected={selected} onSelect={(s) => setSelectedId(s.id)} onReplay={setReplay} />}
       </div>
 
@@ -94,7 +118,7 @@ export default function MapPage() {
 
       {replay && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-[rgba(20,28,38,.45)] p-6">
-          <div className="flex h-[86vh] w-full max-w-6xl flex-col bg-white shadow-[0_10px_40px_rgba(0,0,0,.3)]">
+          <div className="rise flex h-[86vh] w-full max-w-6xl flex-col bg-white shadow-[0_10px_40px_rgba(0,0,0,.3)]">
             <div className="flex items-center gap-3 bg-indigo px-5 py-2.5 text-white">
               <span className="text-[17px] font-medium">Paul&apos;s screen moment · step {replay.order} · {replay.time}</span>
               <button className="ml-auto px-1 text-[24px] leading-none" aria-label="Close" onClick={() => setReplay(null)}>×</button>
