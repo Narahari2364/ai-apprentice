@@ -4,6 +4,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import LedgerlineFrame from "@/features/erp/LedgerlineFrame";
+import ModeRibbon from "@/components/ModeRibbon";
 import TutorPanel, { type TeachStage } from "@/features/teach/TutorPanel";
 import { checkGuardrails } from "@/features/teach/checkGuardrails";
 import { useTeachProgress } from "@/features/teach/progress";
@@ -47,13 +48,16 @@ export default function TeachPage() {
   );
 
   return (
-    <div className="h-full">
-      <LedgerlineFrame
-        query="user=maya&guard=1"
-        mode="teach"
-        apprenticeOn={stage !== "closed"}
-        onApprenticeClick={() => setStage(stage === "closed" ? "intro" : stage)}
-      />
+    <div className="flex h-full flex-col">
+      <ModeRibbon mode="teaching" />
+      <div className="min-h-0 flex-1">
+        <LedgerlineFrame
+          query="user=maya&guard=1"
+          mode="teach"
+          apprenticeOn={stage !== "closed"}
+          onApprenticeClick={() => setStage(stage === "closed" ? "intro" : stage)}
+        />
+      </div>
       <TutorPanel stage={stage} setStage={setStage} violations={violations} progress={progress} onReset={reset} />
     </div>
   );

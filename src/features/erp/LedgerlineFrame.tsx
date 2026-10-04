@@ -9,7 +9,6 @@
 //   onApprenticeClick, an indigo "Apprentice" button is added to Ledgerline's top bar.
 
 import { useEffect, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
 import { attachLedgerline, embedCss, injectApprenticeButton, sendCommand, type EmbedMode } from "@/lib/ledgerline";
 
 const MOCK_WIDTH = 1180;
@@ -27,19 +26,17 @@ interface Props {
 }
 
 export default function LedgerlineFrame({ query, mode, onApprenticeClick, apprenticeOn = false, onReady }: Props) {
-  const router = useRouter();
-  const routerRef = useRef(router);
   const wrap = useRef<HTMLDivElement>(null);
   const frame = useRef<HTMLIFrameElement>(null);
   const onReadyRef = useRef(onReady);
   const onClickRef = useRef(onApprenticeClick);
   const setButtonOn = useRef<((on: boolean) => void) | null>(null);
   const [size, setSize] = useState({ scale: 1, width: MOCK_WIDTH, height: 800 });
+  const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
     onReadyRef.current = onReady;
     onClickRef.current = onApprenticeClick;
-    routerRef.current = router;
   });
 
   useEffect(() => {
@@ -69,14 +66,10 @@ export default function LedgerlineFrame({ query, mode, onApprenticeClick, appren
         style.id = "apprentice-embed";
         style.textContent = embedCss(mode);
         doc.head.appendChild(style);
-        if (onClickRef.current) {
-          // Our top bar is hidden on these pages, so the way to the Work Map lives in Ledgerline's.
-          setButtonOn.current = injectApprenticeButton(doc, () => onClickRef.current?.(), [
-            { label: "Work Map", onClick: () => routerRef.current.push("/map") },
-          ]);
-        }
+        if (onClickRef.current) setButtonOn.current = injectApprenticeButton(doc, () => onClickRef.current?.());
       }
       sendCommand({ cmd: "new_session" });
+      setLoaded(true);
       onReadyRef.current?.();
     };
     iframe.addEventListener("load", ready);
@@ -96,6 +89,18 @@ export default function LedgerlineFrame({ query, mode, onApprenticeClick, appren
         className="absolute left-0 top-0"
         style={{ width: size.width, height: size.height, transform: `scale(${size.scale})`, transformOrigin: "0 0", border: 0 }}
       />
+      {/* Loading screen until Ledgerline is ready */}
+      <div
+        className={`absolute inset-0 flex flex-col items-center justify-center gap-4 bg-[linear-gradient(180deg,#f6f8fc,#ffffff)] transition-opacity duration-500 ${loaded ? "pointer-events-none opacity-0" : "opacity-100"}`}
+        aria-hidden={loaded}
+      >
+        <span className="grid h-14 w-14 place-items-center rounded-lg bg-[#2F8FE6] text-[22px] font-bold text-white shadow-lg">L</span>
+        <div className="text-[18px] text-[#1f2d3d]"><b className="font-medium">ledgerline</b> <span className="font-light">enterprise</span></div>
+        <div className="h-1 w-48 overflow-hidden rounded-full bg-[#e4e7ec]">
+          <div className="h-full w-1/3 animate-[loadbar_1.1s_ease-in-out_infinite] rounded-full bg-gradient-to-r from-brand to-indigo" />
+        </div>
+        <div className="text-[13px] text-[#667085]">Opening the expense tool…</div>
+      </div>
     </div>
   );
 }

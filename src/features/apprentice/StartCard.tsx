@@ -20,7 +20,7 @@ interface Props {
 export default function StartCard({ title, subtitle, modeLabel, taskLabel, tasks, expectations, startLabel, onStart, onClose }: Props) {
   const [task, setTask] = useState(tasks[0]);
   return (
-    <Popup title={title} subtitle={subtitle} modeLabel={modeLabel} initial={{ top: 92, right: 150 }} width={430} onClose={onClose}>
+    <Popup title={title} subtitle={subtitle} modeLabel={modeLabel} initial={{ top: 132, right: 150 }} width={430} onClose={onClose}>
       <div className="px-5 pb-1 pt-4">
         <label className="mb-1.5 block text-[12.5px] font-bold uppercase tracking-wide text-[#333]" htmlFor="appr-task">
           {taskLabel}
