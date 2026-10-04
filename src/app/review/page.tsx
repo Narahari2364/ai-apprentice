@@ -3,35 +3,40 @@
 // from Paul's way". The supervisor looks at each one (screenshot, what the new hire did, Paul's
 // step, Torchbearer's note), marks it fine or needs correction, and submits.
 
-import { useState, useSyncExternalStore } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { saveMastery, type ReviewBatch } from "@/lib/session";
+import { loadReviews, saveMastery, saveReviews, type ReviewBatch } from "@/lib/session";
 import type { ReviewItem } from "@/lib/types";
 
-const KEY = "apprentice.reviews";
-const readRaw = () => {
-  try {
-    return localStorage.getItem(KEY);
-  } catch {
-    return null;
-  }
-};
 
 export default function ReviewPage() {
-  const raw = useSyncExternalStore(() => () => {}, readRaw, () => null);
-  const stored: ReviewBatch | null = raw ? JSON.parse(raw) : null;
+  // The review batch lives in the database.
   const [batch, setBatch] = useState<ReviewBatch | null>(null);
-  const current = batch ?? stored;
+  const [loading, setLoading] = useState(true);
+  const timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  useEffect(() => {
+    loadReviews().then((b) => {
+      setBatch(b);
+      setLoading(false);
+    });
+  }, []);
+  const current = batch;
   const items = current?.items ?? [];
   const decided = items.filter((i) => i.decision).length;
 
-  function save(next: ReviewBatch) {
+  function save(next: ReviewBatch, immediate = false) {
     setBatch(next);
-    localStorage.setItem(KEY, JSON.stringify(next));
+    clearTimeout(timer.current);
+    if (immediate) saveReviews(next);
+    else timer.current = setTimeout(() => saveReviews(next), 500);
   }
   function set(id: string, patch: Partial<ReviewItem>) {
     if (!current) return;
     save({ ...current, items: current.items.map((i) => (i.id === id ? { ...i, ...patch } : i)) });
+  }
+
+  if (loading) {
+    return <div className="grid min-h-full place-items-center bg-[#f6f8fc] text-[15px] text-[#667085]">Loading reviews from the database…</div>;
   }
 
   return (
@@ -116,7 +121,7 @@ export default function ReviewPage() {
                     saveMastery(it.workflowId, current.learner, { [it.stepId]: it.decision === "fine" ? "learned" : "relearn" });
                   }
                 }
-                save({ ...current, submitted: true });
+                save({ ...current, submitted: true }, true);
               }}
               disabled={decided < items.length}
               className="h-11 rounded-sm bg-indigo px-5 text-[15px] text-white hover:bg-indigo-dark disabled:opacity-40"

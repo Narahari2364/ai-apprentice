@@ -4,23 +4,17 @@
 //   2. Review  Continue shows the CORRECTED workflow; every step can still be edited (revise)
 //   3. Save    approves it: the workflow is trained and Teaching can use it. Until then it is on hold.
 
-import { useState, useSyncExternalStore } from "react";
+import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import Link from "next/link";
 import ExportDialog from "@/features/workmap/ExportDialog";
 import { TypeChip, guardrailType } from "@/features/workmap/WorkMapView";
 import { EXAMPLE_ID, exampleWorkflow, getWorkflow, listWorkflows, saveWorkflow } from "@/lib/session";
+import type { WorkflowSummary } from "@/lib/types";
 import type { WorkflowRecord, WorkMapStep } from "@/lib/types";
 
 const readId = () => {
   try {
     return new URLSearchParams(window.location.search).get("id");
-  } catch {
-    return null;
-  }
-};
-const readLib = () => {
-  try {
-    return localStorage.getItem("torchbearer.workflows");
   } catch {
     return null;
   }
@@ -32,12 +26,30 @@ const corrected = (s: WorkMapStep): WorkMapStep =>
 
 export default function MappingPage() {
   const idParam = useSyncExternalStore(() => () => {}, readId, () => null);
-  const libRaw = useSyncExternalStore(() => () => {}, readLib, () => null);
-  const library = libRaw ? listWorkflows() : [];
-  const chosen = getWorkflow(idParam) ?? library[0] ?? exampleWorkflow();
-
+  // Loaded from the database: the list of workflows, and the one being mapped.
+  const [library, setLibrary] = useState<WorkflowSummary[]>([]);
   const [record, setRecord] = useState<WorkflowRecord | null>(null);
-  const wf = record && record.id === chosen.id ? record : chosen;
+  const [loading, setLoading] = useState(true);
+  const [saveState, setSaveState] = useState<"saved" | "saving" | "error">("saved");
+  const saveTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+
+  useEffect(() => {
+    let live = true;
+    listWorkflows().then(async (list) => {
+      if (!live) return;
+      setLibrary(list);
+      const loaded = (await getWorkflow(idParam ?? list[0]?.id)) ?? exampleWorkflow();
+      if (live) {
+        setRecord(loaded);
+        setLoading(false);
+      }
+    });
+    return () => {
+      live = false;
+    };
+  }, [idParam]);
+
+  const wf = record ?? exampleWorkflow();
   const map = wf.map;
   const isExample = wf.id === EXAMPLE_ID;
 
@@ -54,9 +66,18 @@ export default function MappingPage() {
   const showFinal = view === "final" || (approved && view !== "check") || isExample;
   const finalSteps = draft ?? map.steps.map(corrected);
 
-  function persist(next: WorkflowRecord) {
+  /** Show the change now; write it to the database a moment later (typing doesn't flood it). */
+  function persist(next: WorkflowRecord, immediate = false) {
     setRecord(next);
-    saveWorkflow(next);
+    setSaveState("saving");
+    clearTimeout(saveTimer.current);
+    const write = () =>
+      saveWorkflow(next).then((ok) => {
+        setSaveState(ok ? "saved" : "error");
+        if (ok) setLibrary((l) => l.map((w) => (w.id === next.id ? { ...w, name: next.name, published: !!next.map.published, stepCount: next.map.steps.length } : w)));
+      });
+    if (immediate) write();
+    else saveTimer.current = setTimeout(write, 600);
   }
   function review(id: string, value: "ok" | "wrong") {
     persist({ ...wf, map: { ...map, published: false, steps: map.steps.map((s) => (s.id === id ? { ...s, review: value } : s)) } });
@@ -78,7 +99,7 @@ export default function MappingPage() {
   }
   function save() {
     const steps = finalSteps.map((s, i) => ({ ...s, order: i + 1, review: "ok" as const, correction: undefined }));
-    persist({ ...wf, map: { ...map, steps, published: true, confirmed: true } });
+    persist({ ...wf, map: { ...map, steps, published: true, confirmed: true } }, true);
     setDraft(null);
     setEditing(null);
     setView("final");
@@ -94,6 +115,10 @@ export default function MappingPage() {
     [map.steps.length - checked, "Still to check", "text-[#7a5a00]"],
   ];
 
+  if (loading) {
+    return <div className="grid min-h-full place-items-center bg-[#f6f8fc] text-[15px] text-[#667085]">Loading the workflow from the database…</div>;
+  }
+
   return (
     <div className="min-h-full bg-[#f6f8fc]">
       <section className="relative overflow-hidden border-b border-line bg-[linear-gradient(180deg,#f3f2ff_0%,#ffffff_100%)]">
@@ -104,7 +129,7 @@ export default function MappingPage() {
             <span className="ml-auto text-[#667085]">Workflow</span>
             <select value={wf.id} onChange={(e) => switchTo(e.target.value)} className="h-9 max-w-xs rounded-sm border border-[#9aa0a6] bg-white px-2 text-[14px] focus:border-indigo focus:outline-none">
               {library.map((w) => (
-                <option key={w.id} value={w.id}>{w.name}{w.map.published ? "" : " · on hold"}</option>
+                <option key={w.id} value={w.id}>{w.name}{w.published ? "" : " · on hold"}</option>
               ))}
               <option value={EXAMPLE_ID}>{exampleWorkflow().name}</option>
             </select>
@@ -116,6 +141,11 @@ export default function MappingPage() {
                 <span className={`rounded-full px-2.5 py-1 text-[12.5px] font-medium ${approved ? "bg-ok-soft text-ok" : "bg-warn-soft text-[#7a5a00]"}`}>
                   {approved ? "● Saved · Torchbearer trained, all set" : "● On hold · waiting for Paul's approval"}
                 </span>
+                {!isExample && (
+                  <span className={`text-[12.5px] ${saveState === "error" ? "text-err" : "text-[#667085]"}`}>
+                    {saveState === "saving" ? "Saving to the database…" : saveState === "error" ? "Couldn't save to the database, retrying on your next change" : "✓ Saved in the database"}
+                  </span>
+                )}
               </div>
               <h1 className="mt-4 text-[36px] font-light leading-[1.1] tracking-tight text-[#1f2d3d] md:text-[42px]">{wf.name}</h1>
               <p className="mt-2 max-w-2xl text-[16px] leading-relaxed text-[#475467]">

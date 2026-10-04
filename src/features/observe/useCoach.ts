@@ -5,7 +5,7 @@
 // Anything that might differ goes to the supervisor's review list, never "you're wrong".
 // Must be used inside <ConversationProvider>.
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { elapsed, resetSession } from "@/lib/events";
 import { loadMastery, loadReviews, saveMastery, saveReviews } from "@/lib/session";
 import { useVoiceAgent } from "@/lib/useVoiceAgent";
@@ -30,8 +30,14 @@ export function useCoach(map: WorkMap, workflowId: string) {
   // Learned / relearn per step: this session, and what was saved from earlier sessions.
   const [mastery, setMastery] = useState<Record<string, StepMastery>>({});
   const [sessions, setSessions] = useState(0); // bumps on start/stop so saved progress is re-read
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  const previous = useMemo(() => loadMastery(workflowId, LEARNER), [workflowId, sessions]);
+  const [previous, setPrevious] = useState<Record<string, StepMastery>>({});
+  useEffect(() => {
+    let live = true;
+    loadMastery(workflowId, LEARNER).then((m) => live && setPrevious(m));
+    return () => {
+      live = false;
+    };
+  }, [workflowId, sessions]);
   const [error, setError] = useState<string | null>(null);
 
   const live = useRef({ agent, done, flagged, reviews });
@@ -43,6 +49,7 @@ export function useCoach(map: WorkMap, workflowId: string) {
   const actions = useRef<{ time: string; text: string }[]>([]);
   const toSay = useRef<string | null>(null);
   const recent = useRef<string[]>([]);
+  const pendingReviews = useRef<ReviewItem[]>([]); // unsubmitted items from earlier sessions
   const masteryRef = useRef<Record<string, StepMastery>>({});
 
   function mark(stepId: string, value: StepMastery) {
@@ -97,7 +104,7 @@ export function useCoach(map: WorkMap, workflowId: string) {
         if (data.stepId) mark(data.stepId, "relearn");
         const next = [...l.reviews, item];
         setReviews(next);
-        saveReviews({ learner: LEARNER, items: next, submitted: false });
+        saveReviews({ learner: LEARNER, items: [...pendingReviews.current, ...next], submitted: false });
         if (data.stepId && !l.flagged.includes(data.stepId)) setFlagged((x) => [...x, data.stepId]);
       }
       if (data.message && (data.verdict === "match" || data.verdict === "different")) {
@@ -142,8 +149,10 @@ export function useCoach(map: WorkMap, workflowId: string) {
     setMastery({});
     setSessions((n) => n + 1);
     recent.current = [];
-    const prev = loadReviews();
-    if (prev && !prev.submitted) saveReviews({ learner: LEARNER, items: [], submitted: false });
+    // Keep anything the supervisor hasn't reviewed yet; a submitted batch starts fresh.
+    loadReviews().then((prev) => {
+      pendingReviews.current = prev && !prev.submitted ? prev.items : [];
+    });
     try {
       await watcher.current.start((f) => onFrame(f), () => setSharing(false));
       setSharing(true);

@@ -1,6 +1,7 @@
 // localStorage persistence for the captured session and the generated Work Map.
 import { sampleWorkMap, capturedSessionEnabled } from "@/data/sampleWorkMap";
-import type { ReviewItem, ScreenEvent, StepMastery, TranscriptLine, WorkMap, WorkflowRecord } from "./types";
+import type { ReviewBatch, ScreenEvent, StepMastery, TranscriptLine, WorkMap, WorkflowRecord, WorkflowSummary } from "./types";
+export type { ReviewBatch } from "./types";
 
 const SESSION_KEY = "apprentice.session";
 const WORKMAP_KEY = "apprentice.workmap";
@@ -73,20 +74,13 @@ export function loadTeachingMap(): WorkMap {
   return capturedSessionEnabled && map?.published ? map : sampleWorkMap;
 }
 
-// ---------- Teaching → supervisor review ----------
-const REVIEW_KEY = "apprentice.reviews";
-export interface ReviewBatch {
-  learner: string;
-  items: ReviewItem[];
-  submitted: boolean;
-}
-export const loadReviews = () => read<ReviewBatch>(REVIEW_KEY);
-export const saveReviews = (b: ReviewBatch) => write(REVIEW_KEY, b);
+// ---------- Database (server: private Vercel Blob store, see src/lib/db.ts) ----------
+// Trained workflows, learner progress and supervisor reviews live in the database, so every
+// device sees the same trained Torchbearer. These helpers call the app's own /api routes.
 
-// ---------- Workflow library: every recording, saved under its name ----------
-const LIB_KEY = "torchbearer.workflows";
+const json = { "Content-Type": "application/json" };
 
-/** The prepared example: always available, already approved. */
+/** The prepared example: always available, already approved (not stored in the database). */
 export const EXAMPLE_ID = "example";
 export const exampleWorkflow = (): WorkflowRecord => ({
   id: EXAMPLE_ID,
@@ -94,27 +88,74 @@ export const exampleWorkflow = (): WorkflowRecord => ({
   createdAt: "2026-10-03T09:00:00Z",
   map: { ...sampleWorkMap, published: true },
 });
+export const exampleSummary = (): WorkflowSummary => {
+  const w = exampleWorkflow();
+  return { id: w.id, name: w.name, createdAt: w.createdAt, published: true, stepCount: w.map.steps.length };
+};
 
-export const listWorkflows = (): WorkflowRecord[] => read<WorkflowRecord[]>(LIB_KEY) ?? [];
-export const getWorkflow = (id: string | null | undefined): WorkflowRecord | null =>
-  id === EXAMPLE_ID ? exampleWorkflow() : listWorkflows().find((w) => w.id === id) ?? null;
-
-export function saveWorkflow(record: WorkflowRecord) {
-  if (record.id === EXAMPLE_ID) return;
-  const others = listWorkflows().filter((w) => w.id !== record.id);
-  if (write(LIB_KEY, [record, ...others])) return;
-  // Storage full: keep this workflow's screenshots, drop the older ones', and retry.
-  const slim = others.map((w) => ({ ...w, map: { ...w.map, steps: w.map.steps.map((s) => ({ ...s, screenshot: undefined })) } }));
-  write(LIB_KEY, [record, ...slim]);
+export async function listWorkflows(): Promise<WorkflowSummary[]> {
+  try {
+    const r = await fetch("/api/workflows", { cache: "no-store" });
+    return r.ok ? await r.json() : [];
+  } catch {
+    return [];
+  }
 }
 
-export function deleteWorkflow(id: string) {
-  write(LIB_KEY, listWorkflows().filter((w) => w.id !== id));
+export async function getWorkflow(id: string | null | undefined): Promise<WorkflowRecord | null> {
+  if (!id) return null;
+  if (id === EXAMPLE_ID) return exampleWorkflow();
+  try {
+    const r = await fetch(`/api/workflows/${encodeURIComponent(id)}`, { cache: "no-store" });
+    return r.ok ? await r.json() : null;
+  } catch {
+    return null;
+  }
 }
 
-// ---------- Teaching: learned / relearn per step, per workflow and learner ----------
-const progressKey = (workflowId: string, learner: string) => `torchbearer.progress.${workflowId}.${learner}`;
-export const loadMastery = (workflowId: string, learner: string) => read<Record<string, StepMastery>>(progressKey(workflowId, learner)) ?? {};
-export function saveMastery(workflowId: string, learner: string, mastery: Record<string, StepMastery>) {
-  write(progressKey(workflowId, learner), { ...loadMastery(workflowId, learner), ...mastery });
+export async function saveWorkflow(record: WorkflowRecord): Promise<boolean> {
+  if (record.id === EXAMPLE_ID) return true;
+  try {
+    const r = await fetch(`/api/workflows/${encodeURIComponent(record.id)}`, { method: "PUT", headers: json, body: JSON.stringify(record) });
+    return r.ok;
+  } catch {
+    return false;
+  }
+}
+
+const progressUrl = (workflowId: string, learner: string) =>
+  `/api/progress?workflow=${encodeURIComponent(workflowId)}&learner=${encodeURIComponent(learner)}`;
+
+export async function loadMastery(workflowId: string, learner: string): Promise<Record<string, StepMastery>> {
+  try {
+    const r = await fetch(progressUrl(workflowId, learner), { cache: "no-store" });
+    return r.ok ? await r.json() : {};
+  } catch {
+    return {};
+  }
+}
+
+export async function saveMastery(workflowId: string, learner: string, patch: Record<string, StepMastery>) {
+  try {
+    await fetch(progressUrl(workflowId, learner), { method: "PUT", headers: json, body: JSON.stringify(patch) });
+  } catch {
+    /* best effort */
+  }
+}
+
+export async function loadReviews(): Promise<ReviewBatch | null> {
+  try {
+    const r = await fetch("/api/reviews", { cache: "no-store" });
+    return r.ok ? await r.json() : null;
+  } catch {
+    return null;
+  }
+}
+
+export async function saveReviews(batch: ReviewBatch) {
+  try {
+    await fetch("/api/reviews", { method: "PUT", headers: json, body: JSON.stringify(batch) });
+  } catch {
+    /* best effort */
+  }
 }

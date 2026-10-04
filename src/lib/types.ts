@@ -106,6 +106,22 @@ export interface WorkflowRecord {
   map: WorkMap;
 }
 
+/** What the workflow list shows (the full record is loaded on demand). */
+export interface WorkflowSummary {
+  id: string;
+  name: string;
+  createdAt: string;
+  published: boolean;
+  stepCount: number;
+}
+
+/** The supervisor's review batch for one learner. */
+export interface ReviewBatch {
+  learner: string;
+  items: ReviewItem[];
+  submitted: boolean;
+}
+
 /** Teaching: per step, has the new hire learned it or do they need to relearn it. */
 export type StepMastery = "learned" | "relearn";
 

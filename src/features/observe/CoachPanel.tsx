@@ -7,7 +7,7 @@ import Link from "next/link";
 import { ListeningBars } from "@/features/apprentice/Popup";
 import { BotFace } from "./Launcher";
 import MicMeter from "./MicMeter";
-import type { StepMastery, WorkflowRecord } from "@/lib/types";
+import type { StepMastery, WorkflowRecord, WorkflowSummary } from "@/lib/types";
 import type { Coach, CoachStatus } from "./useCoach";
 
 const STATUS: Record<CoachStatus, string> = {
@@ -23,7 +23,7 @@ const btnPrimary = "h-9 rounded-sm bg-indigo px-3 text-[14px] text-white hover:b
 
 interface Props {
   c: Coach;
-  workflows: WorkflowRecord[];
+  workflows: WorkflowSummary[];
   selected: WorkflowRecord | null;
   onSelect: (id: string | null) => void;
 }
@@ -49,7 +49,7 @@ export default function CoachPanel({ c, workflows, selected, onSelect }: Props) 
           <p className="text-[16px] leading-snug">Hi Maya! Which workflow do you want to practise?</p>
           <ul className="mt-3 space-y-2">
             {workflows.map((w) => {
-              const ready = !!w.map.published;
+              const ready = w.published;
               return (
                 <li key={w.id}>
                   <button
@@ -59,7 +59,7 @@ export default function CoachPanel({ c, workflows, selected, onSelect }: Props) 
                   >
                     <div className="text-[15px] font-medium">{w.name}</div>
                     <div className="text-[12.5px] text-[#667085]">
-                      {w.map.steps.length} steps · {ready ? "approved by Paul" : "on hold, waiting for Paul's approval"}
+                      {w.stepCount} steps · {ready ? "approved by Paul" : "on hold, waiting for Paul's approval"}
                     </div>
                   </button>
                 </li>

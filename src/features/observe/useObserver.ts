@@ -190,7 +190,7 @@ export function useObserver(onWorkMapReady: (workflowId: string) => void) {
   }
 
   /** Stop recording and hand everything the AI observed to Mapping, on hold until the expert approves. */
-  function sendToMapping() {
+  async function sendToMapping() {
     setPhase("building");
     agent.endSession();
     watcher.current.stop();
@@ -208,12 +208,17 @@ export function useObserver(onWorkMapReady: (workflowId: string) => void) {
     }));
     const offRecordRanges = offRanges.current.map((r) => ({ from: r.from, to: r.to || elapsed() }));
     const id = `wf_${Date.now().toString(36)}`;
-    saveWorkflow({
+    const saved = await saveWorkflow({
       id,
       name: workflowName.current,
       createdAt: new Date().toISOString(),
       map: { task: workflowName.current, steps, gaps: [], confirmed: qa.length > 0, offRecord: offRecordRanges, published: false },
     });
+    if (!saved) {
+      setError("Couldn't save the workflow to the database. Check the connection and try again.");
+      setPhase("debrief");
+      return;
+    }
     onWorkMapReady(id);
   }
 

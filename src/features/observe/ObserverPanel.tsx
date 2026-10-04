@@ -17,7 +17,7 @@ const STATUS: Record<ObserverStatus, string> = {
   asking: "Asking…",
   off_record: "Off the record",
   debrief: "Debrief · listening",
-  building: "Opening Mapping…",
+  building: "Saving the workflow…",
 };
 
 const btnOutline = "h-9 rounded-sm border border-indigo bg-white px-3 text-[14px] text-indigo hover:bg-indigo-soft disabled:opacity-50";
@@ -140,7 +140,7 @@ export default function ObserverPanel({ o, onStart }: { o: Observer; onStart?: (
           </>
         ) : (
           <button className={`${btnPrimary} flex-1`} onClick={o.sendToMapping} disabled={o.phase === "building"}>
-            {o.phase === "building" ? "Opening Mapping…" : "Send to Mapping →"}
+            {o.phase === "building" ? "Saving to the database…" : "Send to Mapping →"}
           </button>
         )}
       </div>
