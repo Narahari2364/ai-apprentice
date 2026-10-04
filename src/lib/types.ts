@@ -62,6 +62,7 @@ export interface WorkMapStep {
   id: string;
   order: number;
   title: string;
+  short?: string; // 2–4 word label for the Work Map timeline
   time: string; // screen moment, "mm:ss"
   screenshot?: string; // data URL or /public path
   docId?: string; // Ledgerline document for this step; /map opens it via open_document
@@ -85,7 +86,7 @@ export type RuleKey = "approval" | "delivery_docs";
 export interface GuardrailResult {
   ok: boolean;
   applicable: RuleKey[]; // rules that applied to this expense (for Teach progress)
-  violations: { key: RuleKey; stepId: string; rule: string; explanation: string; fields: string[] }[];
+  violations: { key: RuleKey; stepId: string; rule: string; explanation: string; fields: string[]; missing: string }[];
 }
 
 // ---------- Legacy: old invoice mock ERP (src/features/erp/MockErp.tsx), no longer used ----------

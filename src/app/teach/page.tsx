@@ -35,10 +35,11 @@ export default function TeachPage() {
                 cmd: "save_decision",
                 request_id: e.request_id as string,
                 allow: false,
-                title: "Paul would stop here.",
-                message: result.violations.map((v) => `${v.rule} ${v.explanation}`).join(" "),
+                // Soft banner: the tutor asks a hint question first instead of revealing the rule.
+                title: "Save is paused.",
+                message: "Your tutor has a question about this expense.",
                 fields: [...new Set(result.violations.flatMap((v) => v.fields))],
-                note: result.violations[0].explanation,
+                note: result.violations.map((v) => v.missing).join(" · "),
               },
         );
       }),

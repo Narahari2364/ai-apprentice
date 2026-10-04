@@ -16,6 +16,7 @@ import { useVoiceAgent } from "@/lib/useVoiceAgent";
 import { sampleWorkMap } from "@/data/sampleWorkMap";
 import type { ScreenEvent } from "@/lib/types";
 import Popup, { ListeningBars } from "@/features/apprentice/Popup";
+import Dialog, { btnIndigo, btnIndigoOutline } from "@/features/apprentice/Dialog";
 import StartCard from "@/features/apprentice/StartCard";
 import { registerAgent, sendToAgent, STATE_LABEL, type AgentUiState } from "./agent";
 import { setCapturePaused, snapshot, startScreenCapture, stopScreenCapture } from "./screenCapture";
@@ -70,6 +71,7 @@ function Interviewer({ stage, setStage }: Props) {
   const offRecordEvents = useRef(new Set<ScreenEvent>());
   const shots = useRef<Record<string, string>>({});
   const offRanges = useRef<{ from: string; to: string }[]>([]);
+  const [debriefFrom, setDebriefFrom] = useState(0); // transcript index where the debrief starts
 
   useEffect(() => {
     agentRef.current = agent;
@@ -213,6 +215,7 @@ function Interviewer({ stage, setStage }: Props) {
 
   function endTask() {
     setPhase("debrief");
+    setDebriefFrom(agent.transcript.length);
     sendCommand({ cmd: "clear_highlight" });
     sendToAgent(
       `[DEBRIEF] Paul is done with the task (${task}). Everything that happened on screen:\n${recordedEvents()
@@ -290,7 +293,6 @@ function Interviewer({ stage, setStage }: Props) {
     : "listening";
 
   const lastAgent = [...agent.transcript].reverse().find((t) => t.speaker === "agent");
-  const review = phase !== "task";
   // Folds to a small bar while Paul works; opens while the agent speaks and keeps its
   // question visible until Paul answers or does the next thing on screen.
   const lastEvent = seenEvents[seenEvents.length - 1];
@@ -298,11 +300,128 @@ function Interviewer({ stage, setStage }: Props) {
   const autoFold = phase === "task" && agent.connected && !agent.isSpeaking && !questionShowing && !offRecord && !buildError && !agent.error;
   const statusLabel = ui === "listening" || ui === "debrief" ? "Listening…" : STATE_LABEL[ui];
 
+  // ---------- Review mode: debrief questions, then the teach-back ----------
+  if (phase !== "task") {
+    const lines = agent.transcript.slice(debriefFrom);
+    const tbIndex = lines.findIndex((l) => l.speaker === "agent" && /^so[:,]|did i get that right/i.test(l.text));
+    const qa: { q: string; a?: string }[] = [];
+    (tbIndex >= 0 ? lines.slice(0, tbIndex) : lines).forEach((l) => {
+      if (l.speaker === "agent" && l.text.includes("?")) qa.push({ q: l.text });
+      else if (l.speaker === "expert" && qa.length && !qa[qa.length - 1].a) qa[qa.length - 1].a = l.text;
+    });
+    const answered = qa.filter((x) => x.a).length;
+    const teachBack = tbIndex >= 0 ? lines[tbIndex].text : null;
+    const reply = tbIndex >= 0 ? lines.slice(tbIndex + 1).filter((l) => l.speaker === "expert").pop() : undefined;
+    const sentences = teachBack
+      ? teachBack.replace(/^so[:,]\s*/i, "").split(/(?<=[.!])\s+/).filter((x) => x && !/did i get that right/i.test(x))
+      : [];
+    const errorBox = buildError && (
+      <div className="mx-5 mb-4 border-l-4 border-warn bg-warn-soft px-3 py-2 text-[14px]">
+        <b>Couldn&apos;t build the Work Map.</b> {buildError}
+        <div className="mt-2 flex gap-2">
+          <button className={btnIndigoOutline} onClick={buildMap}>Try again</button>
+          <button className={btnIndigo} onClick={loadPreparedMap}>Use prepared Work Map</button>
+        </div>
+      </div>
+    );
+
+    if (phase === "building") {
+      return (
+        <Dialog title="Work Map" subtitle="Writing up what I learned" modeLabel="REVIEW MODE" width={560}>
+          <p className="flex items-center gap-3 px-5 py-6 text-[16px]"><ListeningBars active /> Merging your answers, the screen moments and the teach-back…</p>
+        </Dialog>
+      );
+    }
+
+    if (teachBack) {
+      return (
+        <Dialog
+          title="Teach-back"
+          subtitle="Here's how I understand it"
+          modeLabel="REVIEW MODE"
+          footer={
+            <>
+              <span className="flex-1 text-[13px] text-muted">Explained back in under a minute</span>
+              <button className={btnIndigoOutline} disabled={!agent.connected} onClick={() => sendToAgent("[CORRECT] Paul wants to correct a step.", { respond: true })}>
+                Correct a step
+              </button>
+              <button
+                className={btnIndigo}
+                onClick={() => {
+                  sendToAgent("[SCREEN] Paul confirmed the teach-back: yes, that's how it works.");
+                  buildMap();
+                }}
+              >
+                Yes, that&apos;s how it works
+              </button>
+            </>
+          }
+        >
+          <ol className="list-decimal space-y-1.5 px-5 pb-2 pl-10 pt-4 text-[16px] leading-snug">
+            {sentences.map((x) => <li key={x}>{x}</li>)}
+          </ol>
+          <p className="px-5 pb-3 text-[16px]">Did I get that right?</p>
+          {reply && (
+            <div className="border-y border-line bg-panel-2 px-5 py-2 text-right text-[14.5px]">
+              <b className="text-[#0f766e]">Paul</b> “{reply.text}”
+            </div>
+          )}
+          {errorBox}
+        </Dialog>
+      );
+    }
+
+    return (
+      <Dialog
+        title="Debrief"
+        subtitle="A few questions before I write this up"
+        modeLabel="REVIEW MODE"
+        footer={
+          <>
+            <span className="flex flex-1 items-center gap-2 text-[14px] text-indigo">
+              {agent.connected ? <><ListeningBars active /> {agent.isSpeaking ? "Asking…" : "Listening…"}</> : "Voice not connected"}
+            </span>
+            {agent.connected ? (
+              <>
+                <button className={btnIndigoOutline} onClick={toggleOffRecord}>{offRecord ? "Back on record" : "Off the record"}</button>
+                <button className={btnIndigoOutline} onClick={() => sendToAgent("[SKIP] Paul wants to skip this question.", { respond: true })}>Skip question</button>
+              </>
+            ) : (
+              <button className={btnIndigo} onClick={buildMap}>Build Work Map</button>
+            )}
+          </>
+        }
+      >
+        <div className="border-b border-line px-5 pb-2 pt-3">
+          <div className="flex text-[14.5px]">
+            <span>Things I couldn&apos;t tell from your screen</span>
+            <span className="ml-auto">{answered} answered</span>
+          </div>
+          <div className="mt-1.5 h-1.5 bg-[#e5e7eb]">
+            <div className="h-full bg-indigo transition-all" style={{ width: `${qa.length ? (answered / qa.length) * 100 : 0}%` }} />
+          </div>
+        </div>
+        {qa.length === 0 && <p className="px-5 py-5 text-[15px] text-[#444]">{agent.connected ? "Starting the debrief…" : "Voice isn't connected. You can still build the Work Map from the screen events."}</p>}
+        {qa.map((x, i) => (
+          <div key={i} className={`flex gap-3 border-b border-[#eee] px-5 py-3 ${x.a ? "" : "bg-indigo-soft"}`}>
+            <span className={`mt-0.5 grid h-6 w-6 flex-none place-items-center rounded-full text-[12px] font-bold text-white ${x.a ? "bg-ok" : "bg-indigo"}`}>{i + 1}</span>
+            <div className="flex-1 text-[16px] leading-snug">
+              {x.q}
+              {x.a && <div className="mt-0.5 text-[14.5px] text-[#0f766e]">Paul: “{x.a}”</div>}
+            </div>
+            <span className="text-[13px] text-muted">{x.a ? "✓ answered" : "asking now…"}</span>
+          </div>
+        ))}
+        {errorBox}
+      </Dialog>
+    );
+  }
+
   return (
     <Popup
       title="Apprentice"
-      subtitle={review ? `Review mode · checking what it learned from ${EXPERT}` : `Learning from ${EXPERT}`}
-      modeLabel={review ? "REVIEW" : "LEARNING MODE"}
+      subtitle={`Learning from ${EXPERT}`}
+      modeLabel="LEARNING MODE"
       initial={{ left: 24, bottom: 120 }}
       width={420}
       foldable
@@ -349,7 +468,7 @@ function Interviewer({ stage, setStage }: Props) {
           {(ui === "listening" || ui === "debrief") && <ListeningBars active />}
           <span className="truncate">{statusLabel}</span>
         </span>
-        {phase === "task" && (
+        {agent.connected && (
           <>
             <button
               onClick={toggleOffRecord}
@@ -363,7 +482,7 @@ function Interviewer({ stage, setStage }: Props) {
             </button>
           </>
         )}
-        {(phase === "debrief" || (!agent.connected && phase === "task" && seenEvents.length > 0 && !starting)) && (
+        {!agent.connected && seenEvents.length > 0 && !starting && (
           // Also offered without a live agent (e.g. voice credits ran out): events alone still build a map.
           <button onClick={buildMap} className="h-9 rounded-sm bg-indigo px-3 text-[14px] text-white hover:bg-indigo-dark">
             Build Work Map

@@ -1,12 +1,12 @@
 "use client";
-// Work Map: clickable step cards. Selecting a step opens its document inside
-// Ledgerline (open_document command) next to the map.
+// Work Map (Review mode → Publish to tutor), following the Review-mode design.
+// Replay opens the step's document inside Ledgerline (open_document command).
 
-import { useRef, useState, useSyncExternalStore } from "react";
+import { useState, useSyncExternalStore } from "react";
 import Link from "next/link";
 import WorkMapView from "@/features/workmap/WorkMapView";
+import ExportDialog from "@/features/workmap/ExportDialog";
 import LedgerlineFrame from "@/features/erp/LedgerlineFrame";
-import { downloadText, toAgentMarkdown } from "@/features/workmap/exportAgent";
 import { sampleWorkMap } from "@/data/sampleWorkMap";
 import { sendCommand } from "@/lib/ledgerline";
 import type { WorkMap, WorkMapStep } from "@/lib/types";
@@ -23,96 +23,94 @@ const readRaw = () => {
 export default function MapPage() {
   const raw = useSyncExternalStore(() => () => {}, readRaw, () => null);
   const map: WorkMap = raw ? JSON.parse(raw) : sampleWorkMap;
-  const [selected, setSelected] = useState<WorkMapStep | null>(null);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [replay, setReplay] = useState<WorkMapStep | null>(null);
+  const [exporting, setExporting] = useState(false);
   const [justPublished, setJustPublished] = useState(false);
   const published = !raw || map.published || justPublished; // the prepared sample counts as published
+  const selected = map.steps.find((s) => s.id === selectedId) ?? map.steps.find((s) => s.decision) ?? map.steps[0];
 
   function publish() {
     localStorage.setItem(KEY, JSON.stringify({ ...map, published: true }));
     setJustPublished(true);
   }
-  const ready = useRef(false);
-
-  function select(step: WorkMapStep) {
-    const next = selected?.id === step.id ? null : step;
-    if (!next?.docId) ready.current = false; // the Ledgerline pane closes
-    setSelected(next);
-    if (!next) return;
-    if (step.docId && ready.current) sendCommand({ cmd: "open_document", doc_id: step.docId });
-  }
 
   return (
-    <div className={`grid h-full ${selected?.docId ? "grid-cols-[minmax(0,1fr)_minmax(0,1fr)]" : "grid-cols-1"}`}>
-      <div className="min-h-0 overflow-y-auto bg-panel">
-        <div className="mx-auto flex max-w-5xl flex-col gap-3 p-6">
-          <div className="flex items-center text-[13px] text-[#444]">
-            <span>{raw ? "Work Map from the last capture session" : "Sample Work Map (no session captured yet)"}</span>
-            <span className="ml-3 text-muted">· personal data redacted</span>
+    <div className="min-h-full bg-panel">
+      <div className="mx-auto flex max-w-7xl flex-col gap-3 p-5">
+        <div className="flex items-center text-[13px] text-[#444]">
+          <span>{raw ? "Learned in the last capture session" : "Prepared Work Map (no session captured yet)"} · personal data redacted</span>
+          {raw && (
             <button
-              className="btn ml-auto h-8 text-[13px]"
-              onClick={() => downloadText("work-map-agent.md", toAgentMarkdown(map))}
-              title="Instructions an AI agent can load: same steps, stops where Paul would"
+              className="ml-auto text-brand hover:underline"
+              onClick={() => {
+                localStorage.removeItem(KEY);
+                location.reload();
+              }}
             >
-              Export for agents
+              Reset to sample
             </button>
-            <button
-              className="btn ml-2 h-8 text-[13px]"
-              onClick={() => downloadText("work-map.json", JSON.stringify({ ...map, steps: map.steps.map((s) => ({ ...s, screenshot: undefined })) }, null, 2), "application/json")}
-            >
-              JSON
+          )}
+        </div>
+
+        {/* header bar */}
+        <div className="flex flex-wrap items-center gap-4 bg-indigo px-5 py-3 text-white">
+          <svg width="26" height="24" viewBox="0 0 18 16" aria-hidden="true">
+            <path d="M1.5 1.5h15v10H6L1.5 15z" fill="#fff" />
+            <path d="M5 5h8M5 8h5" stroke="#5146d9" strokeWidth="1.4" />
+          </svg>
+          <div className="min-w-0 leading-tight">
+            <div className="text-[21px] font-medium">Work Map · Meal expense report</div>
+            <div className="text-[13.5px] opacity-90">
+              Learned from Paul Adler · {map.confirmed ? "confirmed in the teach-back" : "teach-back not confirmed yet"}
+            </div>
+          </div>
+          <span className="rounded-sm border border-white/70 px-2 py-0.5 text-[12px] font-bold tracking-wide">
+            {published ? "PUBLISHED" : "REVIEW MODE"}
+          </span>
+          <div className="ml-auto flex gap-2">
+            <button className="h-10 rounded-sm bg-white px-4 text-[15px] text-indigo hover:bg-indigo-soft" onClick={() => setExporting(true)}>
+              Export for AI agents ↓
             </button>
-            {raw && (
-              <button
-                className="ml-4 text-brand hover:underline"
-                onClick={() => {
-                  localStorage.removeItem(KEY);
-                  location.reload();
-                }}
-              >
-                Reset to sample
+            {published ? (
+              <Link href="/teach" className="flex h-10 items-center rounded-sm bg-white px-4 text-[15px] text-indigo hover:bg-indigo-soft">
+                Open Teaching mode →
+              </Link>
+            ) : (
+              <button className="h-10 rounded-sm bg-white px-4 text-[15px] font-medium text-indigo hover:bg-indigo-soft" onClick={publish}>
+                Publish to tutor
               </button>
             )}
           </div>
-          {raw && !published ? (
-            <div className="flex items-center gap-4 border-l-[5px] border-indigo bg-white px-4 py-3 shadow-sm">
-              <div className="flex-1 text-[14.5px]">
-                <b>Review mode.</b> Check what the Apprentice learned from Paul. Nobody else sees it until he approves.
-              </div>
-              <button className="h-10 rounded-sm bg-indigo px-4 text-[15px] text-white hover:bg-indigo-dark" onClick={publish}>
-                Approve &amp; publish
-              </button>
-            </div>
-          ) : (
-            <div className="flex items-center gap-4 border-l-[5px] border-ok bg-white px-4 py-3 shadow-sm">
-              <div className="flex-1 text-[14.5px]">
-                <b>{raw ? "Published." : "Prepared Work Map."}</b> Teaching mode coaches new hires with this map.
-              </div>
-              <Link href="/teach" className="flex h-10 items-center rounded-sm bg-brand px-4 text-[15px] text-white hover:bg-brand-dark">
-                Open Teaching mode →
-              </Link>
-            </div>
-          )}
-          <WorkMapView map={map} selectedId={selected?.id ?? null} onSelect={select} />
         </div>
+        {raw && !published && (
+          <p className="text-[13.5px] text-[#444]">Review mode: nobody else sees this until Paul publishes it to the tutor.</p>
+        )}
+
+        {selected && <WorkMapView map={map} selected={selected} onSelect={(s) => setSelectedId(s.id)} onReplay={setReplay} />}
       </div>
-      {selected?.docId && (
-        <div className="flex min-h-0 flex-col border-l border-line">
-          <div className="flex h-10 flex-none items-center gap-2 border-b border-line bg-panel-2 px-4 text-[13px]">
-            <b>Step {selected.order}</b> · document in Ledgerline
-            <button className="ml-auto text-brand hover:underline" onClick={() => {
-                ready.current = false;
-                setSelected(null);
-              }}>Close</button>
-          </div>
-          <div className="min-h-0 flex-1">
-            <LedgerlineFrame
-              query="user=paul"
-              mode="view"
-              onReady={() => {
-                ready.current = true;
-                if (selected.docId) sendCommand({ cmd: "open_document", doc_id: selected.docId });
-              }}
-            />
+
+      {exporting && <ExportDialog map={map} onClose={() => setExporting(false)} />}
+
+      {replay && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-[rgba(20,28,38,.45)] p-6">
+          <div className="flex h-[86vh] w-full max-w-6xl flex-col bg-white shadow-[0_10px_40px_rgba(0,0,0,.3)]">
+            <div className="flex items-center gap-3 bg-indigo px-5 py-2.5 text-white">
+              <span className="text-[17px] font-medium">Paul&apos;s screen moment · step {replay.order} · {replay.time}</span>
+              <button className="ml-auto px-1 text-[24px] leading-none" aria-label="Close" onClick={() => setReplay(null)}>×</button>
+            </div>
+            <div className="min-h-0 flex-1">
+              {replay.docId ? (
+                <LedgerlineFrame
+                  query="user=paul"
+                  mode="view"
+                  onReady={() => replay.docId && sendCommand({ cmd: "open_document", doc_id: replay.docId })}
+                />
+              ) : (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={replay.screenshot} alt={`Paul's screen at ${replay.time}`} className="h-full w-full object-contain" />
+              )}
+            </div>
           </div>
         </div>
       )}

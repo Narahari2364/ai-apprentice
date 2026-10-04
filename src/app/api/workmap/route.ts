@@ -12,7 +12,8 @@ Return JSON only, exactly this shape:
   "task": string,                       // one line, what the expert was doing
   "steps": [{
     "id": "s1", "order": 1,
-    "title": string,                    // short imperative, e.g. "Set Type of Meal from the receipt"
+    "title": string,                    // short imperative, e.g. "Attach supervisor approval when over 30 a person"
+    "short": string,                    // 2–4 word timeline label, e.g. "Approval over 30"
     "time": "mm:ss",                    // the screen event time this step links to
     "decision": string,                 // "" for routine steps; for judgment calls what was decided, e.g. "Changed Type of Meal to Eat In"
     "reason": string,                   // the reason, paraphrased

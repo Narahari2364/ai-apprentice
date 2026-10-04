@@ -1,22 +1,25 @@
 "use client";
-// The Apprentice in teaching mode (/teach): start card → floating popup over Ledgerline.
-// The tutor gets Paul's Work Map on connect, sees every screen event, and is told to
-// step in whenever a save is blocked by a guardrail. Shows progress and the mastery report.
+// The Apprentice in teaching mode (/teach), following the Teaching-mode design:
+// start card → popup with the coaching conversation (Hint / End practice) → when a save
+// is held, the tutor's hint question plus a replay card of Paul's moment (I'll fix it)
+// → "Practice complete" session report.
 
 import { useEffect, useRef, useState } from "react";
-import Link from "next/link";
 import { ConversationProvider } from "@elevenlabs/react";
 import { resetSession, subscribe } from "@/lib/events";
 import { sendCommand } from "@/lib/ledgerline";
 import { loadTeachingMap } from "@/lib/session";
 import { useVoiceAgent } from "@/lib/useVoiceAgent";
 import { redact } from "@/lib/redact";
-import type { GuardrailResult, RuleKey } from "@/lib/types";
+import type { GuardrailResult } from "@/lib/types";
 import Popup, { ListeningBars } from "@/features/apprentice/Popup";
 import StartCard from "@/features/apprentice/StartCard";
-import { masteryReport, RULE_LABEL, type RuleStatus, type TeachProgress } from "./progress";
+import Dialog, { btnIndigo, btnIndigoOutline } from "@/features/apprentice/Dialog";
+import { sessionReport, type RowStatus, type TeachProgress } from "./progress";
 
 export type TeachStage = "closed" | "intro" | "live";
+
+const NEW_HIRE = "Maya Chen";
 
 interface Props {
   stage: TeachStage;
@@ -34,19 +37,13 @@ export default function TutorPanel(props: Props) {
   );
 }
 
-const RULE_PILL: Record<RuleStatus, [string, string]> = {
-  untested: ["Not met yet", "bg-[#EEF1F4] text-[#444]"],
-  respected: ["Respected", "bg-ok-soft text-ok"],
-  broken: ["Broken", "bg-err-soft text-err"],
-  fixed: ["Fixed", "bg-warn-soft text-[#7a5a00]"],
-};
-
 function Tutor({ stage, setStage, violations, progress, onReset }: Props) {
   const agent = useVoiceAgent("tutor");
-  const [showReplay, setShowReplay] = useState(false);
-  const [showProgress, setShowProgress] = useState(false);
-  const [report, setReport] = useState<ReturnType<typeof masteryReport> | null>(null);
+  const [held, setHeld] = useState(false); // a save is held and the hint/replay card is showing
+  const [finished, setFinished] = useState(false);
+  const [shared, setShared] = useState(false);
   const agentRef = useRef(agent);
+  const chat = useRef<HTMLOListElement>(null);
   const map = loadTeachingMap();
   const step = violations.length ? map.steps.find((s) => s.id === violations[0].stepId) : undefined;
 
@@ -55,15 +52,20 @@ function Tutor({ stage, setStage, violations, progress, onReset }: Props) {
   });
 
   useEffect(() => {
+    chat.current?.scrollTo({ top: chat.current.scrollHeight });
+  }, [agent.transcript.length, held]);
+
+  useEffect(() => {
     if (!agent.connected) return;
     agentRef.current.sendContextualUpdate(`[WORKMAP] ${JSON.stringify(loadTeachingMap())}`);
     return subscribe((e) => {
       if (e.type === "save_blocked") {
-        setShowReplay(false);
+        setHeld(true);
         agentRef.current.sendUserMessage(
-          redact(`[BLOCKED] Maya tried to save but: ${e.description}. A replay of Paul's screen moment is available; offer it. Step in now.`),
+          redact(`[BLOCKED] Maya tried to save but: ${e.description}. A replay of Paul's screen moment is showing next to you. Step in now with a hint question.`),
         );
       } else {
+        if (e.type === "expense_saved") setHeld(false);
         agentRef.current.sendContextualUpdate(redact(`[SCREEN] ${e.time} ${e.description}`));
       }
     });
@@ -73,28 +75,35 @@ function Tutor({ stage, setStage, violations, progress, onReset }: Props) {
     setStage("live");
     resetSession();
     onReset();
-    setReport(null);
+    setFinished(false);
     agent.start();
   }
 
-  function finish() {
-    const r = masteryReport(progress);
-    setReport(r);
+  function hint() {
+    agent.sendUserMessage("[HINT] Maya asks for a hint. Give one short hint question about her next decision, in Paul's terms. Don't give the answer.");
+  }
+
+  function endPractice() {
+    const r = sessionReport(progress);
+    setFinished(true);
+    setShared(false);
     if (agent.connected) {
       agent.sendUserMessage(
-        `[DONE] Maya is finished. Mastered: ${r.mastered.join("; ") || "nothing yet"}. Practise next: ${r.practise.join("; ") || "nothing"}. Give her the short closing now.`,
+        `[DONE] Maya is finished. How it went: ${r.rows.map((x) => `${x.label}: ${x.note}`).join("; ")}. Give her the short closing now.`,
       );
     }
   }
 
-  function replay() {
-    const next = !showReplay;
-    setShowReplay(next);
-    // Show the document Paul looked at in this step, inside Maya's Ledgerline.
-    if (next && step?.docId) sendCommand({ cmd: "open_document", doc_id: step.docId });
-    if (next && step && agent.connected) {
-      agent.sendContextualUpdate(`[SCREEN] Replaying Paul's screen moment ${step.time}: ${step.decision || step.title}.`);
-    }
+  function practiseAnother() {
+    setFinished(false);
+    setHeld(false);
+    onReset();
+    sendCommand({ cmd: "clear_highlight" });
+    if (agent.connected) agent.sendContextualUpdate("[SCREEN] Maya starts another practice case.");
+  }
+
+  function openReplay() {
+    if (step?.docId) sendCommand({ cmd: "open_document", doc_id: step.docId });
   }
 
   if (stage === "closed") return null;
@@ -114,129 +123,114 @@ function Tutor({ stage, setStage, violations, progress, onReset }: Props) {
           "Can replay Paul's screen moment when it helps.",
           "Names and card numbers are hidden automatically.",
         ]}
-        startLabel="Start coaching"
+        startLabel="Start practice"
         onStart={start}
         onClose={() => setStage("closed")}
       />
     );
   }
 
-  const lastTutor = [...agent.transcript].reverse().find((t) => t.speaker === "agent");
-  const status = !agent.connected
-    ? agent.status === "connecting" ? "Connecting…" : "Not started"
-    : agent.isSpeaking ? (violations.length ? "Stepping in" : "Coaching") : "Listening…";
-  const stepsDone = progress.steps.filter((s) => s.done).length;
-  const ruleKeys = Object.keys(progress.rules) as RuleKey[];
-  const respected = ruleKeys.filter((k) => progress.rules[k] === "respected" || progress.rules[k] === "fixed").length;
-
-  return (
-    <Popup
-      title="Apprentice"
-      subtitle="Coaching Maya with Paul's Work Map"
-      modeLabel="TEACHING MODE"
-      initial={{ left: 24, bottom: 110 }}
-      width={430}
-      foldable
-    >
-      {report ? (
-        <div className="grid gap-3 px-4 py-3 text-[14px]">
-          <div className="text-[16px] font-medium">Mastery report</div>
-          <ReportList title="Mastered" tone="text-ok" items={report.mastered} empty="Nothing yet." />
-          <ReportList title="Practise next" tone="text-err" items={report.practise} empty="Nothing. Ready for real cases." />
-          {report.untested.length > 0 && <ReportList title="Not covered by this case" tone="text-muted" items={report.untested} empty="" />}
-          <div className="flex gap-2 pt-1">
-            <button className="h-9 rounded-sm border border-indigo bg-white px-3 text-[14px] text-indigo" onClick={() => setReport(null)}>Back</button>
-            <Link href="/map" className="flex h-9 items-center rounded-sm bg-indigo px-3 text-[14px] text-white">Open Work Map</Link>
+  if (finished) {
+    const r = sessionReport(progress);
+    const closing = [...agent.transcript].reverse().find((t) => t.speaker === "agent");
+    const ICON: Record<RowStatus, [string, string]> = {
+      alone: ["✓", "bg-ok"],
+      done: ["✓", "bg-ok"],
+      hint: ["!", "bg-warn"],
+      open: ["×", "bg-err"],
+    };
+    return (
+      <Dialog
+        title="Practice complete"
+        subtitle={`${NEW_HIRE} · unseen case: 35 delivery dinner`}
+        modeLabel="TEACHING MODE"
+        footer={
+          <>
+            <span className="flex-1 text-[13px] text-muted">{shared ? "Shared with your manager (demo, nothing is sent)." : ""}</span>
+            <button className={btnIndigoOutline} onClick={() => setStage("closed")}>Close</button>
+            <button className={btnIndigoOutline} onClick={() => setShared(true)} disabled={shared}>Send to my manager</button>
+            <button className={btnIndigo} onClick={practiseAnother}>Practice another case</button>
+          </>
+        }
+      >
+        <div className="grid md:grid-cols-2">
+          <div className="border-line p-5 md:border-r">
+            <div className="mb-2 text-[13px] font-bold uppercase tracking-wide text-[#333]">How it went</div>
+            {r.rows.map((row) => (
+              <div key={row.label} className="flex items-start gap-3 border-b border-[#eee] py-2.5 last:border-b-0">
+                <span className={`mt-0.5 grid h-6 w-6 flex-none place-items-center rounded-full text-[13px] font-bold text-white ${ICON[row.status][1]}`}>{ICON[row.status][0]}</span>
+                <div className="flex-1 text-[16px]">
+                  {row.label}
+                  {row.detail && <div className="text-[13.5px] text-[#7a5a00]">{row.detail}</div>}
+                </div>
+                <span className="text-[13px] text-[#444]">{row.note}</span>
+              </div>
+            ))}
+          </div>
+          <div className="p-5">
+            <div className="mb-2 text-[13px] font-bold uppercase tracking-wide text-[#333]">Practice next</div>
+            <div className="rounded-sm border border-[#c9c4f5] bg-indigo-soft px-4 py-3 text-[16px]" dangerouslySetInnerHTML={{ __html: r.practise[0] ?? "Nothing. Ready for real cases." }} />
+            {closing && (
+              <p className="mt-4 text-[15px] leading-snug">
+                <b className="text-indigo">Tutor</b> {closing.text}
+              </p>
+            )}
           </div>
         </div>
-      ) : (
-        <>
-          <div className="px-4 pb-3 pt-3">
-            {lastTutor ? (
-              <div>
-                <div className="text-[13px] text-[#444]">
-                  <b className="text-ink">Tutor</b> <span className="ml-1 font-mono text-muted">{lastTutor.time}</span>
-                </div>
-                <p className="mt-0.5 text-[16px] leading-snug">{lastTutor.text}</p>
-              </div>
-            ) : (
-              <p className="text-[14.5px] text-[#444]">{agent.connected ? "Open the new expense when you're ready." : "Connecting…"}</p>
-            )}
-            {agent.error && <p className="mt-2 border-l-4 border-err bg-err-soft px-3 py-1.5 text-[13px] text-[#8E1B1B]">{agent.error}</p>}
-          </div>
+      </Dialog>
+    );
+  }
 
-          {violations.length > 0 && (
-            <div className="border-y border-[#F0D58A] border-l-[5px] border-l-warn bg-warn-soft px-4 py-2.5 text-[14px]">
-              <div className="mb-1 font-bold">Paul would stop here.</div>
-              {violations.map((v) => (
-                <p key={v.key} className="mb-1.5 leading-snug">
-                  <b>{v.rule}</b> {v.explanation}
-                </p>
-              ))}
-              {step && (
-                <button onClick={replay} className="mt-0.5 h-8 rounded-sm border border-indigo bg-white px-3 text-[13px] text-indigo">
-                  {showReplay ? "Hide" : "▶ Replay"} Paul&apos;s screen moment ({step.time})
-                </button>
-              )}
-              {showReplay && step && (
-                <div className="mt-2 rounded-sm border border-line bg-white p-2">
-                  <div className="mb-1 text-[12.5px] text-muted">
-                    Paul at {step.time}: {step.decision || step.title}
-                    {step.docId && " · his document is open in Ledgerline"}
-                  </div>
-                  {step.screenshot && (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img src={step.screenshot} alt={`Paul's screen at ${step.time}`} className="mb-1 rounded-sm border border-line" />
-                  )}
-                  <p className="italic text-[#444]">“{step.expertQuote}”</p>
-                </div>
-              )}
-            </div>
-          )}
+  const status = !agent.connected ? (agent.status === "connecting" ? "Connecting…" : "Not connected") : agent.isSpeaking ? "Speaking…" : "Listening…";
 
-          <button onClick={() => setShowProgress((p) => !p)} className="flex w-full items-center border-t border-line px-4 py-2 text-left text-[13px] text-[#444] hover:text-indigo">
-            {showProgress ? "▾" : "▸"} Progress
-            <span className="ml-auto">{stepsDone}/{progress.steps.length} steps · {respected}/{ruleKeys.length} rules</span>
-          </button>
-          {showProgress && (
-            <div className="border-t border-line bg-panel px-4 py-2 text-[13.5px]">
-              {progress.steps.map((s) => (
-                <div key={s.label} className="flex items-center gap-2 py-0.5">
-                  <span className={`grid h-4 w-4 place-items-center rounded-sm border text-[11px] ${s.done ? "border-ok bg-ok text-white" : "border-[#bbb] bg-white"}`}>{s.done ? "✓" : ""}</span>
-                  <span className={s.done ? "" : "text-muted"}>{s.label}</span>
-                </div>
-              ))}
-              <div className="mt-1 border-t border-line pt-1">
-                {ruleKeys.map((k) => (
-                  <div key={k} className="flex items-center gap-2 py-0.5">
-                    <span className="flex-1">{RULE_LABEL[k]}</span>
-                    <span className={`pill ${RULE_PILL[progress.rules[k]][1]}`}>{RULE_PILL[progress.rules[k]][0]}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          <div className="flex items-center gap-2 border-t border-line px-4 py-2.5">
-            <span className="flex min-w-0 flex-1 items-center gap-2 text-[14px] text-indigo">
-              {status === "Listening…" && <ListeningBars active />}
-              {status}
-            </span>
-            <button onClick={finish} className="h-9 rounded-sm bg-indigo px-3 text-[14px] text-white hover:bg-indigo-dark">
-              Finish
-            </button>
-          </div>
-        </>
-      )}
-    </Popup>
-  );
-}
-
-function ReportList({ title, tone, items, empty }: { title: string; tone: string; items: string[]; empty: string }) {
   return (
-    <div>
-      <div className={`mb-1 text-[12.5px] font-bold uppercase tracking-wide ${tone}`}>{title}</div>
-      {items.length ? <ul className="list-disc space-y-0.5 pl-5">{items.map((i) => <li key={i}>{i}</li>)}</ul> : <p className="text-muted">{empty}</p>}
-    </div>
+    <Popup title="Apprentice" subtitle={`Coaching ${NEW_HIRE}`} modeLabel="TEACHING MODE" initial={{ left: 24, bottom: 110 }} width={440} foldable>
+      <div className="px-4 pb-2 pt-3">
+        <div className="mb-1 text-[12.5px] text-muted">Practice case · not shown by Paul</div>
+        <ol ref={chat} className="max-h-60 space-y-1.5 overflow-y-auto text-[15px] leading-snug">
+          {agent.transcript.length === 0 && <li className="text-[#444]">{agent.connected ? "Starting…" : "Connecting…"}</li>}
+          {agent.transcript.slice(-8).map((t, i) => (
+            <li key={i}>
+              <b className={t.speaker === "agent" ? "font-medium text-indigo" : "font-medium text-[#c2410c]"}>{t.speaker === "agent" ? "Tutor" : "Maya"}</b> {t.text}
+            </li>
+          ))}
+        </ol>
+        {held && step && (
+          <button onClick={openReplay} className="mt-2 flex w-full items-center gap-3 rounded-sm border border-line bg-panel-2 p-2 text-left hover:border-indigo" title="Open Paul's document in Ledgerline">
+            {step.screenshot ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={step.screenshot} alt="" className="h-16 w-24 flex-none rounded-sm border border-line object-cover" />
+            ) : (
+              <span className="grid h-16 w-24 flex-none place-items-center rounded-sm border border-line bg-white">
+                <span className="h-0 w-0 border-y-[9px] border-l-[14px] border-y-transparent border-l-indigo" />
+              </span>
+            )}
+            <span className="min-w-0 text-[14px] leading-snug">
+              “{step.expertQuote}”
+              <span className="mt-0.5 block text-[12px] text-muted">Paul · {step.time} · replaying</span>
+            </span>
+          </button>
+        )}
+        {agent.error && <p className="mt-2 border-l-4 border-err bg-err-soft px-3 py-1.5 text-[13px] text-[#8E1B1B]">{agent.error}</p>}
+      </div>
+      <div className="flex items-center gap-2 border-t border-line px-4 py-2.5">
+        <span className="flex min-w-0 flex-1 items-center gap-2 text-[14px] text-indigo">
+          {status === "Listening…" && <ListeningBars active />}
+          {status}
+        </span>
+        <button className="h-9 rounded-sm border border-indigo bg-white px-3 text-[14px] text-indigo hover:bg-indigo-soft disabled:opacity-50" onClick={hint} disabled={!agent.connected}>
+          Hint
+        </button>
+        {held ? (
+          <button className="h-9 rounded-sm bg-indigo px-3 text-[14px] text-white hover:bg-indigo-dark" onClick={() => setHeld(false)}>
+            I&apos;ll fix it
+          </button>
+        ) : (
+          <button className="h-9 rounded-sm border border-indigo bg-white px-3 text-[14px] text-indigo hover:bg-indigo-soft" onClick={endPractice}>
+            End practice
+          </button>
+        )}
+      </div>
+    </Popup>
   );
 }

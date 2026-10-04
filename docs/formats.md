@@ -6,7 +6,7 @@ Times are `"mm:ss"` since the session started. Money is a plain number plus an I
 
 ## The work app: Ledgerline
 
-`public/ledgerline/index.html` is the team's fake expense tool (read its header comment for the full API). Only its story data (CONFIG users, DOCS, seed) was changed to follow the demo script: Paul Adler (expert) and Maya Brandt (new hire); its storage key is `expense-demo-v2`.
+`public/ledgerline/index.html` is the team's fake expense tool (read its header comment for the full API). Only its story data (CONFIG users, DOCS, seed) was changed to follow the demo script: Paul Adler (expert) and Maya Chen (new hire); its storage key is `expense-demo-v2`.
 Our app embeds it in an iframe (`src/features/erp/LedgerlineFrame.tsx`, scaled to fit its 1180px minimum) and talks to it only through
 `src/lib/ledgerline.ts`:
 

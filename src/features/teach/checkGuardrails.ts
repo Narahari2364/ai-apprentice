@@ -39,6 +39,7 @@ export function checkGuardrails(exp: ExpenseSnapshot, workMap: WorkMap): Guardra
           : "Delivery order: the receipt alone isn't tax-compliant. Download the invoice from the app and attach it too.",
         explanation: quote(step, "The receipt just shows what I paid. The invoice has the VAT breakdown finance needs, and I have to download it separately. So for delivery I always upload both."),
         fields: ["attachments"],
+        missing: hasInvoice ? "Delivery receipt missing" : "Tax invoice missing",
       });
     }
   }
@@ -52,6 +53,7 @@ export function checkGuardrails(exp: ExpenseSnapshot, workMap: WorkMap): Guardra
       rule: `${exp.amount_per_person?.toFixed(2)} per person is over ${APPROVAL_LIMIT}, and no supervisor approval is attached.`,
       explanation: quote(step, "Over 30 a person, I need proof my supervisor actually signed off. A screenshot of an email or a chat works, as long as it shows the date, the amount and who was there."),
       fields: ["attachments"],
+      missing: "Supervisor approval missing",
     });
   }
 

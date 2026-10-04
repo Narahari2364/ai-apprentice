@@ -1,32 +1,48 @@
-// Stretch goal "agent-ready guardrails": the Work Map as instructions an AI agent
-// can load, so it follows the same steps and stops where the expert would.
+// Stretch goal "agent-ready guardrails": the Work Map as rules an AI agent can load,
+// so it follows the same steps and stops where the expert would.
 
+import { redact } from "@/lib/redact";
 import type { WorkMap } from "@/lib/types";
+import { guardrailType } from "./WorkMapView";
 
-export function toAgentMarkdown(map: WorkMap): string {
-  const stops = map.steps.flatMap((s) => s.guardrails.map((g) => `- ${g} _(step ${s.order}, expert at ${s.time})_`));
+export interface ExportOptions {
+  quotes: boolean;
+  guardrails: boolean;
+  screenMoments: boolean;
+}
+
+export function toAgentMarkdown(map: WorkMap, opts: ExportOptions = { quotes: true, guardrails: true, screenMoments: false }): string {
   const lines = [
-    `# Procedure: ${map.task}`,
+    `# ${map.task}: rules from Paul Adler${map.confirmed ? " (confirmed in the teach-back)" : ""}`,
     "",
-    `Source: expert Work Map${map.confirmed ? ", confirmed by the expert after a teach-back" : " (not yet confirmed by the expert)"}.`,
-    "Follow the steps in order. Routine steps you may do on your own. For judgment calls, apply the rule and give the reason. If any STOP condition is true, do not save: hand the case to a person and say which rule applies.",
-    "",
-    "## STOP conditions (hard guardrails)",
-    ...(stops.length ? stops : ["- none recorded"]),
+    "Follow the steps in order. If a STOP guardrail applies, do not submit: hand the case to a person and say which rule applies.",
     "",
     "## Steps",
   ];
-  for (const s of map.steps) {
-    lines.push("", `### ${s.order}. ${s.title}${s.decision ? " (judgment call)" : ""}`);
-    if (s.decision) lines.push(`- **Decision rule:** ${s.decision}`);
-    lines.push(`- **Why:** ${s.reason}`);
-    lines.push(`- **Expert's words:** "${s.expertQuote}"`);
-    for (const g of s.guardrails) lines.push(`- **STOP if:** ${g}`);
+  map.steps.forEach((s) => {
+    lines.push(`${s.order}. ${s.title}${s.decision ? ` (judgment call: ${s.decision})` : ""}${opts.screenMoments ? ` [screen ${s.time}]` : ""}`);
+    if (opts.quotes) lines.push(`   Paul: "${s.expertQuote}"`);
+  });
+  if (opts.guardrails) {
+    lines.push("", "## Guardrails");
+    for (const s of map.steps) for (const g of s.guardrails) lines.push(`- ${guardrailType(g)}: ${g}`);
   }
-  if (map.gaps.length) {
-    lines.push("", "## Not yet clear (ask a person)", ...map.gaps.map((g) => `- ${g}`));
-  }
-  return lines.join("\n") + "\n";
+  if (map.gaps.length) lines.push("", "## Not yet clear (ask a person)", ...map.gaps.map((g) => `- ${g}`));
+  // Names and card numbers are removed from the export.
+  return redact(lines.join("\n")) + "\n";
+}
+
+export function toAgentJson(map: WorkMap, opts: ExportOptions): string {
+  const steps = map.steps.map((s) => ({
+    order: s.order,
+    title: s.title,
+    decision: s.decision || null,
+    reason: s.reason,
+    ...(opts.quotes ? { expertQuote: s.expertQuote } : {}),
+    ...(opts.guardrails ? { guardrails: s.guardrails.map((g) => ({ type: guardrailType(g), text: g })) } : {}),
+    ...(opts.screenMoments ? { screenMoment: s.time } : {}),
+  }));
+  return redact(JSON.stringify({ task: map.task, expert: "Paul Adler", confirmed: map.confirmed, steps, openQuestions: map.gaps }, null, 2));
 }
 
 export function downloadText(filename: string, text: string, type = "text/markdown") {

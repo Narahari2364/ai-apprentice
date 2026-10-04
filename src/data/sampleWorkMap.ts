@@ -1,6 +1,6 @@
 import type { WorkMap } from "@/lib/types";
 
-// Paul's Work Map from the demo script: 6 steps, 3 judgment calls, 3 guardrails.
+// Paul's Work Map from the demo script: 6 steps, 3 judgment calls, 4 guardrails.
 // Matches fakeSession.ts. Teach uses this until a real capture session produces one.
 // docId = Ledgerline DOCS id that /map (and Teach's replay) opens for the step.
 export const sampleWorkMap: WorkMap = {
@@ -10,6 +10,7 @@ export const sampleWorkMap: WorkMap = {
   steps: [
     {
       id: "s1",
+      short: "Add the meal",
       order: 1,
       title: "Open the month's report and add a Meals / Drinks expense",
       time: "00:20",
@@ -20,6 +21,7 @@ export const sampleWorkMap: WorkMap = {
     },
     {
       id: "s2",
+      short: "Attach receipt",
       order: 2,
       title: "Restaurant meal: attach the receipt and submit",
       time: "01:05",
@@ -31,6 +33,7 @@ export const sampleWorkMap: WorkMap = {
     },
     {
       id: "s3",
+      short: "Approval over 30",
       order: 3,
       title: "Over 30 per person: attach the supervisor's approval",
       time: "02:30",
@@ -45,6 +48,7 @@ export const sampleWorkMap: WorkMap = {
     },
     {
       id: "s4",
+      short: "Delivery app invoice",
       order: 4,
       title: "Delivery orders: attach both the receipt and the downloaded invoice",
       time: "04:00",
@@ -56,6 +60,7 @@ export const sampleWorkMap: WorkMap = {
     },
     {
       id: "s5",
+      short: "Restaurants: receipt only",
       order: 5,
       title: "Restaurant receipts don't need the extra invoice step",
       time: "04:40",
@@ -67,13 +72,14 @@ export const sampleWorkMap: WorkMap = {
     },
     {
       id: "s6",
+      short: "Save & submit",
       order: 6,
       title: "Save each expense and submit the report",
       time: "05:20",
       decision: "",
       reason: "The 30 per person line is the same everywhere; checked once more before submitting.",
       expertQuote: "Always the same. 30 a person is the line everywhere.",
-      guardrails: [],
+      guardrails: ["30 per person is the limit everywhere; it never changes."],
     },
   ],
 };

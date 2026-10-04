@@ -413,10 +413,10 @@ const CONFIG = {
   guardTimeoutMs: 20000,
   users: {
     paul: {id: 'paul', name: 'Paul Adler', title: 'CONS', role: 'expert', office: 'BERLIN', lastLogin: '09/30/2026 at 6:12 PM'},
-    maya: {id: 'maya', name: 'Maya Brandt', title: 'ASC', role: 'new_hire', office: 'BERLIN', lastLogin: '10/02/2026 at 9:03 AM'},
+    maya: {id: 'maya', name: 'Maya Chen', title: 'ASC', role: 'new_hire', office: 'BERLIN', lastLogin: '10/02/2026 at 9:03 AM'},
   },
   colleagues: [
-    {name: 'Paul Adler', title: 'CONS'}, {name: 'Maya Brandt', title: 'ASC'},
+    {name: 'Paul Adler', title: 'CONS'}, {name: 'Maya Chen', title: 'ASC'},
     {name: 'Jonas Weber', title: 'PL'}, {name: 'Ana Souza', title: 'PL'},
     {name: 'Mira Okafor', title: 'ASC'}, {name: 'Tobias Lindqvist', title: 'CONS'},
     {name: 'Felix Krämer', title: 'CONS'}, {name: 'Clara Nguyen', title: 'CONS'},
@@ -567,11 +567,11 @@ doc({id: 'n1-conf', kind: 'order_confirmation', style: 'app', file: 'Bitebox rec
 doc({id: 'n1-inv', kind: 'invoice', style: 'a4', file: 'Bitebox invoice BBX-DE-2026-51907.pdf', date: '2026-10-02', issueDate: '2026-10-02',
   brand: 'Bitebox', letterhead: {name: 'Bitebox Germany GmbH', lines: ['Kastanienallee 5', '10435 Berlin']},
   onBehalf: {name: 'Burger Werk', address: 'Simon-Dach-Straße 9, 10245 Berlin', taxNo: '29/771/40385'},
-  customer: 'Maya Brandt', number: 'BBX-DE-2026-51907', payment: 'Mastercard',
+  customer: 'Maya Chen', number: 'BBX-DE-2026-51907', payment: 'Mastercard',
   items: [[1, 'Classic Cheeseburger', 15.90, 7], [1, 'Süßkartoffel-Pommes', 5.50, 7], [1, 'Coleslaw', 6.90, 7], [1, 'Cola 0,33l', 3.20, 19], [1, 'Liefergebühr', 1.99, 19], [1, 'Servicegebühr', 0.51, 19], [1, 'Trinkgeld Kurier', 1.00, 0]],
   footer: 'Bitebox Germany GmbH · Kastanienallee 5 · 10435 Berlin · Rechnung im Namen und für Rechnung des Restaurants'});
-approval('n1-ok', PL_LEN, 'Maya Brandt', '2026-10-02', '20:58', 'RE: Late dinner tonight – OK?',
-  ['Hi Maya,', 'approved – your dinner delivery from Burger Werk via Bitebox on 10/02/2026, EUR 35.00 incl. courier tip. Participants: Maya Brandt (deadline work).', 'Ana'],
+approval('n1-ok', PL_LEN, 'Maya Chen', '2026-10-02', '20:58', 'RE: Late dinner tonight – OK?',
+  ['Hi Maya,', 'approved – your dinner delivery from Burger Werk via Bitebox on 10/02/2026, EUR 35.00 incl. courier tip. Participants: Maya Chen (deadline work).', 'Ana'],
   'Screenshot – approval A. Souza (dinner 02.10.).png');
 // History documents for Paul's returned September report
 doc({id: 'h1-inv', kind: 'invoice', style: 'thermal', file: 'Receipt – Deli Hafenblick.jpg', date: '2026-09-14', time: '12:58',
@@ -739,7 +739,7 @@ function seed() {
   const len = {reports: [], gallery: ['n1-conf', 'n1-inv', 'n1-ok'], uploads: {}};
   len.reports.push({id: uid('rep'), number: '010055120764', name: 'Onboarding week', pay_in: 'EUR', office: 'BERLIN', status: 'submitted', created: '2026-09-29', expenses: [
     withGuests(mkExp({transaction_date: '2026-09-28', spent: 18.40, location: 'Germany', business_purpose: 'Lunch on first day (onboarding)', meal_amount: 15.90, drink_amount: 2.50,
-      restaurant_name: 'Mittagsküche Mitte', restaurant_address: 'Linienstraße 40, 10119 Berlin', type_of_meal: 'Take Away', projects: [proj(4)]}), ['Maya Brandt']),
+      restaurant_name: 'Mittagsküche Mitte', restaurant_address: 'Linienstraße 40, 10119 Berlin', type_of_meal: 'Take Away', projects: [proj(4)]}), ['Maya Chen']),
   ]});
   // Empty October drafts so the demo starts right at "Add Expense".
   sab.reports.push({id: uid('rep'), number: '010055231908', name: 'Food – October', pay_in: 'EUR', office: 'BERLIN', status: 'draft', created: '2026-10-01', expenses: []});
@@ -748,7 +748,7 @@ function seed() {
 }
 
 /* ---------- state ---------- */
-const STORE_KEY = 'expense-demo-v3'; // v3: Paul (expert) + Maya (new hire), demo script story
+const STORE_KEY = 'expense-demo-v4'; // v3: Paul (expert) + Maya (new hire), demo script story
 const params = new URLSearchParams(location.search);
 let S = null;
 function loadState() {

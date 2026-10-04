@@ -70,19 +70,32 @@ export function useTeachProgress() {
   return { progress, recordCheck, reset };
 }
 
-/** End-of-session mastery report. */
-export function masteryReport(p: TeachProgress) {
-  const keys = Object.keys(p.rules) as RuleKey[];
-  const mastered = [
-    ...keys.filter((k) => p.rules[k] === "respected").map((k) => RULE_LABEL[k]),
-    ...p.steps.filter((s) => s.done).map((s) => s.label),
-  ];
-  const practise = [
-    ...keys
-      .filter((k) => p.rules[k] === "broken" || p.rules[k] === "fixed")
-      .map((k) => `${RULE_LABEL[k]}${p.rules[k] === "fixed" ? ": caught by the tutor, practise spotting it yourself" : ""}`),
-    ...p.steps.filter((s) => !s.done).map((s) => s.label),
-  ];
-  const untested = keys.filter((k) => p.rules[k] === "untested").map((k) => RULE_LABEL[k]);
-  return { mastered, practise, untested };
+/** End-of-session report, as in the Teaching-mode design: how each part went and what to practise next. */
+export type RowStatus = "alone" | "hint" | "open" | "done";
+
+export function sessionReport(p: TeachProgress) {
+  const step = (label: string) => p.steps.find((s) => s.label === label)?.done ?? false;
+  const ruleRow = (key: RuleKey, label: string) => {
+    const r = p.rules[key];
+    if (r === "untested") return null;
+    return {
+      label,
+      status: (r === "respected" ? "alone" : r === "fixed" ? "hint" : "open") as RowStatus,
+      note: r === "respected" ? "on her own" : r === "fixed" ? "needed a hint" : "not fixed yet",
+      detail: r === "fixed" ? "Caught before save, fixed after a hint" : undefined,
+    };
+  };
+  const rows = [
+    step("Attach the receipt") ? { label: "Uploaded the receipt", status: "alone" as RowStatus, note: "on her own" } : null,
+    ruleRow("delivery_docs", "Delivery app → tax invoice"),
+    ruleRow("approval", "Over 30 → supervisor approval"),
+    { label: "Saved correctly", status: (step("Save without a guardrail block") ? "done" : "open") as RowStatus, note: step("Save without a guardrail block") ? "done" : "not yet" },
+  ].filter(Boolean) as { label: string; status: RowStatus; note: string; detail?: string }[];
+
+  const PRACTICE: Record<RuleKey, string> = {
+    approval: "Catch the <b>30 per person</b> line yourself, without a prompt.",
+    delivery_docs: "Remember the <b>tax invoice for delivery orders</b> without a prompt.",
+  };
+  const practise = (Object.keys(p.rules) as RuleKey[]).filter((k) => p.rules[k] === "fixed" || p.rules[k] === "broken").map((k) => PRACTICE[k]);
+  return { rows, practise };
 }
