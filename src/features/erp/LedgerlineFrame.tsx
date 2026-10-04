@@ -90,11 +90,9 @@ export default function LedgerlineFrame({ query, mode, onApprenticeClick, appren
         className="absolute left-0 top-0"
         style={{ width: size.width, height: size.height, transform: `scale(${size.scale})`, transformOrigin: "0 0", border: 0 }}
       />
-      {/* Loading screen until Ledgerline is ready */}
-      <div
-        className={`absolute inset-0 flex flex-col items-center justify-center gap-4 bg-[linear-gradient(180deg,#f6f8fc,#ffffff)] transition-opacity duration-500 ${loaded ? "pointer-events-none opacity-0" : "opacity-100"}`}
-        aria-hidden={loaded}
-      >
+      {/* Loading screen until Ledgerline is ready (removed, not faded, so it can never get stuck half-visible) */}
+      {!loaded && (
+      <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 bg-[linear-gradient(180deg,#f6f8fc,#ffffff)]">
         <span className="grid h-14 w-14 place-items-center rounded-lg bg-[#2F8FE6] text-[22px] font-bold text-white shadow-lg">L</span>
         <div className="text-[18px] text-[#1f2d3d]"><b className="font-medium">ledgerline</b> <span className="font-light">enterprise</span></div>
         <div className="h-1 w-48 overflow-hidden rounded-full bg-[#e4e7ec]">
@@ -102,6 +100,7 @@ export default function LedgerlineFrame({ query, mode, onApprenticeClick, appren
         </div>
         <div className="text-[13px] text-[#667085]">Opening the expense tool…</div>
       </div>
+      )}
     </div>
   );
 }
