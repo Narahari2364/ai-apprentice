@@ -55,6 +55,23 @@ function Teach() {
   const [micError, setMicError] = useState<string | null>(null);
   const canPip = useSyncExternalStore(() => () => {}, pipSupported, () => true);
   const bot = <CoachPanel c={c} workflows={workflows} selected={selected} onSelect={setPicked} />;
+  const startArea = !selected ? (
+    <p className="text-[15px] text-[#475467]">First pick a workflow in the floating Torchbearer.</p>
+  ) : c.sharing ? (
+    <div className="text-[15px]">
+      <div className="font-medium text-err">● Recording · {selected.name}</div>
+      <p className="mt-1 text-[14px] text-[#475467]">Switch to Maya&apos;s work. Stop recording in the floating Torchbearer when she&apos;s done.</p>
+    </div>
+  ) : (
+    <div className="flex flex-col gap-2">
+      <div className="text-[15px]">Practising: <b>{selected.name}</b></div>
+      <button onClick={c.start} className="h-11 rounded-sm bg-indigo text-[16px] text-white hover:bg-indigo-dark">
+        {c.finished ? "● Practise again" : "● Start recording"}
+      </button>
+      <p className="text-[13px] text-[#667085]">Chrome will ask what to share: choose <b>Entire screen</b>.</p>
+      {c.error && <p className="rounded-sm bg-err-soft px-3 py-2 text-[13.5px] text-[#8E1B1B]">{c.error}</p>}
+    </div>
+  );
 
   return (
     <>
@@ -72,6 +89,7 @@ function Teach() {
         }}
         micError={micError}
         panel={bot}
+        startArea={startArea}
         links={[{ href: "/capture", label: "← Capture" }, { href: "/map", label: "← Mapping" }, { href: "/review", label: "Supervisor review →" }]}
         demo={{ href: "/ledgerline/index.html?user=maya", label: "Demo app: open Ledgerline as Maya" }}
       />

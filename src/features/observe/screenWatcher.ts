@@ -92,3 +92,13 @@ function diff(a: Uint8ClampedArray, b: Uint8ClampedArray) {
   for (let i = 0; i < a.length; i += 4) d += Math.abs(a[i] - b[i]) + Math.abs(a[i + 1] - b[i + 1]);
   return d / (a.length / 4);
 }
+
+/** Why screen sharing didn't start, in words the user can act on. */
+export function shareErrorText(e: unknown): string {
+  const name = e instanceof DOMException ? e.name : "";
+  const msg = e instanceof Error ? e.message : "";
+  if (name === "InvalidStateError" || /gesture|activation/i.test(msg))
+    return "Chrome only starts screen recording from the main Torchbearer page. Press ● Start recording there.";
+  if (name === "NotAllowedError") return "Screen sharing was cancelled or blocked. Press ● Start recording again and choose Entire screen.";
+  return msg || "Screen sharing didn't start. Press ● Start recording again.";
+}

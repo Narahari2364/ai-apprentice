@@ -10,7 +10,7 @@ import { elapsed, resetSession } from "@/lib/events";
 import { loadMastery, loadReviews, saveMastery, saveReviews } from "@/lib/session";
 import { useVoiceAgent } from "@/lib/useVoiceAgent";
 import type { ReviewItem, StepMastery, WorkMap } from "@/lib/types";
-import { ScreenWatcher, type Frame } from "./screenWatcher";
+import { ScreenWatcher, shareErrorText, type Frame } from "./screenWatcher";
 
 const PAUSE_MS = 2000;
 const LEARNER = "Maya Chen";
@@ -156,8 +156,8 @@ export function useCoach(map: WorkMap, workflowId: string) {
     try {
       await watcher.current.start((f) => onFrame(f), () => setSharing(false));
       setSharing(true);
-    } catch {
-      setError("Screen sharing was cancelled. The tutor needs to see your screen.");
+    } catch (e) {
+      setError(shareErrorText(e));
       return;
     }
     agent.start();

@@ -33,6 +33,33 @@ function Capture() {
   });
   const canPip = useSyncExternalStore(() => () => {}, pipSupported, () => true);
   const bot = <ObserverPanel o={o} onStart={(name) => o.start(name)} />;
+  const [name, setName] = useState("");
+  const startArea = o.sharing ? (
+    <div className="text-[15px]">
+      <div className="font-medium text-err">● Recording “{name || "workflow"}”</div>
+      <p className="mt-1 text-[14px] text-[#475467]">Switch to your work. Stop recording in the floating Torchbearer when you&apos;re done.</p>
+    </div>
+  ) : (
+    <div className="flex flex-col gap-2">
+      <label htmlFor="page-wf-name" className="text-[12px] font-bold uppercase tracking-[.12em] text-[#667085]">Name this workflow</label>
+      <input
+        id="page-wf-name"
+        value={name}
+        onChange={(e) => setName(e.target.value)}
+        placeholder="e.g. Meal expense report"
+        className="h-11 rounded-sm border border-[#9aa0a6] px-3 text-[16px] focus:border-indigo focus:outline-none"
+      />
+      <button
+        onClick={() => o.start(name)}
+        disabled={!name.trim()}
+        className="h-11 rounded-sm bg-indigo text-[16px] text-white hover:bg-indigo-dark disabled:opacity-40"
+      >
+        ● Start recording
+      </button>
+      <p className="text-[13px] text-[#667085]">Chrome will ask what to share: choose <b>Entire screen</b>.</p>
+      {o.error && <p className="rounded-sm bg-err-soft px-3 py-2 text-[13.5px] text-[#8E1B1B]">{o.error}</p>}
+    </div>
+  );
 
   return (
     <>
@@ -50,6 +77,7 @@ function Capture() {
         }}
         micError={micError}
         panel={bot}
+        startArea={startArea}
         links={[{ href: "/map", label: "Mapping →" }, { href: "/teach", label: "Teaching →" }]}
         demo={{ href: "/ledgerline/index.html?user=paul", label: "Demo app: open Ledgerline as Paul" }}
       />

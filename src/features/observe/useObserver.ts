@@ -13,7 +13,7 @@ import { elapsed, resetSession } from "@/lib/events";
 import { saveWorkflow } from "@/lib/session";
 import { useVoiceAgent } from "@/lib/useVoiceAgent";
 import type { ObservedStep, ObserveQA, TranscriptLine } from "@/lib/types";
-import { ScreenWatcher, type Frame } from "./screenWatcher";
+import { ScreenWatcher, shareErrorText, type Frame } from "./screenWatcher";
 
 const PAUSE_MS = 3000;
 const MIN_GAP_MS = 15000;
@@ -161,8 +161,8 @@ export function useObserver(onWorkMapReady: (workflowId: string) => void) {
     try {
       await watcher.current.start((f) => onFrame(f), () => setSharing(false));
       setSharing(true);
-    } catch {
-      setError("Screen sharing was cancelled. Torchbearer needs to see your screen.");
+    } catch (e) {
+      setError(shareErrorText(e));
       return;
     }
     agent.start();

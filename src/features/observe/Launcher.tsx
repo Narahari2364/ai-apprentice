@@ -15,6 +15,8 @@ interface Props {
   failed?: boolean;
   /** Mic permission problem from the Launch click. */
   micError?: string | null;
+  /** Start controls shown on this page once launched (Chrome only starts screen recording from a click here). */
+  startArea?: ReactNode;
   onLaunch: () => void;
   /** The bot itself, shown inline only when floating windows aren't available. */
   panel: ReactNode;
@@ -24,7 +26,7 @@ interface Props {
   notice?: ReactNode;
 }
 
-export default function Launcher({ eyebrow, title, text, launched, canPip, failed = false, micError, onLaunch, panel, demo, links, notice }: Props) {
+export default function Launcher({ eyebrow, title, text, launched, canPip, failed = false, micError, onLaunch, panel, demo, links, notice, startArea }: Props) {
   return (
     <section className="relative min-h-full overflow-hidden bg-[linear-gradient(180deg,#f3f2ff_0%,#ffffff_70%)]">
       <div className="pointer-events-none absolute -right-32 -top-40 h-[480px] w-[480px] rounded-full bg-indigo/10 blur-3xl" aria-hidden="true" />
@@ -50,9 +52,12 @@ export default function Launcher({ eyebrow, title, text, launched, canPip, faile
                 Launch Torchbearer
               </button>
             )}
+            {(launched || failed || !canPip) && startArea && (
+              <div className="mt-8 w-full max-w-md rounded-md border border-line bg-white p-5 text-left shadow-[0_8px_24px_rgba(16,24,40,.06)]">{startArea}</div>
+            )}
             {launched && (
-              <div className="mt-8 rounded-md border border-[#bfe3cc] bg-ok-soft px-5 py-3 text-[16px] text-ok">
-                ✓ Torchbearer is floating on your screen. If Chrome asks for the microphone, click Allow. Then you can minimize this window.
+              <div className="mt-4 rounded-md border border-[#bfe3cc] bg-ok-soft px-5 py-3 text-[15px] text-ok">
+                ✓ Torchbearer is floating on your screen. Start recording here (allow the microphone if Chrome asks), then switch to your work.
               </div>
             )}
             {micError && (
