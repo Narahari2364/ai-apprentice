@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Roboto } from "next/font/google";
 import TopBar from "@/components/TopBar";
+import MockBadge from "@/features/mock/MockBadge";
 import "./globals.css";
 
 const roboto = Roboto({
@@ -20,6 +21,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       <body className="flex h-full flex-col overflow-hidden font-sans">
         <TopBar />
         <main className="min-h-0 flex-1 overflow-auto">{children}</main>
+        <MockBadge />
       </body>
     </html>
   );

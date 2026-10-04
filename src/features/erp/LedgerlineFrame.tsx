@@ -48,6 +48,7 @@ export default function LedgerlineFrame({ query, mode, onApprenticeClick, appren
     if (!el) return;
     const ro = new ResizeObserver(([entry]) => {
       const { width: w, height: h } = entry.contentRect;
+      if (w <= 0 || h <= 0) return; // not laid out yet (0/0 would give a NaN height)
       const scale = Math.min(1, w / MOCK_WIDTH);
       const next = { scale, width: Math.max(MOCK_WIDTH, Math.floor(w)), height: Math.round(h / scale) };
       setSize((s) => (s.scale === next.scale && s.width === next.width && s.height === next.height ? s : next));

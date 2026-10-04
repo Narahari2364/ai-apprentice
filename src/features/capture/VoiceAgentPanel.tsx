@@ -12,7 +12,7 @@ import { ConversationProvider } from "@elevenlabs/react";
 import { elapsed, getHistory, onActivity, resetSession, subscribe, useScreenEvents } from "@/lib/events";
 import { fieldFor, sendCommand } from "@/lib/ledgerline";
 import { attachDocs, attachScreenshots, saveSession, saveWorkMap } from "@/lib/session";
-import { useVoiceAgent } from "@/lib/useVoiceAgent";
+import { useApprenticeAgent } from "@/features/mock/useApprenticeAgent";
 import { sampleWorkMap } from "@/data/sampleWorkMap";
 import type { ScreenEvent } from "@/lib/types";
 import { ListeningBars } from "@/features/apprentice/Popup";
@@ -50,7 +50,7 @@ export default function VoiceAgentPanel(props: Props) {
 
 function Interviewer({ stage, setStage }: Props) {
   const router = useRouter();
-  const agent = useVoiceAgent("interviewer");
+  const agent = useApprenticeAgent("interviewer");
   const [offRecord, setOffRecord] = useState(false);
   const [phase, setPhase] = useState<"task" | "debrief" | "building">("task");
   const [waiting, setWaiting] = useState<string | null>(null); // why the agent is holding a question
