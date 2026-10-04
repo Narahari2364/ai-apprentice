@@ -93,6 +93,14 @@ export default function CoachPanel({ c, workflows, selected, onSelect }: Props) 
             <div className={`border-b px-4 py-3 ${c.message.verdict === "match" ? "border-[#bfe3cc] bg-ok-soft" : "border-[#F0D58A] bg-warn-soft"}`}>
               <div className="text-[12px] font-medium text-[#555]">{c.message.verdict === "match" ? "✓ Looks right" : "⚑ Might be different · under review"} · {c.message.time}</div>
               <p className="mt-0.5 text-[15.5px] leading-snug">{c.message.text}</p>
+              <p className="mt-1.5 text-[12.5px] leading-snug text-[#555]">
+                From the recorded step <b>{c.message.stepTitle}</b>: <i>&ldquo;{c.message.evidence}&rdquo;</i>
+              </p>
+            </div>
+          )}
+          {c.uncovered && !c.message && (
+            <div className="border-b border-line bg-panel px-4 py-2.5 text-[13px] leading-snug text-[#475467]">
+              Not covered by the expert&apos;s recording, so no guidance here: <i>{c.uncovered}</i>
             </div>
           )}
 
