@@ -11,26 +11,26 @@ export default function TopBar() {
   if (path.startsWith("/capture") || path.startsWith("/teach")) return null;
 
   return (
-    <header className="relative z-20 flex h-16 flex-none items-center border-b border-line bg-white px-6">
-      <Link href="/" className="flex flex-none items-center gap-2.5 text-[24px] tracking-tight text-[#1f2d3d]">
+    <header className="relative z-20 flex h-16 flex-none items-center border-b border-line bg-white px-4 sm:px-6">
+      <Link href="/" className="flex flex-none items-center gap-2.5 text-[20px] tracking-tight text-[#1f2d3d] sm:text-[24px]">
         <Logo />
         <span>
           <b className="font-medium">AI</b> <span className="font-light">Apprentice</span>
         </span>
       </Link>
 
-      <div className="ml-auto flex flex-none items-center gap-5">
+      <div className="ml-auto flex flex-none items-center gap-3 sm:gap-5">
         <Link
           href="/map"
-          className={`whitespace-nowrap text-[15px] ${path.startsWith("/map") ? "font-medium text-brand" : "text-[#444] hover:text-brand"}`}
+          className={`hidden whitespace-nowrap text-[15px] sm:inline ${path.startsWith("/map") ? "font-medium text-brand" : "text-[#444] hover:text-brand"}`}
         >
           Work Map
         </Link>
         <div className="flex overflow-hidden rounded-sm border border-brand text-[14px]" role="group" aria-label="Mode">
-          <Link href="/capture" className="bg-white px-3.5 py-1.5 text-brand hover:bg-brand-soft">
+          <Link href="/capture" className="bg-white px-2.5 py-1.5 sm:px-3.5 text-brand hover:bg-brand-soft">
             Expert
           </Link>
-          <Link href="/teach" className="border-l border-brand bg-white px-3.5 py-1.5 text-brand hover:bg-brand-soft">
+          <Link href="/teach" className="border-l border-brand bg-white px-2.5 py-1.5 sm:px-3.5 text-brand hover:bg-brand-soft">
             New hire
           </Link>
         </div>
