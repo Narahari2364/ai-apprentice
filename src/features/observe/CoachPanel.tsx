@@ -4,6 +4,7 @@
 
 import Link from "next/link";
 import { ListeningBars } from "@/features/apprentice/Popup";
+import { BotFace } from "./Launcher";
 import type { WorkMap } from "@/lib/types";
 import type { Coach, CoachStatus } from "./useCoach";
 
@@ -22,10 +23,7 @@ export default function CoachPanel({ c, map, blocked }: { c: Coach; map: WorkMap
   return (
     <div className="flex h-full flex-col bg-white text-ink">
       <div className="flex items-center gap-3 bg-indigo px-4 py-3 text-white">
-        <svg width="22" height="20" viewBox="0 0 18 16" aria-hidden="true">
-          <path d="M1.5 1.5h15v10H6L1.5 15z" fill="#fff" />
-          <path d="M5 5h8M5 8h5" stroke="#5146d9" strokeWidth="1.4" />
-        </svg>
+        <BotFace size={34} />
         <div className="min-w-0 flex-1 leading-tight">
           <div className="text-[17px] font-medium">Apprentice</div>
           <div className="truncate text-[12.5px] opacity-90">Guiding Maya with Paul&apos;s approved steps</div>

@@ -19,11 +19,21 @@ export const pipSupported = () => typeof window !== "undefined" && "documentPict
 export function usePip() {
   const [container, setContainer] = useState<HTMLElement | null>(null);
   const [pipWindow, setPipWindow] = useState<Window | null>(null);
+  const [failed, setFailed] = useState(false); // browser refused (e.g. embedded browsers): float in the page instead
 
   /** Must be called from a click. */
-  const open = useCallback(async (width = 400, height = 680) => {
-    if (!window.documentPictureInPicture) return false;
-    const pip = await window.documentPictureInPicture.requestWindow({ width, height });
+  const open = useCallback(async (width = 380, height = 600) => {
+    if (!window.documentPictureInPicture) {
+      setFailed(true);
+      return false;
+    }
+    let pip: Window;
+    try {
+      pip = await window.documentPictureInPicture.requestWindow({ width, height });
+    } catch {
+      setFailed(true);
+      return false;
+    }
     // Same styles and fonts as the app.
     document.head.querySelectorAll('style, link[rel="stylesheet"]').forEach((n) => pip.document.head.appendChild(n.cloneNode(true)));
     pip.document.documentElement.className = document.documentElement.className;
@@ -43,5 +53,5 @@ export function usePip() {
 
   const close = useCallback(() => pipWindow?.close(), [pipWindow]);
 
-  return { container, open, close, isOpen: container !== null };
+  return { container, open, close, failed, isOpen: container !== null };
 }

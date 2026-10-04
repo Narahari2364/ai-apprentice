@@ -3,6 +3,7 @@
 // writing live from the screenshots (with the expert's answers merged in), and controls.
 
 import { ListeningBars } from "@/features/apprentice/Popup";
+import { BotFace } from "./Launcher";
 import { TypeChip, guardrailType } from "@/features/workmap/WorkMapView";
 import type { Observer, ObserverStatus } from "./useObserver";
 
@@ -27,10 +28,7 @@ export default function ObserverPanel({ o, onStart }: { o: Observer; onStart?: (
   return (
     <div className="flex h-full flex-col bg-white text-ink">
       <div className="flex items-center gap-3 bg-indigo px-4 py-3 text-white">
-        <svg width="22" height="20" viewBox="0 0 18 16" aria-hidden="true">
-          <path d="M1.5 1.5h15v10H6L1.5 15z" fill="#fff" />
-          <path d="M5 5h8M5 8h5" stroke="#5146d9" strokeWidth="1.4" />
-        </svg>
+        <BotFace size={34} />
         <div className="min-w-0 flex-1 leading-tight">
           <div className="text-[17px] font-medium">Apprentice</div>
           <div className="truncate text-[12.5px] opacity-90">{o.offRecord ? "Paused by the expert" : "Learning from your screen"}</div>

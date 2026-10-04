@@ -21,7 +21,14 @@ export class ScreenWatcher {
 
   /** Must be called from a click (the browser asks the user what to share). */
   async start(onFrame: (f: Frame) => void, onEnded: () => void) {
-    this.stream = await navigator.mediaDevices.getDisplayMedia({ video: { frameRate: 5 }, audio: false });
+    // Suggest the whole screen so the bot sees any browser tab or app the user works in.
+    this.stream = await navigator.mediaDevices.getDisplayMedia({
+      video: { frameRate: 5, displaySurface: "monitor" },
+      audio: false,
+      selfBrowserSurface: "exclude",
+      surfaceSwitching: "include",
+      monitorTypeSurfaces: "include",
+    } as DisplayMediaStreamOptions);
     this.video = document.createElement("video");
     this.video.srcObject = this.stream;
     this.video.muted = true;
