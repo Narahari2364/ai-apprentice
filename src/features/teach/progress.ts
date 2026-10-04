@@ -9,7 +9,7 @@ export type RuleStatus = "untested" | "respected" | "broken" | "fixed";
 
 export const RULE_LABEL: Record<RuleKey, string> = {
   delivery_docs: "Delivery order: receipt and invoice attached",
-  approval: "Over 30 per person: supervisor approval attached",
+  approval: "Over $30 per person: supervisor approval attached",
 };
 
 const attached = (e: ScreenEvent, kind: string) => e.type === "attachment_added" && e.description.includes(`(${kind})`);
@@ -25,7 +25,7 @@ const STEPS: { label: string; done: (e: ScreenEvent, seen: Set<string>) => boole
       return seen.has("receipt") && seen.has("invoice");
     },
   },
-  { label: "Over 30 per person: attach the approval", done: (e) => attached(e, "approval_email") },
+  { label: "Over $30 per person: attach the approval", done: (e) => attached(e, "approval_email") },
   { label: "Save without a guardrail block", done: (e) => e.type === "expense_saved" },
 ];
 
@@ -88,12 +88,12 @@ export function sessionReport(p: TeachProgress) {
   const rows = [
     step("Attach the receipt") ? { label: "Uploaded the receipt", status: "alone" as RowStatus, note: "on her own" } : null,
     ruleRow("delivery_docs", "Delivery app → tax invoice"),
-    ruleRow("approval", "Over 30 → supervisor approval"),
+    ruleRow("approval", "Over $30 → supervisor approval"),
     { label: "Saved correctly", status: (step("Save without a guardrail block") ? "done" : "open") as RowStatus, note: step("Save without a guardrail block") ? "done" : "not yet" },
   ].filter(Boolean) as { label: string; status: RowStatus; note: string; detail?: string }[];
 
   const PRACTICE: Record<RuleKey, string> = {
-    approval: "Catch the <b>30 per person</b> line yourself, without a prompt.",
+    approval: "Catch the <b>$30 per person</b> line yourself, without a prompt.",
     delivery_docs: "Remember the <b>tax invoice for delivery orders</b> without a prompt.",
   };
   const practise = (Object.keys(p.rules) as RuleKey[]).filter((k) => p.rules[k] === "fixed" || p.rules[k] === "broken").map((k) => PRACTICE[k]);

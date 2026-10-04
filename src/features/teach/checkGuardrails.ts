@@ -44,14 +44,14 @@ export function checkGuardrails(exp: ExpenseSnapshot, workMap: WorkMap): Guardra
     }
   }
 
-  // 2. Over 30 per person: proof that the supervisor signed off.
+  // 2. Over $30 per person: proof that the supervisor signed off.
   if ((exp.amount_per_person ?? 0) > APPROVAL_LIMIT && !hasApproval) {
     const step = findStep(workMap, /approval|per person|30/i);
     violations.push({
       key: "approval",
       stepId: step?.id ?? "s3",
       rule: `${exp.amount_per_person?.toFixed(2)} per person is over ${APPROVAL_LIMIT}, and no supervisor approval is attached.`,
-      explanation: quote(step, "Over 30 a person, I need proof my supervisor actually signed off. A screenshot of an email or a chat works, as long as it shows the date, the amount and who was there."),
+      explanation: quote(step, "Over $30 a person, I need proof my supervisor actually signed off. A screenshot of an email or a chat works, as long as it shows the date, the amount and who was there."),
       fields: ["attachments"],
       missing: "Supervisor approval missing",
     });

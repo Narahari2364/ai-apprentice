@@ -142,7 +142,7 @@ function Tutor({ stage, setStage, violations, progress, onReset }: Props) {
     return (
       <Dialog
         title="Practice complete"
-        subtitle={`${NEW_HIRE} · unseen case: 35 delivery dinner`}
+        subtitle={`${NEW_HIRE} · unseen case: $35 delivery dinner`}
         modeLabel="TEACHING MODE"
         footer={
           <>

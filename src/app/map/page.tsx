@@ -7,7 +7,7 @@ import Link from "next/link";
 import WorkMapView from "@/features/workmap/WorkMapView";
 import ExportDialog from "@/features/workmap/ExportDialog";
 import LedgerlineFrame from "@/features/erp/LedgerlineFrame";
-import { sampleWorkMap } from "@/data/sampleWorkMap";
+import { sampleWorkMap, capturedSessionEnabled, workMapPage as text } from "@/data/sampleWorkMap";
 import { sendCommand } from "@/lib/ledgerline";
 import type { WorkMap, WorkMapStep } from "@/lib/types";
 
@@ -21,17 +21,22 @@ const readRaw = () => {
 };
 
 export default function MapPage() {
-  const raw = useSyncExternalStore(() => () => {}, readRaw, () => null);
+  const stored = useSyncExternalStore(() => () => {}, readRaw, () => null);
+  // Fixed by default: the page shows src/content/workmap.json; a live session's map only when that file says so.
+  const raw = capturedSessionEnabled ? stored : null;
   const map: WorkMap = raw ? JSON.parse(raw) : sampleWorkMap;
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [replay, setReplay] = useState<WorkMapStep | null>(null);
   const [exporting, setExporting] = useState(false);
   const [justPublished, setJustPublished] = useState(false);
-  const published = !raw || map.published || justPublished; // the prepared sample counts as published
+  // Coming from a capture session, Paul still has to publish (even when the page shows the fixed map);
+  // opening /map directly shows the prepared map as already published.
+  const storedPublished = stored ? Boolean((JSON.parse(stored) as WorkMap).published) : true;
+  const published = storedPublished || justPublished;
   const selected = map.steps.find((s) => s.id === selectedId) ?? map.steps.find((s) => s.decision) ?? map.steps[0];
 
   function publish() {
-    localStorage.setItem(KEY, JSON.stringify({ ...map, published: true }));
+    localStorage.setItem(KEY, JSON.stringify({ ...(stored ? (JSON.parse(stored) as WorkMap) : map), published: true }));
     setJustPublished(true);
   }
 
@@ -55,18 +60,18 @@ export default function MapPage() {
             <div className="min-w-0 flex-1">
               <div className="flex flex-wrap items-center gap-2">
                 <span className="rounded-sm border border-indigo/30 bg-indigo-soft px-2.5 py-1 text-[12px] font-bold uppercase tracking-wide text-indigo">
-                  Module 2 · Review mode
+                  {text.eyebrow}
                 </span>
                 <span className={`rounded-full px-2.5 py-1 text-[12.5px] font-medium ${published ? "bg-ok-soft text-ok" : "bg-warn-soft text-[#7a5a00]"}`}>
-                  {published ? "● Published to the tutor" : "● Waiting for Paul's approval"}
+                  {published ? "● Published to the tutor" : `● Waiting for ${text.expertName}'s approval`}
                 </span>
               </div>
               <h1 className="mt-4 text-[38px] font-light leading-[1.1] tracking-tight text-[#1f2d3d] md:text-[44px]">
-                What Paul taught <span className="font-medium text-indigo">the Apprentice</span>
+                {text.headline} <span className="font-medium text-indigo">{text.headlineAccent}</span>
               </h1>
               <p className="mt-2 max-w-2xl text-[16.5px] text-[#475467]">
-                {map.task}. {map.confirmed ? "Confirmed by Paul in the teach-back." : "Teach-back not confirmed yet."}{" "}
-                <span className="text-[#98a2b3]">{raw ? "Learned in the last capture session" : "Prepared Work Map"} · personal data redacted</span>
+                {map.task}. {map.confirmed ? `Confirmed by ${text.expertName} in the teach-back.` : "Teach-back not confirmed yet."}{" "}
+                <span className="text-[#98a2b3]">{raw ? "Learned in the last capture session · personal data redacted" : text.sourceNote}</span>
               </p>
             </div>
             <div className="flex flex-wrap gap-2 pt-1">
