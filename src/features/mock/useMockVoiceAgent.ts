@@ -25,9 +25,20 @@ const LIVE: Turn[][] = [
     { who: "expert", text: "Those were sit-down restaurant receipts, they're already tax-compliant. It's only Uber Eats and other delivery apps where the receipt isn't enough." },
   ],
 ];
-const LIVE_EXTRA: Turn[] = [
-  { who: "agent", text: "Is there a limit on this one, or a moment you'd stop and ask someone?" },
-  { who: "expert", text: "Not for this one, that's the usual." },
+// Generic questions for anything else, never the same one twice in a row.
+const LIVE_EXTRA: Turn[][] = [
+  [
+    { who: "agent", text: "Is there a limit on this one, or a moment you'd stop and ask someone?" },
+    { who: "expert", text: "Under thirty a person it's simple: receipt and done." },
+  ],
+  [
+    { who: "agent", text: "Is there anything on this one you would never do?" },
+    { who: "expert", text: "Never submit a meal without the receipt, that comes straight back from finance." },
+  ],
+  [
+    { who: "agent", text: "Who would you check with before saving something like this?" },
+    { who: "expert", text: "Nobody for a normal meal. Only my supervisor when it goes over thirty a person." },
+  ],
 ];
 const DEBRIEF: Turn[] = [
   { who: "agent", text: "Quick check before I write this up. Does the $30 threshold ever change, or is it always the same number?" },
@@ -63,7 +74,8 @@ export function useMockVoiceAgent(role: "interviewer" | "tutor") {
   const lastUserSpeech = useRef(0);
   const timers = useRef<ReturnType<typeof setTimeout>[]>([]);
   const busyUntil = useRef(0);
-  const liveIndex = useRef(0);
+  const askedLive = useRef(new Set<number>());
+  const extraIndex = useRef(0);
   const tutor = useRef({ greeted: false, attachments: 0, blocked: 0 });
 
   useEffect(() => () => timers.current.forEach(clearTimeout), []);
@@ -89,17 +101,31 @@ export function useMockVoiceAgent(role: "interviewer" | "tutor") {
   }
   const say = (text: string) => play([{ who: "agent", text }]);
 
+  // Ask the scripted question that fits what Paul just did (approval screenshot → Q1,
+  // delivery-app files → Q2 then Q3), anything else gets a generic limit question.
+  function pickLive(pause: string): Turn[] {
+    const used = askedLive.current;
+    const take = (i: number) => (used.add(i), LIVE[i]);
+    if (/approval/i.test(pause) && !used.has(0)) return take(0);
+    if (/bitebox|uber eats|order_confirmation|delivery/i.test(pause)) {
+      if (!used.has(1)) return take(1);
+      if (!used.has(2)) return take(2);
+    }
+    return LIVE_EXTRA[extraIndex.current++ % LIVE_EXTRA.length];
+  }
+
   function start() {
     setStatus("connecting");
     tutor.current = { greeted: false, attachments: 0, blocked: 0 };
-    liveIndex.current = 0;
+    askedLive.current = new Set();
+    extraIndex.current = 0;
     later(700, () => setStatus("connected"));
     return Promise.resolve();
   }
 
   function sendUserMessage(text: string) {
     if (role === "interviewer") {
-      if (text.startsWith("[PAUSE]")) play(LIVE[liveIndex.current++] ?? LIVE_EXTRA);
+      if (text.startsWith("[PAUSE]")) play(pickLive(text));
       else if (text.startsWith("[DEBRIEF]")) play(DEBRIEF);
       return;
     }
