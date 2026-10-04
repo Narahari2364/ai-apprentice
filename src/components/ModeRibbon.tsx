@@ -30,7 +30,7 @@ export default function ModeRibbon({ mode }: Props) {
       <span className="ml-auto flex items-center gap-4">
         <Link href="/map" className="opacity-90 hover:underline hover:opacity-100">Work Map</Link>
         <Link
-          href={learning ? "/teach" : "/capture"}
+          href={learning ? "/teach" : "/learn"}
           className="rounded-sm border border-white/50 px-2 py-0.5 opacity-95 transition hover:bg-white/10"
         >
           Switch to {learning ? "New hire" : "Expert"} →

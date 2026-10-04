@@ -40,7 +40,7 @@ function Hero() {
             and coaches the next new hire in the expert&apos;s own words.
           </p>
           <div className="mt-8 flex flex-wrap gap-3">
-            <Link href="/capture" className="inline-flex h-12 items-center gap-2 rounded-sm bg-indigo px-6 text-[16px] text-white shadow-sm transition hover:bg-indigo-dark">
+            <Link href="/learn" className="inline-flex h-12 items-center gap-2 rounded-sm bg-indigo px-6 text-[16px] text-white shadow-sm transition hover:bg-indigo-dark">
               I&apos;m the expert <span className="opacity-80">· teach the Apprentice</span> →
             </Link>
             <Link href="/teach" className="inline-flex h-12 items-center gap-2 rounded-sm border border-brand bg-white px-6 text-[16px] text-brand transition hover:bg-brand-soft">
@@ -230,7 +230,7 @@ function People() {
             quote="Over $30 a person, I need proof my supervisor actually signed off."
             rules={["Over $30 per person → supervisor approval", "Delivery apps → receipt and tax invoice", "Restaurant receipts are enough on their own"]}
             cta="Show the Apprentice how it's done"
-            href="/capture"
+            href="/learn"
             accent="indigo"
           />
           <Persona

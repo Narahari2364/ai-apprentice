@@ -1,0 +1,248 @@
+"use client";
+// The screenshot-only Apprentice loop:
+//   watch    every 2 s a frame; changed frames go to /api/observe with the workflow so far
+//   write    the LLM returns what happened + the updated workflow (+ maybe a question)
+//   ask      a question is spoken only at a pause: screen still ≥ 3 s, nobody talking,
+//            ≥ 15 s since the last question
+//   learn    the spoken answer is paired with its question and written into the workflow
+//            right away by a fast text-only call (why / rule on the right step)
+// Must be used inside <ConversationProvider>.
+
+import { useEffect, useMemo, useRef, useState } from "react";
+import { elapsed, resetSession } from "@/lib/events";
+import { attachScreenshots, saveWorkMap } from "@/lib/session";
+import { useVoiceAgent } from "@/lib/useVoiceAgent";
+import type { ObservedStep, ObserveQA, ScreenEvent, TranscriptLine } from "@/lib/types";
+import { ScreenWatcher, type Frame } from "./screenWatcher";
+
+const PAUSE_MS = 3000;
+const MIN_GAP_MS = 15000;
+
+export type ObserverStatus = "idle" | "connecting" | "watching" | "reading" | "asking" | "off_record" | "debrief" | "building";
+
+/** Pair each question the agent asked with the expert's spoken answer (follow-up lines are appended). */
+function pairAnswers(transcript: TranscriptLine[]): ObserveQA[] {
+  const pairs: ObserveQA[] = [];
+  let open: string | null = null;
+  let answering = false;
+  for (const line of transcript) {
+    if (line.speaker === "agent") {
+      answering = false;
+      if (line.text.includes("?")) open = line.text;
+    } else if (open) {
+      pairs.push({ q: open, a: line.text });
+      open = null;
+      answering = true;
+    } else if (answering && pairs.length) {
+      pairs[pairs.length - 1].a += ` ${line.text}`;
+    }
+  }
+  return pairs;
+}
+
+export function useObserver(onWorkMapReady: () => void) {
+  const agent = useVoiceAgent("interviewer");
+  const watcher = useRef(new ScreenWatcher());
+  const [sharing, setSharing] = useState(false);
+  const [workflow, setWorkflow] = useState<ObservedStep[]>([]);
+  const [actions, setActions] = useState<{ time: string; text: string }[]>([]);
+  const [reading, setReading] = useState(false);
+  const [offRecord, setOffRecord] = useState(false);
+  const [phase, setPhase] = useState<"task" | "debrief" | "building">("task");
+  const [error, setError] = useState<string | null>(null);
+
+  const qa = useMemo(() => pairAnswers(agent.transcript), [agent.transcript]);
+
+  // Latest values for the 2-second loop.
+  const live = useRef({ agent, workflow, qa, offRecord, phase });
+  useEffect(() => {
+    live.current = { agent, workflow, qa, offRecord, phase };
+  });
+  const lastSent = useRef<string | null>(null);
+  const inFlight = useRef(false);
+  const integrated = useRef(0); // how many Q&A pairs the LLM has already seen
+  const asked = useRef<string[]>([]);
+  const pending = useRef<string | null>(null);
+  const lastQuestionAt = useRef(0);
+  const shots = useRef<Record<string, string>>({});
+  const offRanges = useRef<{ from: string; to: string }[]>([]);
+  const actionsRef = useRef<{ time: string; text: string }[]>([]);
+
+  // Write each new spoken answer into the workflow right away (fast, text-only call).
+  useEffect(() => {
+    if (qa.length <= integrated.current) return;
+    const count = qa.length;
+    const ctrl = new AbortController();
+    fetch("/api/observe", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ mode: "integrate", workflow: live.current.workflow, qa, asked: asked.current, now: elapsed() }),
+      signal: ctrl.signal,
+    })
+      .then((r) => r.json())
+      .then((data) => {
+        if (!data.workflow) return;
+        integrated.current = count;
+        setWorkflow(data.workflow);
+      })
+      .catch(() => {});
+    return () => ctrl.abort();
+  }, [qa]);
+
+  async function onFrame(f: Frame) {
+    const l = live.current;
+    if (l.offRecord || l.phase === "building" || inFlight.current) return;
+    if (!f.changed) return;
+    inFlight.current = true;
+    setReading(true);
+    const now = elapsed();
+    try {
+      const res = await fetch("/api/observe", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ frame: f.dataUrl, previous: lastSent.current, workflow: l.workflow, actions: actionsRef.current, qa: l.qa, asked: asked.current, now }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error);
+      lastSent.current = f.dataUrl;
+      setWorkflow(data.workflow);
+      setError(null);
+      if (data.action) {
+        actionsRef.current = [...actionsRef.current, { time: now, text: data.action }];
+        setActions(actionsRef.current);
+        if (l.agent.connected) l.agent.sendContextualUpdate(`[SCREEN] ${now} ${data.action}`);
+        const shot = watcher.current.grab(720);
+        if (shot) shots.current[now] = shot;
+      }
+      if (data.question && l.phase === "task") pending.current = data.question;
+    } catch (e) {
+      setError(e instanceof Error ? e.message.slice(0, 160) : "Couldn't read the screen.");
+    } finally {
+      inFlight.current = false;
+      setReading(false);
+    }
+  }
+
+  // Ask the pending question only at a natural pause.
+  useEffect(() => {
+    if (!agent.connected || phase !== "task") return;
+    const t = setInterval(() => {
+      const l = live.current;
+      const q = pending.current;
+      const now = Date.now();
+      if (!q || l.offRecord || l.agent.isSpeaking) return;
+      if (now - watcher.current.lastChange < PAUSE_MS) return; // still working on screen
+      if (now - l.agent.lastUserSpeech.current < 2500) return; // still talking
+      if (now - lastQuestionAt.current < MIN_GAP_MS) return; // question budget
+      l.agent.sendUserMessage(`[ASK] ${q}`);
+      asked.current.push(q);
+      pending.current = null;
+      lastQuestionAt.current = now;
+    }, 1000);
+    return () => clearInterval(t);
+  }, [agent.connected, phase]);
+
+  async function start() {
+    setError(null);
+    resetSession();
+    shots.current = {};
+    offRanges.current = [];
+    asked.current = [];
+    integrated.current = 0;
+    lastSent.current = null;
+    actionsRef.current = [];
+    setWorkflow([]);
+    setActions([]);
+    setPhase("task");
+    try {
+      await watcher.current.start((f) => onFrame(f), () => setSharing(false));
+      setSharing(true);
+    } catch {
+      setError("Screen sharing was cancelled. The Apprentice needs to see your screen.");
+      return;
+    }
+    agent.start();
+  }
+
+  function toggleOffRecord() {
+    const next = !offRecord;
+    setOffRecord(next);
+    watcher.current.paused = next;
+    agent.setMuted(next);
+    if (next) offRanges.current.push({ from: elapsed(), to: "" });
+    else if (offRanges.current.length) offRanges.current[offRanges.current.length - 1].to = elapsed();
+    if (agent.connected) agent.sendContextualUpdate(next ? "[SCREEN] The expert went off the record." : "[SCREEN] The expert is back on the record.");
+  }
+
+  function endTask() {
+    setPhase("debrief");
+    pending.current = null;
+    if (!agent.connected) return; // no voice (e.g. out of credits): go straight to building the map
+    agent.sendUserMessage(
+      `[DEBRIEF] The expert is done. The workflow I wrote from the screen:\n${workflow
+        .map((s, i) => `${i + 1}. ${s.title}${s.why ? ` (why: ${s.why})` : ""}${s.rule ? ` (rule: ${s.rule})` : ""}`)
+        .join("\n")}\nAsk about what is still unclear, then explain it back.`,
+    );
+  }
+
+  async function buildWorkMap() {
+    setPhase("building");
+    agent.endSession();
+    watcher.current.stop();
+    setSharing(false);
+    const events: ScreenEvent[] = [
+      ...actions.map((a) => ({ time: a.time, invoiceId: "", type: "vision_action", description: a.text, source: "vision" as const })),
+      ...workflow.map((s) => ({
+        time: s.time,
+        invoiceId: "",
+        type: "workflow_step",
+        description: `Workflow step: ${s.title}. ${s.detail}${s.why ? ` Why: ${s.why}` : ""}${s.rule ? ` Rule: ${s.rule}` : ""}`,
+        source: "vision" as const,
+      })),
+    ].sort((a, b) => a.time.localeCompare(b.time));
+    try {
+      const res = await fetch("/api/workmap", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ events, transcript: agent.transcript }),
+        signal: AbortSignal.timeout(60000),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.steps?.length) throw new Error(data.error || "The Work Map came back empty.");
+      const offRecordRanges = offRanges.current.map((r) => ({ from: r.from, to: r.to || elapsed() }));
+      saveWorkMap({ ...attachScreenshots(data, shots.current), offRecord: offRecordRanges, published: false });
+      onWorkMapReady();
+    } catch (e) {
+      setError(e instanceof Error ? e.message.slice(0, 160) : "Couldn't build the Work Map.");
+      setPhase("debrief");
+    }
+  }
+
+  const status: ObserverStatus =
+    phase === "building" ? "building"
+    : offRecord ? "off_record"
+    : !sharing ? "idle"
+    : agent.status === "connecting" ? "connecting"
+    : agent.isSpeaking ? "asking"
+    : phase === "debrief" ? "debrief"
+    : reading ? "reading"
+    : "watching";
+
+  return {
+    status,
+    phase,
+    sharing,
+    connected: agent.connected,
+    workflow,
+    qa,
+    transcript: agent.transcript,
+    error: error ?? agent.error,
+    start,
+    toggleOffRecord,
+    offRecord,
+    endTask,
+    buildWorkMap,
+  };
+}
+
+export type Observer = ReturnType<typeof useObserver>;

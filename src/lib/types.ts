@@ -72,6 +72,22 @@ export interface WorkMapStep {
   guardrails: string[];
 }
 
+/** One step of the workflow the vision LLM writes live from screenshots (+ the user's spoken answers). */
+export interface ObservedStep {
+  id: string;
+  title: string; // short imperative, e.g. "Attach the supervisor's approval screenshot"
+  detail: string; // what was seen on screen
+  why: string | null; // the user's reason, only from a spoken answer
+  rule: string | null; // a limit/exception/stop condition, only from a spoken answer
+  time: string; // "mm:ss" when it happened
+}
+
+/** A question the Apprentice asked about something the screenshots couldn't explain, and the answer. */
+export interface ObserveQA {
+  q: string;
+  a: string;
+}
+
 export interface WorkMap {
   task: string;
   steps: WorkMapStep[];

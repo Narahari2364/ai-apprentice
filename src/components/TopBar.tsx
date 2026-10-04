@@ -8,7 +8,7 @@ import { usePathname } from "next/navigation";
 
 export default function TopBar() {
   const path = usePathname();
-  if (path.startsWith("/capture") || path.startsWith("/teach")) return null;
+  if (path.startsWith("/capture") || path.startsWith("/teach")) return null; // full-screen Ledgerline
 
   return (
     <header className="relative z-20 flex h-16 flex-none items-center border-b border-line bg-white px-4 sm:px-6">
@@ -27,7 +27,7 @@ export default function TopBar() {
           Work Map
         </Link>
         <div className="flex overflow-hidden rounded-sm border border-brand text-[14px]" role="group" aria-label="Mode">
-          <Link href="/capture" className="bg-white px-2.5 py-1.5 sm:px-3.5 text-brand hover:bg-brand-soft">
+          <Link href="/learn" className="bg-white px-2.5 py-1.5 sm:px-3.5 text-brand hover:bg-brand-soft">
             Expert
           </Link>
           <Link href="/teach" className="border-l border-brand bg-white px-2.5 py-1.5 sm:px-3.5 text-brand hover:bg-brand-soft">
