@@ -12,8 +12,8 @@ Return JSON only, exactly this shape:
   "task": string,                       // one line, what the expert was doing
   "steps": [{
     "id": "s1", "order": 1,
-    "title": string,                    // short imperative, e.g. "Attach supervisor approval when over 30 a person"
-    "short": string,                    // 2–4 word timeline label, e.g. "Approval over 30"
+    "title": string,                    // short imperative, e.g. "Attach supervisor approval when over $30 a person"
+    "short": string,                    // 2–4 word timeline label, e.g. "Approval over $30"
     "time": "mm:ss",                    // the screen event time this step links to
     "decision": string,                 // "" for routine steps; for judgment calls what was decided, e.g. "Changed Type of Meal to Eat In"
     "reason": string,                   // the reason, paraphrased
@@ -24,7 +24,7 @@ Return JSON only, exactly this shape:
   "confirmed": boolean                  // true only if the expert confirmed the apprentice's teach-back
 }
 Events come from the app itself [dom] and from a vision model reading the screen [vision]; the same action may appear twice, so merge duplicates.
-Rules: 5–9 steps in chronological order. Every judgment call and guardrail must come from the transcript or events, never invented. Prefer generalised steps ("Attach the PL approval when over €30 per person") over one-off ones.`;
+Rules: 5–9 steps in chronological order. Every judgment call and guardrail must come from the transcript or events, never invented. Prefer generalised steps ("Attach the PL approval when over $30 per person") over one-off ones.`;
 
 export async function POST(req: Request) {
   const { events, transcript } = (await req.json()) as { events: ScreenEvent[]; transcript: TranscriptLine[] };

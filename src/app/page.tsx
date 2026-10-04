@@ -227,8 +227,8 @@ function People() {
             color="bg-[#0f766e]"
             name="Paul Adler"
             role="Consultant · the expert"
-            quote="Over 30 a person, I need proof my supervisor actually signed off."
-            rules={["Over 30 per person → supervisor approval", "Delivery apps → receipt and tax invoice", "Restaurant receipts are enough on their own"]}
+            quote="Over $30 a person, I need proof my supervisor actually signed off."
+            rules={["Over $30 per person → supervisor approval", "Delivery apps → receipt and tax invoice", "Restaurant receipts are enough on their own"]}
             cta="Show the Apprentice how it's done"
             href="/capture"
             accent="indigo"
@@ -238,8 +238,8 @@ function People() {
             color="bg-[#c2410c]"
             name="Maya Chen"
             role="Associate, week 1 · the new hire"
-            quote="…oh, it's over 30, so I need the supervisor approval screenshot too."
-            rules={["New case: a 35 delivery dinner", "Predicts each step before acting", "Wrong save held, explained in Paul's words"]}
+            quote="…oh, it's over $30, so I need the supervisor approval screenshot too."
+            rules={["New case: a $35 delivery dinner", "Predicts each step before acting", "Wrong save held, explained in Paul's words"]}
             cta="Practise with the tutor"
             href="/teach"
             accent="brand"
