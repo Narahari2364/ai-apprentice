@@ -29,11 +29,14 @@ export default function MapPage() {
   const [replay, setReplay] = useState<WorkMapStep | null>(null);
   const [exporting, setExporting] = useState(false);
   const [justPublished, setJustPublished] = useState(false);
-  const published = !raw || map.published || justPublished; // the prepared sample counts as published
+  // Coming from a capture session, Paul still has to publish (even when the page shows the fixed map);
+  // opening /map directly shows the prepared map as already published.
+  const storedPublished = stored ? Boolean((JSON.parse(stored) as WorkMap).published) : true;
+  const published = storedPublished || justPublished;
   const selected = map.steps.find((s) => s.id === selectedId) ?? map.steps.find((s) => s.decision) ?? map.steps[0];
 
   function publish() {
-    localStorage.setItem(KEY, JSON.stringify({ ...map, published: true }));
+    localStorage.setItem(KEY, JSON.stringify({ ...(stored ? (JSON.parse(stored) as WorkMap) : map), published: true }));
     setJustPublished(true);
   }
 
