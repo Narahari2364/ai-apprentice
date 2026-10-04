@@ -226,7 +226,6 @@ export default function MappingPage() {
                         <span className="mr-1 text-[13px] text-[#667085]">Is this observation right?</span>
                         <button onClick={() => review(s.id, "ok")} className={`h-9 rounded-sm border px-3 text-[14px] ${s.review === "ok" ? "border-ok bg-ok text-white" : "border-ok bg-white text-ok hover:bg-ok-soft"}`}>✓ Correct</button>
                         <button onClick={() => review(s.id, "wrong")} className={`h-9 rounded-sm border px-3 text-[14px] ${s.review === "wrong" ? "border-err bg-err text-white" : "border-err bg-white text-err hover:bg-err-soft"}`}>✗ Wrong</button>
-                        <button onClick={() => review(s.id, "not_needed")} className={`h-9 rounded-sm border px-3 text-[14px] ${s.review === "not_needed" ? "border-[#667085] bg-[#667085] text-white" : "border-[#9aa0a6] bg-white text-[#475467] hover:bg-panel"}`} title="Right, but not something a new hire needs to copy">Not needed</button>
                       </div>
                       {s.review === "wrong" && (
                         <textarea
@@ -274,10 +273,7 @@ export default function MappingPage() {
                           </div>
                         ) : (
                           <>
-                            <div className="text-[17.5px] leading-snug text-[#1f2d3d]">
-                              {s.title}
-                              {s.review === "not_needed" && <span className="ml-2 rounded-full bg-panel px-2 py-0.5 align-middle text-[12px] text-[#667085]">not needed · never flagged</span>}
-                            </div>
+                            <div className="text-[17.5px] leading-snug text-[#1f2d3d]">{s.title}</div>
                             {s.decision?.startsWith("Corrected by Paul") && <div className="mt-0.5 text-[13px] text-err">{s.decision}</div>}
                             {s.expertQuote && <div className="mt-2 text-[14.5px] text-[#475467]"><b className="text-indigo">Why:</b> “{s.expertQuote}”</div>}
                             {s.guardrails.map((g) => (
